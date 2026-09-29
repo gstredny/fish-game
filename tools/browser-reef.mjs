@@ -36,7 +36,7 @@ async function connect(url) {
 }
 
 async function checkReef(browser, mode) {
-  const width = mode === "phone" ? 390 : 1024, height = mode === "phone" ? 844 : 700;
+  const width = mode === "phone" ? 844 : 1024, height = mode === "phone" ? 390 : 700;
   const { browserContextId } = await browser.send("Target.createBrowserContext");
   let page;
   try {
@@ -128,7 +128,7 @@ async function checkReef(browser, mode) {
     await shot("outside-shelter");
     await clickButton("#pause-button");
     await page.send("Emulation.setDeviceMetricsOverride", { width: height, height: width, deviceScaleFactor: 1, mobile: mode === "phone" });
-    await shot("landscape");
+    await shot("turned");
     assert.deepEqual(errors, []);
     console.log(`${mode}: earn → plant → reload → sprat → shelter → leave: PASS; console errors: 0; screenshots: 7`);
   } finally {

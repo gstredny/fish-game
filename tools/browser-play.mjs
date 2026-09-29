@@ -1,5 +1,5 @@
 // Real-input browser smoke test. Drives the game in headless Chrome over CDP with keyboard (desktop)
-// or touch (phone), then saves screenshots and prints HUD changes. No dependencies (Node 22+).
+// or sideways touch (phone), then saves screenshots and prints HUD changes. No dependencies (Node 22+).
 //
 //   python3 -m http.server 8778 --bind 127.0.0.1 &
 //   "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new \
@@ -53,7 +53,7 @@ const hud = () => evaluate(`JSON.stringify({
 
 await send("Page.enable"); await send("Runtime.enable"); await send("Log.enable");
 if (MODE === "phone") {
-  await send("Emulation.setDeviceMetricsOverride", { width: 390, height: 844, deviceScaleFactor: 3, mobile: true });
+  await send("Emulation.setDeviceMetricsOverride", { width: 844, height: 390, deviceScaleFactor: 3, mobile: true });
   await send("Emulation.setTouchEmulationEnabled", { enabled: true, maxTouchPoints: 5 });
 } else {
   await send("Emulation.setDeviceMetricsOverride", { width: 1440, height: 900, deviceScaleFactor: 1, mobile: false });
@@ -103,9 +103,9 @@ if (MODE === "desktop") {
   await sleep(600);
   console.log("after-tap-start", await hud());
   await shot("playing-start");
-  await touch("touchStart", [{ x: 320, y: 300 }]);
+  await touch("touchStart", [{ x: 640, y: 120 }]);
   await sleep(1500); await shot("touch-hold");
-  await touch("touchMove", [{ x: 80, y: 700 }]);
+  await touch("touchMove", [{ x: 80, y: 330 }]);
   await sleep(1500); await shot("touch-drag");
   await touch("touchEnd", []);
   await sleep(400);
@@ -113,8 +113,8 @@ if (MODE === "desktop") {
   const pause = await centerOf("#pause-button");
   await touch("touchStart", [pause]); await touch("touchEnd", []);
   await sleep(400); console.log("paused", await hud()); await shot("paused");
-  await send("Emulation.setDeviceMetricsOverride", { width: 844, height: 390, deviceScaleFactor: 3, mobile: true });
-  await sleep(500); await shot("landscape-paused");
+  await send("Emulation.setDeviceMetricsOverride", { width: 390, height: 844, deviceScaleFactor: 3, mobile: true });
+  await sleep(500); await shot("upright-turn-sideways");
 }
 console.log("console errors:", errors.length ? errors.join("\n") : "none");
 await send("Page.close");

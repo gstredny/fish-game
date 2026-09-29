@@ -13,6 +13,7 @@ const hud = document.querySelector("#hud");
 const hint = document.querySelector("#hint");
 const toast = document.querySelector("#toast");
 const panels = ["intro", "paused", "won", "gameover"];
+const PORTRAIT_PHONE = "(orientation: portrait) and (max-width: 600px) and (pointer: coarse)";
 const input = { keys: new Set(), pointer: null };
 const steering = createSteering(input);
 let width = window.innerWidth;
@@ -90,7 +91,17 @@ function flash(message) {
   toastTimer = setTimeout(() => toast.classList.remove("visible"), 1400);
 }
 
+// Phones play sideways and full screen where the browser allows it (Android); iPhone Safari
+// has no full screen for pages, so style.css asks the child to turn the phone instead.
+function goFullScreen() {
+  if (!window.matchMedia?.("(pointer: coarse)").matches) return;
+  document.documentElement.requestFullscreen?.()
+    .then(() => screen.orientation?.lock?.("landscape"))
+    .catch(() => {});
+}
+
 function begin() {
+  goFullScreen();
   resetWorld(world, width, height);
   world.phase = "playing";
   steering.clear();
@@ -168,6 +179,7 @@ window.addEventListener("keyup", event => input.keys.delete(event.key.length ===
 window.addEventListener("blur", pause);
 document.addEventListener("visibilitychange", () => { if (document.hidden) pause(); });
 window.addEventListener("resize", resize);
+window.addEventListener("resize", () => { if (window.matchMedia?.(PORTRAIT_PHONE).matches) pause(); });
 
 document.querySelector("#start-button").addEventListener("click", begin);
 document.querySelector("#restart-button").addEventListener("click", begin);
