@@ -1,4 +1,4 @@
-const CACHE = "little-fish-v4";
+const CACHE = "little-fish-v5";
 const FILES = [
   "./",
   "./index.html",
@@ -18,7 +18,7 @@ const FILES = [
 ];
 
 self.addEventListener("install", event => {
-  event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(FILES)));
+  event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(FILES.map(file => new Request(file, { cache: "reload" })))));
   self.skipWaiting();
 });
 
