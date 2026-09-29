@@ -1,6 +1,6 @@
 # Playable reef
 
-Status: Open — pushed to GitHub; browser verification blocked by this session's sandbox
+Status: Closed 2026-09-29 — verified in a real browser on desktop and phone sizes (see evidence). Hosting for phone install is not a criterion here; gameplay fixes found in review live in `tasks/002-fair-food-chain-and-safe-start.md`.
 
 ## Intent
 
@@ -33,6 +33,9 @@ Today a playable local game exists, but this environment cannot run its local se
 - 2026-09-29: Publication preflight: `npm test` passed 8/8 with 0 failed and 0 skipped; runtime JavaScript syntax checks passed. Committed the game as `118a240` after checking the 16 staged paths and passing the gitleaks hook.
 - 2026-09-29: `gh repo create gstredny/fish-game --public` failed with a connection error. Read-only GitHub API calls succeeded and confirmed the repo was absent.
 - 2026-09-29: `gh api -X POST user/repos` created the public repository; `git push -u origin master` pushed `118a240`. GitHub Pages is not configured, and live browser verification remains open.
+- 2026-09-29: Review session. `python3 -m http.server 8778 --bind 127.0.0.1` bound fine here. The chrome-devtools MCP profile was locked by another session and the Chrome extension was not connected, so the game was driven in a fresh headless Chrome over the raw DevTools protocol with two dependency-free Node scripts, now kept as `tools/browser-play.mjs` (real keyboard and touch input) and `tools/browser-autoplay.mjs` (seek-food controller through the real pointer input, plays to the shark).
+- 2026-09-29: Desktop 1440×900 keyboard run: start, movement, eating, predator damage, pause/resume, and game over all worked. Phone 390×844 touch run: tap Dive in, touch-and-hold swim, drag, pause button, and landscape all worked. Autoplay: grew through all five forms and reached the won panel in 65 s and 53 s of game time on two runs, then "Explore the ocean" resumed play as a shark. Zero console errors; one Chrome deprecation warning about the `apple-mobile-web-app-capable` meta tag.
+- 2026-09-29: Screenshots inspected at both sizes: no layout problems. Gameplay problems seen in the screenshots (predator the same size as the player, hit within 2 s of starting, post-win ocean 75% sharks, near-empty phone ocean) are recorded as findings in `tasks/002-fair-food-chain-and-safe-start.md`.
 
 ## Evidence
 
@@ -43,3 +46,7 @@ Today a playable local game exists, but this environment cannot run its local se
 - `git status --short` → only the intended new project files; no other repository changes.
 - `git ls-remote origin refs/heads/master` → `118a240492a3c89da0cf23ad731d4029dd6d33f1 refs/heads/master`.
 - `gh repo view gstredny/fish-game --json name,url,visibility,defaultBranchRef` → public repository, URL `https://github.com/gstredny/fish-game`, default branch `master`.
+- 2026-09-29 `npm test` → 8 tests, 8 passed, 0 failed, 0 skipped.
+- 2026-09-29 `node tools/browser-play.mjs desktop` → `1.6s HURT`, `13.9s HURT`, `47.5s GREW -> Coral fish`, pause and resume via `P` confirmed, 7 screenshots.
+- 2026-09-29 `node tools/browser-play.mjs phone` → start by touch, swim by touch-and-hold, `1 / 6 snacks` after 3 s, pause by tap, landscape screenshot, 6 screenshots.
+- 2026-09-29 `node tools/browser-autoplay.mjs` → `33.2s Coral fish`, `35.2s Parrotfish`, `46.4s Blue tuna`, `52.7s Great white shark`, `overlay won`, then `phase playing` as a shark with 3 hearts; `console errors: none`.

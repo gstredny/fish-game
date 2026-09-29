@@ -23,3 +23,14 @@ The game supports touch and portrait screens. Touch and hold in the direction yo
 ```sh
 npm test
 ```
+
+## Check it in a browser
+
+With the local server running, start a headless Chrome and let the scripts play the game. Screenshots land in `screenshots/`.
+
+```sh
+"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new --remote-debugging-port=9444 --user-data-dir=/tmp/fish-chrome about:blank &
+node tools/browser-play.mjs desktop   # real keyboard input, box-pattern swim
+node tools/browser-play.mjs phone     # 390×844 touch input
+node tools/browser-autoplay.mjs       # seek-food controller plays to the shark
+```
