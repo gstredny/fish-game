@@ -213,9 +213,9 @@ function makeCreature(world, width, height, initial) {
   if (initial && Math.abs(x - world.player.x) < 100 && Math.abs(vertical) < 100) x += 180;
   let tier = pickTier(world);
   if (initial && Math.hypot(x - world.player.x, vertical) < 260) tier = Math.min(tier, world.stage);
-  // New arrivals start fully off screen, at spread-out distances, so they swim in one by one
-  // instead of popping in at the edge in a column.
-  if (!initial) x += side * (CREATURES[tier].size * 1.6 + Math.random() * width * 0.3);
+  // New arrivals start fully off screen (big fish need more room) and a little spread out, so they
+  // swim in rather than popping in at the edge in a column. Kept tight so the ocean stays as busy.
+  if (!initial) x += side * (Math.max(0, CREATURES[tier].size * 1.6 - 45) + Math.random() * width * 0.05);
   return {
     x,
     y,

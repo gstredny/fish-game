@@ -66,3 +66,20 @@ George: "Are you saying sound is left? … Just get the sound of the main things
   - The unlock listens on `document`, because both app-test fixtures keep one listener per event type on `window`.
   - The unlock fires on finger-up, click or key press. Chrome and iPhone don't count finger-down as permission to play sound.
 - 2026-09-29: Updates showed only on the second open because the old offline worker serves the old page. The page now reloads itself when a new worker takes over on the start screen. This helps every update after this one ships, because the currently installed version doesn't have the reload yet.
+- 2026-09-29: An independent review of `f1a3955` found one blocking problem.
+  - The update reload fired whenever the game wasn't mid-swim. That includes the drawing page, the Ocean book and fact cards, so an update arriving while a child was colouring wiped the drawing. Reproduced.
+  - Fix: it now reloads only when the start screen itself is showing, and at most once per launch. Coming back to the app also checks for updates.
+  - One-time exposure: phones already running `f1a3955` decide this update's reload with the old rule. A child who starts drawing in the few seconds while this update downloads could lose that scribble once. Later updates are protected.
+- 2026-09-29: Minor findings, all fixed:
+  - Chaining `connect()` could throw on old iPhones and stop the game. Sounds are now connected one step at a time, and a failing sound never stops the game.
+  - After iPhone pauses audio for a call or app switch, the next sound asks for it back instead of waiting for a tap.
+  - A unit test depended on test order.
+  - The browser sound check didn't prove sound reached the speakers.
+- 2026-09-29: The first spawn spread (size × 1.6 + 0–30% of screen width) made the ocean emptier and easier. In 300 simulated 20 s swims on 844×390, fish on screen fell from 14.0 to 10.8 and bumps from 0.75 to 0.43. It is now tuned to extra room for big fish only (size × 1.6 − 45 px) plus 0–5% of the width. Result: 13.2–13.3 fish on screen, about 11 snacks, 0.55 bumps and 2.0–2.4% of the time without a snack in view. It stays slightly easier than before because big hunters no longer pop in half-visible.
+- 2026-09-29: New checks, each red with its fix removed:
+  - `browser-update.mjs`: "an update must not reload the page while the child is drawing".
+  - `browser-sound.mjs`: "sounds are not connected to the speakers".
+  - Unit tests: "a broken audio engine never stops the game" and "after the phone pauses audio, the next sound asks for it back".
+- 2026-09-29: Full run on the fix:
+  - `npm test`: 74 passed.
+  - All pass: `browser-sound`, `browser-update`, `browser-check` (drawing), `browser-learn`, `browser-sideways`, `browser-play` desktop/phone (no console errors), `browser-autoplay` (shark), and `browser-reef` 2 of 2.

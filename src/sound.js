@@ -40,7 +40,8 @@ export function createSound(AudioContextClass = globalThis.AudioContext || globa
     envelope.gain.setValueAtTime(0.0001, at);
     envelope.gain.exponentialRampToValueAtTime(gain, at + 0.012);
     envelope.gain.exponentialRampToValueAtTime(0.0001, at + length);
-    oscillator.connect(envelope).connect(volume);
+    envelope.connect(volume);
+    oscillator.connect(envelope);
     oscillator.start(at);
     oscillator.stop(at + length + 0.02);
   }
@@ -88,15 +89,24 @@ export function createSound(AudioContextClass = globalThis.AudioContext || globa
           volume.gain.value = 0.35;
           volume.connect(context.destination);
         }
-        if (context.state !== "running") context.resume();
+        if (context.state !== "running") context.resume()?.catch?.(() => {});
       } catch {
         context = null;
       }
     },
     play(cue) {
-      if (muted || context?.state !== "running" || !CUES[cue]) return false;
-      CUES[cue]();
-      return true;
+      if (muted || !context || !CUES[cue]) return false;
+      // iPhone pauses audio for calls and app switches; ask for it back instead of waiting for a tap.
+      if (context.state !== "running") {
+        if (context.state !== "closed") context.resume()?.catch?.(() => {});
+        return false;
+      }
+      try {
+        CUES[cue]();
+        return true;
+      } catch {
+        return false; // a sound must never stop the game
+      }
     },
     // Reads (but does not use up) this frame's game events and plays what they call for.
     listen(world) {

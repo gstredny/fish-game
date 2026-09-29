@@ -47,6 +47,12 @@ const LISTEN = `(() => {
   BaseAudioContext.prototype.createOscillator = function () { window.__notes++; return makeNote.call(this); };
   const Real = window.AudioContext;
   window.AudioContext = class extends Real { constructor(...options) { super(...options); window.__audio = this; } };
+  // Sound must actually reach the speakers, at a volume above zero.
+  const connect = AudioNode.prototype.connect;
+  AudioNode.prototype.connect = function (target, ...rest) {
+    if (target instanceof AudioDestinationNode) window.__speakerVolume = this.gain ? this.gain.value : 1;
+    return connect.call(this, target, ...rest);
+  };
 })();`;
 
 const browser = await chromium.launch();
@@ -81,6 +87,7 @@ try {
     const switchedOn = await page.waitForFunction(() => window.__audio?.state === "running", null, { timeout: 5000 })
       .then(() => true, () => false);
     assert.ok(switchedOn, `${label}: sound did not switch on after a tap`);
+    assert.ok(await page.evaluate(() => window.__speakerVolume > 0), `${label}: sounds are not connected to the speakers`);
 
     const heard = {};
     const moment = async (name, setup, phase) => {

@@ -237,6 +237,6 @@ test("new fish swim in from off screen at spread-out distances, not in a column"
     }
   }
   assert.ok(gaps.every(gap => gap >= 0), "every new fish starts fully off screen");
-  assert.ok(new Set(gaps).size > 50, "arrivals are spread out");
-  assert.ok(Math.max(...gaps) - Math.min(...gaps) > 150, "some come from further out than others");
+  assert.ok(new Set(gaps).size > 30, "arrivals are spread out");
+  assert.ok(Math.max(...gaps) - Math.min(...gaps) > 30, "some come from further out than others");
 });

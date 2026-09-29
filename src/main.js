@@ -576,11 +576,21 @@ requestAnimationFrame(frame);
 // Phones allow sound only after a tap (when the finger lifts), click or key press.
 for (const type of ["pointerup", "touchend", "click", "keydown"]) document.addEventListener(type, () => sound.unlock(), true);
 
-// When an update takes over in the background, show it straight away unless a swim is under way.
+// When an update takes over in the background, show it straight away, but only from the start
+// screen itself: never mid-swim, mid-drawing, or with the Ocean book or a card open. Once per launch.
 if ("serviceWorker" in navigator) {
   const updating = Boolean(navigator.serviceWorker.controller);
-  navigator.serviceWorker.register("./sw.js");
+  navigator.serviceWorker.register("./sw.js").then(registration => {
+    // Coming back to the app from the background also checks for a new version.
+    document.addEventListener("visibilitychange", () => { if (!document.hidden) registration.update().catch(() => {}); });
+  }).catch(() => {});
   navigator.serviceWorker.addEventListener("controllerchange", () => {
-    if (updating && world.phase === "ready") location.reload();
+    const onStartScreen = world.phase === "ready" && !document.querySelector("#intro").hidden;
+    if (!updating || !onStartScreen) return;
+    try {
+      if (sessionStorage.getItem("little-fish-updated")) return;
+      sessionStorage.setItem("little-fish-updated", "1");
+    } catch { /* no session storage: still reload once, as the page is fresh after it */ }
+    location.reload();
   });
 }
