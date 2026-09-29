@@ -11,6 +11,7 @@ import { createServer } from "node:http";
 import { mkdirSync, readFileSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { extname, join, normalize } from "node:path";
+import { KINDS } from "../src/species.js";
 
 let playwright;
 try {
@@ -49,7 +50,12 @@ const BARE_INSIDE = [0.5, 0.35];
 const CREAM = [255, 246, 226, 255];
 const RED = [255, 90, 95, 255];
 
+// Every animal counts as met, so first-meeting fact cards don't pause this check;
+// tools/browser-learn.mjs checks the cards.
+const MET_ALL = `try { localStorage.setItem("little-fish-met-v1", ${JSON.stringify(JSON.stringify(KINDS))}); } catch {}`;
+
 async function openGame(context) {
+  await context.addInitScript(MET_ALL);
   const page = await context.newPage();
   // Expose the game's state to this check without a test hook in the shipped code.
   await page.route("**/src/main.js", async route => {
@@ -152,7 +158,7 @@ async function swimToShark(page, label) {
         const dx = creature.x - world.player.x;
         const dy = creature.y - world.player.y;
         const gap = Math.hypot(dx, dy) || 1;
-        if (creature.tier > world.stage && gap < 260) {
+        if (creature.tier > world.stage + 1 && gap < 260) {
           steerX -= dx / gap * (260 - gap) / 60;
           steerY -= dy / gap * (260 - gap) / 60;
         } else if (creature.tier <= world.stage && (!best || gap < best.gap)) {

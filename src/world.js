@@ -1,4 +1,4 @@
-import { canEat, CREATURES, FORMS, nextGrowth } from "./rules.js";
+import { canEat, CREATURES, FLOOR, FORMS, isDanger, isFriend, nextGrowth, SEA_FRIENDS } from "./rules.js";
 import { createReef, isSheltered } from "./reef.js";
 import { followPlayer, toWorld } from "./camera.js";
 
@@ -18,9 +18,14 @@ export function createWorld(width, height, reef = createReef(), artCount = 0) {
     phase: "ready",
     time: 0,
     creatures: [],
+    friends: [],
     particles: [],
     events: [],
-    artCount
+    artCount,
+    // Learning: kinds already met this swim, floating name tags, and when the next fact card may open.
+    greeted: new Set(),
+    labels: [],
+    nextCardAt: 5
   };
   fillOcean(world, width, height, true);
   return world;
@@ -46,10 +51,18 @@ export function swim(world, seconds, input, width, height) {
   for (const creature of world.creatures) {
     creature.x += creature.direction * CREATURES[creature.tier].speed * step;
     creature.y += Math.sin(world.time * 2 + creature.wobble) * 8 * step;
-    if (!world.sheltered && creature.tier > world.stage && distance(world.player, creature) < 180) {
-      const chase = creature.tier === 4 ? 18 : 10;
+    const gap = distance(world.player, creature);
+    if (!world.sheltered && isDanger(world.stage, creature.tier) && gap < 180) {
+      const chase = creature.tier === CREATURES.length - 1 ? 18 : 10;
       creature.x += Math.sign(world.player.x - creature.x) * chase * step;
       creature.y += Math.sign(world.player.y - creature.y) * chase * step;
+    } else if (isFriend(world.stage, creature.tier) && gap < 220) {
+      // Your own kind schools with you: it turns your way and keeps close.
+      creature.direction = world.player.direction;
+      if (gap > CREATURES[creature.tier].size * 2.2) {
+        creature.x += Math.sign(world.player.x - creature.x) * 20 * step;
+        creature.y += Math.sign(world.player.y - creature.y) * 20 * step;
+      }
     }
     meetCreature(world, creature);
     if (world.phase !== "playing") break;
@@ -62,6 +75,14 @@ export function swim(world, seconds, input, width, height) {
     !creature.gone && Math.abs(creature.x - world.camera.x) < width * 1.4 + 160 &&
     Math.abs(creature.y - world.camera.y) < height * 1.4 + 160
   );
+  for (const friend of world.friends) {
+    friend.x += friend.direction * friend.speed * step;
+    if (!friend.floor) friend.y += Math.sin(world.time * 1.3 + friend.wobble) * 6 * step;
+  }
+  world.friends = world.friends.filter(friend => Math.abs(friend.x - world.camera.x) < width * 1.4 + 160 &&
+    (friend.floor || Math.abs(friend.y - world.camera.y) < height * 1.4 + 160));
+  for (const label of world.labels) label.life -= step;
+  world.labels = world.labels.filter(label => label.life > 0 && !label.target.gone);
   world.particles = world.particles.filter(particle => particle.life > 0);
   for (const particle of world.particles) {
     particle.x += particle.vx * step;
@@ -69,6 +90,33 @@ export function swim(world, seconds, input, width, height) {
     particle.life -= step;
   }
   fillOcean(world, width, height, false);
+}
+
+// Animals close enough to meet, nearest first: one per kind, skipping kinds already met this swim.
+// Floor animals sit on the sea bed at the bottom of the screen, so the fish meets them by swimming low.
+export function nearbyAnimals(world, width, height) {
+  const found = new Map();
+  const left = world.camera.x - width / 2, top = world.camera.y - height / 2;
+  const onScreen = spot => spot.x > left && spot.x < left + width && spot.y > top && spot.y < top + height;
+  const consider = (kind, target, gap, reach, lift) => {
+    if (world.greeted.has(kind) || gap > reach || gap >= (found.get(kind)?.gap ?? Infinity)) return;
+    found.set(kind, { kind, target, gap, lift });
+  };
+  for (const creature of world.creatures) {
+    if (creature.gone || !onScreen(creature)) continue;
+    const { kind, size } = CREATURES[creature.tier];
+    consider(kind, creature, distance(world.player, creature), 130 + size, size + 16);
+  }
+  for (const friend of world.friends) {
+    if (friend.floor) {
+      const gap = Math.hypot(friend.x - world.player.x, height * FLOOR - (world.player.y - top));
+      consider(friend.kind, friend, gap, height * 0.15 + 70 + friend.size, friend.size * 2 + 16);
+    } else if (onScreen(friend)) {
+      consider(friend.kind, friend, distance(world.player, friend), 110 + friend.size, friend.size + 16);
+    }
+  }
+  for (const coral of world.reef.corals) consider("clownfish", coral, distance(world.player, coral), 170, 100);
+  return [...found.values()].sort((first, second) => first.gap - second.gap);
 }
 
 function movePlayer(world, input, step, width, height) {
@@ -96,6 +144,7 @@ function movePlayer(world, input, step, width, height) {
 function meetCreature(world, creature) {
   const playerSize = FORMS[world.stage].size;
   const creatureSize = CREATURES[creature.tier].size;
+  if (isFriend(world.stage, creature.tier)) return;
   const edible = canEat(world.stage, creature.tier);
   // Snacks count the moment they touch the fish; a bigger fish must really bump it to hurt.
   const reach = edible ? playerSize + creatureSize : playerSize * 0.68 + creatureSize * 0.62;
@@ -123,7 +172,7 @@ function meetCreature(world, creature) {
   world.hearts -= 1;
   world.invulnerable = 2.4;
   burst(world, world.player.x, world.player.y, "#ffdaab", 14);
-  world.events.push({ type: "hurt" });
+  world.events.push({ type: "hurt", by: CREATURES[creature.tier].kind });
   if (world.hearts === 0) world.phase = "gameover";
 }
 
@@ -132,6 +181,27 @@ function fillOcean(world, width, height, initial) {
   while (world.creatures.length < target) {
     world.creatures.push(makeCreature(world, width, height, initial));
   }
+  const floorTarget = Math.max(1, Math.round(width / 520));
+  while (world.friends.filter(friend => friend.floor).length < floorTarget) {
+    world.friends.push(makeFriend(world, width, height, initial, true));
+  }
+  if (!world.friends.some(friend => !friend.floor)) world.friends.push(makeFriend(world, width, height, initial, false));
+}
+
+// Sea friends not yet met this swim come first, so every swim shows someone new.
+function makeFriend(world, width, height, initial, floor) {
+  const choices = SEA_FRIENDS.filter(friend => friend.floor === floor);
+  const fresh = choices.filter(choice => !world.greeted.has(choice.kind) &&
+    !world.friends.some(friend => friend.kind === choice.kind));
+  const pool = fresh.length ? fresh : choices;
+  const { kind, size, speed } = pool[Math.floor(Math.random() * pool.length)];
+  // Floor animals wait ahead of the fish, where it is heading; swimmers come from either side.
+  const side = floor ? world.player.direction : Math.random() < 0.5 ? -1 : 1;
+  let x = world.camera.x + (initial ? (Math.random() - 0.5) * width * 0.8 : side * (width / 2 + 60 + size * 2));
+  if (initial && Math.abs(x - world.player.x) < 160) x += 320;
+  const y = floor ? 0 : world.camera.y + (Math.random() - 0.5) * height * 0.6;
+  return { kind, size, speed, floor, x, y, wobble: Math.random() * Math.PI * 2,
+    direction: initial || floor ? (Math.random() < 0.5 ? -1 : 1) : -side };
 }
 
 function makeCreature(world, width, height, initial) {
@@ -157,7 +227,7 @@ function makeCreature(world, width, height, initial) {
 // True when a fish that could hurt the player is on screen behind this box.
 export function dangerBehind(world, box, width, height) {
   return world.creatures.some(creature => {
-    if (creature.tier <= world.stage) return false;
+    if (!isDanger(world.stage, creature.tier)) return false;
     const reach = CREATURES[creature.tier].size * 1.6;
     const x = creature.x - world.camera.x + width / 2;
     const y = creature.y - world.camera.y + height / 2;
@@ -166,9 +236,11 @@ export function dangerBehind(world, box, width, height) {
 }
 
 function pickTier(world) {
-  if (world.stage === FORMS.length - 1) return Math.floor(Math.random() * CREATURES.length);
+  // The shark's ocean holds every kind of fish, but no plankton: great whites don't eat it.
+  if (world.stage === FORMS.length - 1) return 1 + Math.floor(Math.random() * (CREATURES.length - 1));
   const roll = Math.random();
-  const offset = roll < 0.25 ? -1 : roll < 0.7 ? 0 : roll < 0.94 ? 1 : 2;
+  // Mostly snacks, a few of your own kind, and about one in four bigger hunters.
+  const offset = roll < 0.25 ? -1 : roll < 0.65 ? 0 : roll < 0.75 ? 1 : roll < 0.95 ? 2 : 3;
   return Math.max(0, Math.min(CREATURES.length - 1, world.stage + offset));
 }
 
