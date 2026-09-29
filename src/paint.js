@@ -1,6 +1,9 @@
 import { CREATURES, FORMS } from "./rules.js";
+import { FRAME, paintFace, paintHalo, TAIL_JOINT } from "./art.js";
 
-export function paintOcean(context, world, width, height, time) {
+const NO_ART = { player: null, npc: [] };
+
+export function paintOcean(context, world, width, height, time, art = NO_ART) {
   const cameraX = world.player.x - width / 2;
   const cameraY = world.player.y - height / 2;
   paintWater(context, width, height, time, cameraX);
@@ -10,7 +13,10 @@ export function paintOcean(context, world, width, height, time) {
     const x = creature.x - cameraX;
     const y = creature.y - cameraY;
     if (x < -100 || x > width + 100 || y < -100 || y > height + 100) continue;
+    const drawing = creature.art === null || creature.art === undefined ? null : art.npc[creature.art];
     if (creature.tier === 0) paintPlankton(context, x, y, time + creature.wobble);
+    else if (drawing) paintArtFish(context, drawing, x, y, CREATURES[creature.tier].size,
+      creature.tier, creature.direction, time + creature.wobble, false);
     else paintFish(context, x, y, CREATURES[creature.tier].size, creature.tier,
       CREATURES[creature.tier].color, creature.direction, time + creature.wobble, false);
   }
@@ -26,9 +32,20 @@ export function paintOcean(context, world, width, height, time) {
 
   if (world.invulnerable <= 0 || Math.floor(time * 9) % 2 === 0) {
     const form = FORMS[world.stage];
-    paintFish(context, width / 2, height / 2, form.size, world.stage,
+    if (art.player) paintArtFish(context, art.player, width / 2, height / 2, form.size,
+      world.stage, world.player.direction, time, true);
+    else paintFish(context, width / 2, height / 2, form.size, world.stage,
       form.color, world.player.direction, time, true);
   }
+}
+
+// A child's drawing as a still picture, sized for menus and the HUD.
+export function portrait(drawing, stage) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 300;
+  canvas.height = 220;
+  paintArtFish(canvas.getContext("2d"), drawing, 175, 130, 80, stage, 1, 0, false);
+  return canvas.toDataURL("image/png");
 }
 
 function paintWater(context, width, height, time, cameraX) {
@@ -168,15 +185,7 @@ function paintFish(context, x, y, size, tier, color, direction, time, player) {
   context.scale(direction, 1);
   const tail = Math.sin(time * 9) * 0.17;
 
-  if (player) {
-    const halo = context.createRadialGradient(0, 0, size * 0.4, 0, 0, size * 1.85);
-    halo.addColorStop(0, "rgba(214,255,238,.22)");
-    halo.addColorStop(1, "rgba(214,255,238,0)");
-    context.fillStyle = halo;
-    context.beginPath();
-    context.arc(0, 0, size * 1.85, 0, Math.PI * 2);
-    context.fill();
-  }
+  if (player) paintHalo(context, size);
 
   context.fillStyle = color;
   context.save();
@@ -224,20 +233,7 @@ function paintFish(context, x, y, size, tier, color, direction, time, player) {
     context.stroke();
   }
 
-  context.fillStyle = "#f7ffef";
-  context.beginPath();
-  context.arc(size * 0.58, -size * 0.17, Math.max(2.5, size * 0.13), 0, Math.PI * 2);
-  context.fill();
-  context.fillStyle = "#173b52";
-  context.beginPath();
-  context.arc(size * 0.62, -size * 0.17, Math.max(1.5, size * 0.07), 0, Math.PI * 2);
-  context.fill();
-
-  context.strokeStyle = "rgba(20,55,70,.55)";
-  context.lineWidth = Math.max(1, size * 0.026);
-  context.beginPath();
-  context.arc(size * 0.75, size * 0.14, size * 0.17, 0.1, 1.7);
-  context.stroke();
+  paintFace(context, size, false);
 
   if (player && tier < 4) {
     context.fillStyle = "#fff1b8";
@@ -245,5 +241,50 @@ function paintFish(context, x, y, size, tier, color, direction, time, player) {
     context.arc(-size * 0.08, -size * 0.18, Math.max(2, size * 0.09), 0, Math.PI * 2);
     context.fill();
   }
+  context.restore();
+}
+
+function paintArtFish(context, drawing, x, y, size, tier, direction, time, player) {
+  context.save();
+  context.translate(x, y + Math.sin(time * 2.5) * 2);
+  context.scale(direction, 1);
+  if (player) paintHalo(context, size);
+
+  const left = FRAME.left * size;
+  const top = FRAME.top * size;
+  const frameWidth = FRAME.width * size;
+  const frameHeight = FRAME.height * size;
+  context.save();
+  context.translate(TAIL_JOINT * size, 0);
+  context.rotate(Math.sin(time * 9) * 0.17);
+  context.translate(-TAIL_JOINT * size, 0);
+  context.drawImage(drawing.tail, left, top, frameWidth, frameHeight);
+  context.restore();
+
+  if (tier === 4) {
+    context.fillStyle = "#8eaec2";
+    context.strokeStyle = "rgba(23,59,82,.6)";
+    context.lineWidth = Math.max(1, size * 0.03);
+    context.beginPath();
+    context.moveTo(-size * 0.42, -size * 0.4);
+    context.quadraticCurveTo(-size * 0.1, -size * 0.72, -size * 0.04, -size * 1.24);
+    context.quadraticCurveTo(size * 0.12, -size * 0.72, size * 0.38, -size * 0.42);
+    context.closePath();
+    context.fill();
+    context.stroke();
+  }
+  context.drawImage(drawing.body, left, top, frameWidth, frameHeight);
+  if (tier === 4) {
+    context.strokeStyle = "rgba(23,59,82,.55)";
+    context.lineWidth = Math.max(1, size * 0.035);
+    context.beginPath();
+    for (let gill = 0; gill < 3; gill++) {
+      const gillX = size * (0.24 + gill * 0.09);
+      context.moveTo(gillX, -size * 0.14);
+      context.quadraticCurveTo(gillX - size * 0.06, size * 0.02, gillX, size * 0.18);
+    }
+    context.stroke();
+  }
+  paintFace(context, size, true);
   context.restore();
 }

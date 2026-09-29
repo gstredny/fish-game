@@ -1,6 +1,9 @@
+import { CRAYONS, prepareArt } from "./art.js";
+import { loadDrawings, saveDrawing } from "./gallery.js";
 import { FORMS } from "./rules.js";
-import { paintOcean } from "./paint.js";
-import { createWorld, resetWorld, swim } from "./world.js";
+import { paintOcean, portrait } from "./paint.js";
+import { createSketchpad } from "./sketchpad.js";
+import { createWorld, dangerBehind, resetWorld, swim } from "./world.js";
 
 const canvas = document.querySelector("#ocean");
 const context = canvas.getContext("2d");
@@ -8,14 +11,70 @@ const overlay = document.querySelector("#overlay");
 const hud = document.querySelector("#hud");
 const hint = document.querySelector("#hint");
 const toast = document.querySelector("#toast");
-const panels = ["intro", "paused", "won", "gameover"];
+const panels = ["intro", "draw", "paused", "won", "gameover"];
 const input = { keys: new Set(), pointer: null };
+const touchFirst = window.matchMedia("(pointer: coarse)").matches;
 let width = window.innerWidth;
 let height = window.innerHeight;
 let world = createWorld(width, height);
 let previousFrame = 0;
 let visualTime = 0;
 let toastTimer;
+
+let storage = null;
+try { storage = window.localStorage; } catch { /* private mode: drawings last for this visit */ }
+let drawings = loadDrawings(storage);
+const art = { player: null, npc: [] };
+const portraits = new Map();
+let artVersion = 0;
+const sketchpad = createSketchpad(document.querySelector("#sketch"));
+
+hint.textContent = touchFirst ? "Touch and hold to swim" : "Move the mouse to swim · Arrow keys work too";
+
+async function decode(drawing) {
+  try {
+    const image = new Image();
+    image.src = drawing;
+    await image.decode();
+    return prepareArt(image);
+  } catch {
+    return null;
+  }
+}
+
+async function loadArt() {
+  const version = ++artVersion;
+  const layers = await Promise.all(drawings.map(decode));
+  if (version !== artVersion) return;
+  art.player = layers[0] || null;
+  art.npc = layers.slice(1);
+  portraits.clear();
+  renderIntro();
+  updateHud();
+}
+
+function portraitAt(stage) {
+  if (!portraits.has(stage)) portraits.set(stage, portrait(art.player, stage));
+  return portraits.get(stage);
+}
+
+function showArt(image, mark, stage) {
+  image.hidden = !art.player;
+  mark.hidden = Boolean(art.player);
+  if (art.player) image.src = portraitAt(stage);
+}
+
+function renderIntro() {
+  const saved = drawings.length > 0;
+  const draw = document.querySelector("#draw-button");
+  const start = document.querySelector("#start-button");
+  draw.className = saved ? "text-button" : "primary-button";
+  start.className = saved ? "primary-button" : "text-button";
+  draw.innerHTML = saved ? "Draw a new fish" : 'Draw my fish <span aria-hidden="true">✎</span>';
+  start.innerHTML = saved ? 'Dive in <span aria-hidden="true">↗</span>' : "Just swim";
+  document.querySelector("#intro-actions").prepend(saved ? start : draw);
+  showArt(document.querySelector("#intro-art"), document.querySelector("#intro-mark"), 0);
+}
 
 function resize() {
   width = window.innerWidth;
@@ -30,14 +89,16 @@ function showPanel(name) {
   overlay.hidden = !name;
   overlay.classList.toggle("result-mode", name !== "intro" && Boolean(name));
   for (const panel of panels) document.getElementById(panel).hidden = panel !== name;
-  hud.hidden = name === "intro";
+  hud.hidden = name === "intro" || name === "draw";
   hint.hidden = Boolean(name);
+  if (name === "won") showArt(document.querySelector("#won-art"), document.querySelector("#won-mark"), 4);
 }
 
 function updateHud() {
   const form = FORMS[world.stage];
   document.querySelector("#stage-name").textContent = form.name;
   document.querySelector("#stage-dot").style.background = form.color;
+  showArt(document.querySelector("#stage-art"), document.querySelector("#stage-dot"), world.stage);
   document.querySelector("#growth-text").textContent = form.goal ?
     `${world.bites} / ${form.goal} snacks to grow` : "The whole ocean is yours";
   document.querySelector("#progress-fill").style.width = form.goal ?
@@ -55,12 +116,29 @@ function flash(message) {
 }
 
 function begin() {
-  resetWorld(world, width, height);
+  resetWorld(world, width, height, Math.max(0, drawings.length - 1));
   world.phase = "playing";
   input.pointer = null;
   input.keys.clear();
   updateHud();
   showPanel(null);
+}
+
+function openSketchpad() {
+  sketchpad.clear();
+  showPanel("draw");
+}
+
+async function finishDrawing() {
+  const swimButton = document.querySelector("#swim-button");
+  if (swimButton.disabled) return;
+  swimButton.disabled = true;
+  if (sketchpad.painted) {
+    drawings = saveDrawing(storage, sketchpad.save(), drawings);
+    await loadArt();
+  }
+  swimButton.disabled = false;
+  begin();
 }
 
 function pause() {
@@ -76,16 +154,27 @@ function resume() {
   showPanel(null);
 }
 
+// Keep the HUD from hiding a fish that can hurt the player.
+function watchBehindHud() {
+  const hidden = world.phase === "playing" && [...hud.children].some(part =>
+    dangerBehind(world, part.getBoundingClientRect(), width, height));
+  hud.classList.toggle("see-through", hidden);
+}
+
 function frame(timestamp) {
   const seconds = previousFrame ? (timestamp - previousFrame) / 1000 : 0;
   previousFrame = timestamp;
   visualTime += Math.min(seconds, 0.05);
   swim(world, seconds, input, width, height);
-  paintOcean(context, world, width, height, visualTime);
+  paintOcean(context, world, width, height, visualTime, art);
+  watchBehindHud();
+  if (!hint.hidden && world.phase === "playing" &&
+    (world.time > 8 || Math.hypot(world.player.x, world.player.y) > 250)) hint.hidden = true;
 
   if (world.events.length) {
     for (const event of world.events.splice(0)) {
-      if (event.type === "grow") flash(world.stage === 4 ? "You became a shark!" : `You grew into a ${FORMS[world.stage].name}!`);
+      if (event.type === "grow") flash(world.stage === 4 ? "You became a shark!" :
+        art.player ? "Your fish grew bigger!" : `You grew into a ${FORMS[world.stage].name}!`);
       if (event.type === "hurt") flash("Watch out, big fish!");
     }
     updateHud();
@@ -112,8 +201,9 @@ window.addEventListener("keydown", event => {
   if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " "].includes(event.key)) event.preventDefault();
   if (event.key === "Escape" || event.key.toLowerCase() === "p") {
     world.phase === "paused" ? resume() : pause();
-  } else if (event.key === "Enter" && world.phase === "ready") {
-    begin();
+  } else if (event.key === "Enter" && !(event.target instanceof HTMLButtonElement)) {
+    if (!document.querySelector("#draw").hidden) finishDrawing();
+    else if (!document.querySelector("#intro").hidden) document.querySelector("#intro .primary-button").click();
   }
   input.keys.add(event.key.length === 1 ? event.key.toLowerCase() : event.key);
 });
@@ -122,6 +212,24 @@ window.addEventListener("blur", pause);
 document.addEventListener("visibilitychange", () => { if (document.hidden) pause(); });
 window.addEventListener("resize", resize);
 
+const crayons = document.querySelector("#crayons");
+for (const [index, crayon] of CRAYONS.entries()) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "crayon";
+  button.style.setProperty("--crayon", crayon.color);
+  button.setAttribute("aria-label", crayon.name);
+  button.setAttribute("aria-pressed", String(index === 0));
+  button.addEventListener("click", () => {
+    sketchpad.setColor(crayon.color);
+    for (const other of crayons.children) other.setAttribute("aria-pressed", String(other === button));
+  });
+  crayons.append(button);
+}
+
+document.querySelector("#draw-button").addEventListener("click", openSketchpad);
+document.querySelector("#clear-button").addEventListener("click", () => sketchpad.clear());
+document.querySelector("#swim-button").addEventListener("click", finishDrawing);
 document.querySelector("#start-button").addEventListener("click", begin);
 document.querySelector("#restart-button").addEventListener("click", begin);
 document.querySelector("#win-restart-button").addEventListener("click", begin);
@@ -130,7 +238,10 @@ document.querySelector("#resume-button").addEventListener("click", resume);
 document.querySelector("#pause-button").addEventListener("click", pause);
 
 resize();
+renderIntro();
 showPanel("intro");
+loadArt();
 requestAnimationFrame(frame);
 
+if (new URLSearchParams(location.search).has("test")) window.littleFish = { world, art };
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js");

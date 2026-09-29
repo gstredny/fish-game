@@ -1,6 +1,6 @@
 import { canEat, CREATURES, FORMS, nextGrowth } from "./rules.js";
 
-export function createWorld(width, height) {
+export function createWorld(width, height, artCount = 0) {
   const world = {
     player: { x: 0, y: 0, direction: 1 },
     stage: 0,
@@ -11,14 +11,15 @@ export function createWorld(width, height) {
     time: 0,
     creatures: [],
     particles: [],
-    events: []
+    events: [],
+    artCount
   };
   fillOcean(world, width, height, true);
   return world;
 }
 
-export function resetWorld(world, width, height) {
-  Object.assign(world, createWorld(width, height));
+export function resetWorld(world, width, height, artCount = world.artCount) {
+  Object.assign(world, createWorld(width, height, artCount));
 }
 
 export function swim(world, seconds, input, width, height) {
@@ -113,13 +114,26 @@ function makeCreature(world, width, height, initial) {
   const vertical = (Math.random() - 0.5) * height * 0.84;
   const x = initial ? horizontal : world.player.x + side * (width / 2 + 45);
   const y = initial ? vertical : world.player.y + vertical;
+  const drawn = tier > 0 && world.artCount > 0 && Math.random() < 0.5;
   return {
     x: x + (initial && Math.abs(x) < 100 && Math.abs(y) < 100 ? 180 : 0),
     y,
     tier,
     direction: initial ? (Math.random() < 0.5 ? -1 : 1) : -side,
-    wobble: Math.random() * Math.PI * 2
+    wobble: Math.random() * Math.PI * 2,
+    art: drawn ? Math.floor(Math.random() * world.artCount) : null
   };
+}
+
+// True when a fish that could hurt the player is on screen behind this box.
+export function dangerBehind(world, box, width, height) {
+  return world.creatures.some(creature => {
+    if (creature.tier <= world.stage) return false;
+    const reach = CREATURES[creature.tier].size * 1.6;
+    const x = creature.x - world.player.x + width / 2;
+    const y = creature.y - world.player.y + height / 2;
+    return x > box.left - reach && x < box.right + reach && y > box.top - reach && y < box.bottom + reach;
+  });
 }
 
 function burst(world, x, y, color, count) {

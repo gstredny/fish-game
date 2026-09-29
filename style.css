@@ -54,6 +54,11 @@ button:focus-visible { outline: 3px solid #ffe49b; outline-offset: 4px; }
   box-shadow: inset -5px -4px 0 rgba(9, 57, 78, .17), 0 0 16px rgba(255, 228, 155, .45);
 }
 
+.stage-art { width: 44px; height: 32px; flex: none; object-fit: contain; }
+
+.hud .growth-card, .hud .hud-actions > * { transition: opacity .25s; }
+.hud.see-through .growth-card, .hud.see-through .hud-actions > * { opacity: .22; }
+
 .stage-row strong { display: block; font-size: 15px; letter-spacing: .01em; }
 .stage-row span:last-child { display: block; margin-top: 2px; font-size: 11px; color: #c8ece7; }
 
@@ -200,6 +205,11 @@ h1 em { color: #ffdf9c; font-style: normal; }
 .primary-button:active { transform: translateY(5px); box-shadow: 0 3px 0 #d58e66; }
 .primary-button span { margin-left: 19px; font-size: 25px; font-weight: 400; }
 
+.intro-actions { display: flex; flex-direction: column; align-items: flex-start; }
+.intro-actions .text-button { margin: 18px 0 0 -6px; }
+.intro-art { display: block; width: 150px; height: 110px; margin: 0 0 6px -12px; object-fit: contain; transform: rotate(-6deg); }
+
+
 .intro-foot { margin-top: 31px; color: rgba(225, 252, 243, .68); font-size: 12px; letter-spacing: .02em; }
 
 .result-panel {
@@ -218,12 +228,45 @@ h1 em { color: #ffdf9c; font-style: normal; }
 .result-panel .primary-button { margin-top: 24px; }
 .text-button { display: block; margin: 23px auto 0; padding: 6px; border: 0; background: none; color: #f4fff6; text-decoration: underline; text-underline-offset: 4px; }
 
+.draw-panel { width: min(560px, 100%); padding: 22px 22px 26px; }
+.draw-panel h2 { margin-top: 0; }
+.sketch {
+  display: block;
+  width: min(100%, calc((100vh - 270px) * 14 / 9));
+  width: min(100%, calc((100dvh - 270px) * 14 / 9));
+  aspect-ratio: 14 / 9;
+  margin: 12px auto 0;
+  border-radius: 20px;
+  background: rgba(222, 255, 245, .1);
+  touch-action: none;
+  cursor: crosshair;
+}
+.crayons { display: flex; flex-wrap: wrap; justify-content: center; gap: 9px; margin-top: 14px; }
+.crayon {
+  width: 44px;
+  height: 44px;
+  border: 3px solid rgba(255, 255, 255, .35);
+  border-radius: 50%;
+  background: var(--crayon);
+  transition: transform .12s;
+}
+.crayon[aria-pressed="true"] { border-color: #fff; transform: scale(1.15); box-shadow: 0 0 0 3px rgba(255, 223, 156, .7); }
+.draw-actions { display: flex; align-items: center; justify-content: center; gap: 22px; margin-top: 6px; }
+.draw-actions .text-button { margin: 18px 0 0; }
+.draw-panel .primary-button { margin-top: 18px; }
+.won-art { display: block; width: 190px; height: 140px; margin: -10px auto -6px; object-fit: contain; }
+
 @media (max-width: 600px) {
   .hud { top: calc(10px + env(safe-area-inset-top)); left: 10px; right: 10px; }
   .growth-card { min-width: 0; width: min(230px, 58vw); padding: 10px 11px 12px; }
   .stage-row strong { font-size: 13px; }
   .stage-row span:last-child { font-size: 10px; }
   .stage-dot { width: 23px; height: 23px; }
+  .stage-art { width: 36px; height: 26px; }
+  .intro-art { width: 120px; height: 88px; }
+  .draw-panel { padding: 16px 14px 20px; border-radius: 22px; }
+  .crayon { width: 40px; height: 40px; }
+  .crayons { display: grid; grid-template-columns: repeat(4, auto); justify-content: center; gap: 10px 16px; }
   .hearts { min-width: 0; padding: 8px; font-size: 14px; letter-spacing: 0; }
   .icon-button { width: 37px; height: 37px; border-radius: 12px; font-size: 17px; }
   .hud-actions { gap: 5px; }
@@ -236,6 +279,17 @@ h1 em { color: #ffdf9c; font-style: normal; }
   .intro-panel p { max-width: 310px; margin-top: 20px; font-size: 16px; }
   .primary-button { min-height: 54px; margin-top: 22px; }
   .intro-foot { margin-top: 25px; }
+}
+
+@media (max-height: 500px) and (orientation: landscape) {
+  .overlay.result-mode { padding: 10px; }
+  .draw-panel { padding: 10px 16px 14px; border-radius: 20px; }
+  .draw-panel h2 { font-size: 22px; }
+  .sketch { width: min(100%, calc((100vh - 160px) * 14 / 9)); width: min(100%, calc((100dvh - 160px) * 14 / 9)); margin-top: 6px; }
+  .crayons { margin-top: 8px; }
+  .crayon { width: 36px; height: 36px; }
+  .draw-actions .text-button { margin-top: 8px; }
+  .draw-panel .primary-button { min-height: 44px; margin-top: 8px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

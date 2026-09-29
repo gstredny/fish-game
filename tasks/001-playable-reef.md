@@ -1,6 +1,6 @@
 # Playable reef
 
-Status: Open — pushed to GitHub; browser verification blocked by this session's sandbox
+Status: Done — verified in a real browser on 2026-09-29
 
 ## Intent
 
@@ -33,6 +33,7 @@ Today a playable local game exists, but this environment cannot run its local se
 - 2026-09-29: Publication preflight: `npm test` passed 8/8 with 0 failed and 0 skipped; runtime JavaScript syntax checks passed. Committed the game as `118a240` after checking the 16 staged paths and passing the gitleaks hook.
 - 2026-09-29: `gh repo create gstredny/fish-game --public` failed with a connection error. Read-only GitHub API calls succeeded and confirmed the repo was absent.
 - 2026-09-29: `gh api -X POST user/repos` created the public repository; `git push -u origin master` pushed `118a240`. GitHub Pages is not configured, and live browser verification remains open.
+- 2026-09-29: A cloud session with Chromium ran the game for real. At desktop and iPhone-13 sizes it loads with no console errors, and start, movement, eating, damage, growth, and the shark finish all work. `tools/browser-check.mjs` now repeats this (see task 002).
 
 ## Evidence
 
