@@ -40,9 +40,35 @@ Sound or voice, redrawing at each growth stage, deleting saved drawings, sharing
 - 2026-09-29: Built the drawing page, saved drawings, drawn player and ocean fish, shark fin and gills, HUD thumbnail, win-screen portrait, fading HUD, device-specific hint, and cache `little-fish-v3`.
 - 2026-09-29: Controls, each confirmed red then restored: plankton allowed to be drawn; 90% drawn share; HUD fading for prey; `gallery.js` missing from the offline cache; no storage-full fallback; junk storage not filtered. Browser check with the fish-shape clip removed failed: `paint leaked outside the fish at 0.95,-0.75 (rgba 58,155,255,255)`.
 - 2026-09-29: Screenshots showed the 8th crayon wrapping (panel styles overridden by later rules), the secondary intro button above the main one on return visits, and a 150px drawing space in landscape. Fixed all three.
+- 2026-09-29: Independent read-only review of `ac3e389` found no blocking code defects. It reproduced four problems:
+  - Two fingers on the drawing page drew a line between them, and the second finger stopped drawing when the first lifted.
+  - A service-worker update could cache old files under the new cache name.
+  - Holding Enter skipped the drawing.
+  - The browser check let three mutants pass: player and ocean drawings swapped, the hint never hiding, and no clip on the drawing page.
+- 2026-09-29: Fixed all four:
+  - Each finger now paints its own stroke.
+  - The offline install bypasses the HTTP cache.
+  - Enter ignores key repeat.
+  - Play waits for saved drawings to load, so the fish no longer switches mid-swim.
+  - Saving a new drawing decodes only that drawing, and Swim! can't stay stuck on an error.
+  - Starting play while the app is hidden pauses it.
+  - Busy buttons dim.
+- 2026-09-29: Added browser checks for each gap and ran them against mutant copies. Each went red on its own assertion:
+  - "two fingers drew a line between them"
+  - "the newest drawing should be the player"
+  - "hint should hide once the player swims away"
+  - "paint shows outside the fish on the drawing page"
+- 2026-09-29: Service-worker update repro, with v2 installed and `max-age=600` headers:
+  - Before the fix, `little-fish-v3` held the v2 `index.html` and `main.js` (no draw button).
+  - After the fix, it holds the v3 files and the page shows the draw button.
+- Open ruling for George: the contract line "A sibling draws the plankton" does not match the build. Plankton stay glowing dots, 5px across, too small to show a drawing. Drawings appear as fish, anchovy size and up. At the sprat stage, every drawn fish on screen is therefore one that can hurt the player.
+- Deferred, not blocking:
+  - Drawn fish are shrunk from full size every frame, about 0.35ms each in headless software rendering. Not measured on a real phone.
+  - A full store drops the new drawing silently.
+  - The drawing panel's Swim! button sits 8px off-screen on 533×320 landscape screens.
 
 ## Evidence
 
 - `npm test` → 18 tests, 18 passed, 0 failed.
-- `node tools/browser-check.mjs` → desktop: shark in 54s, 0 retries, 8 drawn fish; phone: shark in 19s, 0 retries, 3 drawn fish; landscape drawing space 283px wide; no page errors.
+- `node tools/browser-check.mjs` → desktop: shark in 25s, 0 retries, 9 drawn fish. Phone: shark in 36s, 0 retries, 7 drawn fish, two-finger drawing ok. Landscape drawing space 283px wide. No page errors.
 - Without Playwright: `browser-check FAILED: cannot load Playwright`, exit code 2.

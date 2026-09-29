@@ -26,7 +26,6 @@ try { storage = window.localStorage; } catch { /* private mode: drawings last fo
 let drawings = loadDrawings(storage);
 const art = { player: null, npc: [] };
 const portraits = new Map();
-let artVersion = 0;
 const sketchpad = createSketchpad(document.querySelector("#sketch"));
 
 hint.textContent = touchFirst ? "Touch and hold to swim" : "Move the mouse to swim · Arrow keys work too";
@@ -42,10 +41,9 @@ async function decode(drawing) {
   }
 }
 
-async function loadArt() {
-  const version = ++artVersion;
-  const layers = await Promise.all(drawings.map(decode));
-  if (version !== artVersion) return;
+// Layers line up with `drawings`: the newest is the player, the rest swim in
+// the ocean. A drawing that fails to decode leaves a gap filled by a built-in fish.
+function setArt(layers) {
   art.player = layers[0] || null;
   art.npc = layers.slice(1);
   portraits.clear();
@@ -115,13 +113,15 @@ function flash(message) {
   toastTimer = setTimeout(() => toast.classList.remove("visible"), 1400);
 }
 
-function begin() {
+async function begin() {
+  await artReady;
   resetWorld(world, width, height, Math.max(0, drawings.length - 1));
   world.phase = "playing";
   input.pointer = null;
   input.keys.clear();
   updateHud();
   showPanel(null);
+  if (document.hidden) pause();
 }
 
 function openSketchpad() {
@@ -133,12 +133,17 @@ async function finishDrawing() {
   const swimButton = document.querySelector("#swim-button");
   if (swimButton.disabled) return;
   swimButton.disabled = true;
-  if (sketchpad.painted) {
-    drawings = saveDrawing(storage, sketchpad.save(), drawings);
-    await loadArt();
+  try {
+    if (sketchpad.painted) {
+      const drawing = sketchpad.save();
+      await artReady;
+      drawings = saveDrawing(storage, drawing, drawings);
+      setArt([await decode(drawing), art.player, ...art.npc].slice(0, drawings.length));
+    }
+  } finally {
+    swimButton.disabled = false;
   }
-  swimButton.disabled = false;
-  begin();
+  await begin();
 }
 
 function pause() {
@@ -201,7 +206,7 @@ window.addEventListener("keydown", event => {
   if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " "].includes(event.key)) event.preventDefault();
   if (event.key === "Escape" || event.key.toLowerCase() === "p") {
     world.phase === "paused" ? resume() : pause();
-  } else if (event.key === "Enter" && !(event.target instanceof HTMLButtonElement)) {
+  } else if (event.key === "Enter" && !event.repeat && !(event.target instanceof HTMLButtonElement)) {
     if (!document.querySelector("#draw").hidden) finishDrawing();
     else if (!document.querySelector("#intro").hidden) document.querySelector("#intro .primary-button").click();
   }
@@ -240,7 +245,7 @@ document.querySelector("#pause-button").addEventListener("click", pause);
 resize();
 renderIntro();
 showPanel("intro");
-loadArt();
+const artReady = Promise.all(drawings.map(decode)).then(setArt);
 requestAnimationFrame(frame);
 
 if (new URLSearchParams(location.search).has("test")) window.littleFish = { world, art };

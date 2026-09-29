@@ -17,7 +17,9 @@ const FILES = [
 ];
 
 self.addEventListener("install", event => {
-  event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(FILES)));
+  // "reload" skips the browser's HTTP cache, so a new version never stores old files.
+  event.waitUntil(caches.open(CACHE).then(cache =>
+    cache.addAll(FILES.map(file => new Request(file, { cache: "reload" })))));
   self.skipWaiting();
 });
 

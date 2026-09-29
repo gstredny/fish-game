@@ -61,6 +61,37 @@ async function stroke(page, points) {
   await page.mouse.up();
 }
 
+async function screenPixel(page, [x, y]) {
+  return page.evaluate(([x, y]) => {
+    const sketch = document.querySelector("#sketch");
+    return [...sketch.getContext("2d").getImageData(
+      Math.round((x + 1.7) / 2.8 * sketch.width), Math.round((y + 0.9) / 1.8 * sketch.height), 1, 1).data];
+  }, [x, y]);
+}
+
+async function layerPixel(page, which, [x, y]) {
+  return page.evaluate(([which, x, y]) => {
+    const art = window.littleFish.art;
+    const layers = which === "player" ? art.player : art.npc[0];
+    return [...layers.body.getContext("2d").getImageData(
+      Math.round((x + 1.7) / 2.8 * layers.body.width), Math.round((y + 0.9) / 1.8 * layers.body.height), 1, 1).data];
+  }, [which, x, y]);
+}
+
+// Two fingers at once, sent as real touch input.
+async function twoFingers(page) {
+  const box = await page.locator("#sketch").boundingBox();
+  const at = ([x, y], id) => ({ x: box.x + (x + 1.7) / 2.8 * box.width, y: box.y + (y + 0.9) / 1.8 * box.height, id });
+  const cdp = await page.context().newCDPSession(page);
+  const touch = (type, touchPoints) => cdp.send("Input.dispatchTouchEvent", { type, touchPoints });
+  await touch("touchStart", [at([-0.6, -0.3], 0)]);
+  await touch("touchStart", [at([-0.6, -0.3], 0), at([0.6, 0.3], 1)]);
+  await touch("touchMove", [at([-0.62, -0.3], 0), at([0.58, 0.3], 1)]);
+  await touch("touchEnd", [at([0.58, 0.3], 1)]);
+  for (let step = 1; step <= 12; step++) await touch("touchMove", [at([0.58 - step * 0.1, 0.3], 1)]);
+  await touch("touchEnd", []);
+}
+
 async function pixels(page, points) {
   return page.evaluate(async points => {
     const [drawing] = JSON.parse(localStorage.getItem("little-fish-drawings"));
@@ -113,8 +144,14 @@ async function swimToShark(page, label) {
       }));
     }, 40);
   });
+  let hintWhileSwimming = null;
   while (Date.now() < deadline) {
-    const phase = await page.evaluate(() => window.littleFish.world.phase);
+    const { phase, far, hint } = await page.evaluate(() => ({
+      phase: window.littleFish.world.phase,
+      far: Math.hypot(window.littleFish.world.player.x, window.littleFish.world.player.y) > 300,
+      hint: document.querySelector("#hint").hidden
+    }));
+    if (phase === "playing" && far && hintWhileSwimming === null) hintWhileSwimming = hint;
     if (phase === "won") break;
     if (phase === "gameover") {
       retries++;
@@ -125,6 +162,7 @@ async function swimToShark(page, label) {
   await page.evaluate(() => clearInterval(window.botTimer));
   const state = await page.evaluate(() => ({ stage: window.littleFish.world.stage, phase: window.littleFish.world.phase }));
   assert.deepEqual(state, { stage: 4, phase: "won" }, `${label}: did not reach shark form in time`);
+  assert.equal(hintWhileSwimming, true, `${label}: hint should hide once the player swims away`);
   return retries;
 }
 
@@ -146,6 +184,15 @@ try {
     await page.click("#draw-button");
     assert.equal(await page.isVisible("#sketch"), true);
     await page.screenshot({ path: join(shots, `${label}-1-draw-empty.png`) });
+    if (options.hasTouch) {
+      await twoFingers(page);
+      assert.deepEqual(await screenPixel(page, [0, 0]), [255, 246, 226, 255],
+        `${label}: two fingers drew a line between them`);
+      assert.deepEqual(await screenPixel(page, [0, 0.3]), [255, 90, 95, 255],
+        `${label}: the second finger stopped drawing when the first lifted`);
+      await page.click("#clear-button");
+      assert.deepEqual(await screenPixel(page, [0, 0.3]), [255, 246, 226, 255], `${label}: Start over left paint behind`);
+    }
 
     await stroke(page, [[-1.7, -0.75], [1.1, -0.75]]);
     await stroke(page, [[-1.7, 0], [1.1, 0]]);
@@ -153,6 +200,9 @@ try {
     await stroke(page, [[0.95, -0.9], [0.95, 0.9]]);
     await stroke(page, [[-0.3, -0.9], [-0.3, 0.9]]);
     await page.screenshot({ path: join(shots, `${label}-2-draw-painted.png`) });
+    for (const point of OUTSIDE) {
+      assert.equal((await screenPixel(page, point))[3], 0, `${label}: paint shows outside the fish on the drawing page at ${point}`);
+    }
     await page.click("#swim-button");
     await page.waitForFunction(() => document.querySelector("#overlay").hidden);
 
@@ -191,7 +241,6 @@ try {
     const started = Date.now();
     const retries = await swimToShark(page, label);
     const seconds = Math.round((Date.now() - started) / 1000);
-    assert.equal(await page.isVisible("#hint"), false, `${label}: hint should hide once swimming`);
     assert.equal(await page.isVisible("#won-art"), true, `${label}: win screen should show the child's shark`);
     await page.screenshot({ path: join(shots, `${label}-4-won.png`) });
     await page.click("#continue-button");
@@ -212,6 +261,8 @@ try {
       return world.artCount === 1 && window.littleFish.art.npc[0] &&
         world.creatures.filter(creature => creature.art === 0).length;
     }, null, { timeout: 15_000 });
+    assert.deepEqual(await layerPixel(page, "player", [0, 0.3]), [63, 207, 122, 255], `${label}: the newest drawing should be the player`);
+    assert.deepEqual(await layerPixel(page, "npc", [0.3, 0]), [255, 90, 95, 255], `${label}: the older drawing should swim in the ocean`);
     await page.waitForTimeout(1500);
     await page.screenshot({ path: join(shots, `${label}-7-drawn-ocean.png`) });
 

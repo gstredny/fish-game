@@ -15,7 +15,7 @@ export function createSketchpad(canvas) {
   ink.height = canvas.height;
   const pen = ink.getContext("2d");
   let color = CRAYONS[0].color;
-  let last = null;
+  const strokes = new Map();
   let painted = false;
 
   function render() {
@@ -40,8 +40,8 @@ export function createSketchpad(canvas) {
     };
   }
 
-  function paint(to) {
-    const from = last || to;
+  function paint(pointerId, to) {
+    const from = strokes.get(pointerId) || to;
     pen.strokeStyle = color;
     pen.lineWidth = BRUSH * SCREEN_SCALE;
     pen.lineCap = "round";
@@ -50,21 +50,23 @@ export function createSketchpad(canvas) {
     pen.moveTo(from.x, from.y);
     pen.lineTo(to.x, to.y);
     pen.stroke();
-    last = to;
+    strokes.set(pointerId, to);
     painted = true;
     render();
   }
 
+  // Each finger paints its own line, so two fingers or a resting palm never
+  // join up into a stray stroke.
   canvas.addEventListener("pointerdown", event => {
     canvas.setPointerCapture(event.pointerId);
-    last = null;
-    paint(point(event));
+    strokes.delete(event.pointerId);
+    paint(event.pointerId, point(event));
   });
   canvas.addEventListener("pointermove", event => {
-    if (last) paint(point(event));
+    if (strokes.has(event.pointerId)) paint(event.pointerId, point(event));
   });
   for (const type of ["pointerup", "pointercancel"]) {
-    canvas.addEventListener(type, () => { last = null; });
+    canvas.addEventListener(type, event => { strokes.delete(event.pointerId); });
   }
 
   render();
@@ -74,7 +76,7 @@ export function createSketchpad(canvas) {
     clear() {
       pen.clearRect(0, 0, ink.width, ink.height);
       painted = false;
-      last = null;
+      strokes.clear();
       render();
     },
     // The saved picture has no eye or outline; the ocean adds those at any size.
