@@ -1,10 +1,12 @@
 import { CREATURES, FORMS } from "./rules.js";
+import { paintOwnedReef } from "./reef-paint.js";
 
 export function paintOcean(context, world, width, height, time) {
   const cameraX = world.player.x - width / 2;
   const cameraY = world.player.y - height / 2;
   paintWater(context, width, height, time, cameraX);
   paintReef(context, width, height, time, cameraX);
+  paintOwnedReef(context, world, width, height, time);
 
   for (const creature of world.creatures) {
     const x = creature.x - cameraX;

@@ -2,6 +2,8 @@ import { FORMS } from "./rules.js";
 import { paintOcean } from "./paint.js";
 import { createSteering } from "./steering.js";
 import { createWorld, resetWorld, swim } from "./world.js";
+import { plantCoral } from "./reef.js";
+import { loadReef, saveReef } from "./reef-save.js";
 
 const canvas = document.querySelector("#ocean");
 const context = canvas.getContext("2d");
@@ -14,7 +16,8 @@ const input = { keys: new Set(), pointer: null };
 const steering = createSteering(input);
 let width = window.innerWidth;
 let height = window.innerHeight;
-let world = createWorld(width, height);
+let world = createWorld(width, height, loadReef());
+let reefSaved = true;
 let previousFrame = 0;
 let visualTime = 0;
 let toastTimer;
@@ -34,6 +37,7 @@ function showPanel(name) {
   for (const panel of panels) document.getElementById(panel).hidden = panel !== name;
   hud.hidden = name === "intro";
   hint.hidden = Boolean(name);
+  document.querySelector("#reef-bar").hidden = Boolean(name) || (!world.reef.pending && !world.reef.corals.length);
 }
 
 function updateHud() {
@@ -47,6 +51,35 @@ function updateHud() {
   const hearts = document.querySelector("#hearts");
   hearts.textContent = `${"♥ ".repeat(world.hearts)}${"♡ ".repeat(3 - world.hearts)}`.trim();
   hearts.setAttribute("aria-label", `${world.hearts} hearts left`);
+  document.querySelector("#plant-button").hidden = !world.reef.pending || world.phase === "planting";
+  document.querySelector("#cancel-plant-button").hidden = world.phase !== "planting";
+  document.querySelector("#reef-status").textContent = world.phase === "planting" ?
+    "Tap the ocean to plant · Enter plants ahead" : !reefSaved ? "Reef stays for this visit" :
+    world.sheltered ? "Safe in your coral" : world.reef.pending ? `${world.reef.pending} coral to plant` :
+    `${world.reef.corals.length} coral · hide inside when small`;
+}
+
+function rememberReef() {
+  reefSaved = saveReef(world.reef);
+  updateHud();
+}
+
+function startPlanting() {
+  if (!world.reef.pending) return;
+  steering.clear();
+  input.keys.clear();
+  world.phase = "planting";
+  world.plantSpot = { x: world.player.x + Math.min(120, width / 4), y: world.player.y + 80 };
+  showPanel(null);
+  hint.hidden = true;
+  updateHud();
+}
+
+function placeCoral(x, y) {
+  if (!plantCoral(world.reef, x, y)) return flash("Choose a little more space");
+  rememberReef();
+  resume();
+  flash(reefSaved ? "Your reef will be here next time!" : "Your coral is planted!");
 }
 
 function flash(message) {
@@ -77,6 +110,7 @@ function resume() {
   world.phase = "playing";
   world.invulnerable = Math.max(world.invulnerable, 1.2);
   showPanel(null);
+  updateHud();
 }
 
 function frame(timestamp) {
@@ -90,6 +124,7 @@ function frame(timestamp) {
     for (const event of world.events.splice(0)) {
       if (event.type === "grow") flash(world.stage === 4 ? "You became a shark!" : `You grew into a ${FORMS[world.stage].name}!`);
       if (event.type === "hurt") flash("Watch out, big fish!");
+      if (event.type === "reef") rememberReef();
     }
     updateHud();
   }
@@ -99,15 +134,29 @@ function frame(timestamp) {
 }
 
 canvas.addEventListener("pointerdown", event => {
+  if (world.phase === "planting") {
+    placeCoral(world.player.x + event.clientX - width / 2, world.player.y + event.clientY - height / 2);
+    return;
+  }
   if (steering.down(event)) canvas.setPointerCapture(event.pointerId);
 });
-canvas.addEventListener("pointermove", event => steering.move(event));
+canvas.addEventListener("pointermove", event => {
+  if (world.phase === "planting") world.plantSpot = {
+    x: world.player.x + event.clientX - width / 2, y: world.player.y + event.clientY - height / 2
+  };
+  else steering.move(event);
+});
 canvas.addEventListener("pointerup", event => steering.up(event));
 canvas.addEventListener("pointercancel", event => steering.up(event));
 canvas.addEventListener("pointerleave", event => steering.leave(event));
 
 window.addEventListener("keydown", event => {
   if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " "].includes(event.key)) event.preventDefault();
+  if (world.phase === "planting") {
+    if (event.key === "Enter" || event.key === " ") placeCoral(world.plantSpot.x, world.plantSpot.y);
+    if (event.key === "Escape") resume();
+    return;
+  }
   if (event.key === "Escape" || event.key.toLowerCase() === "p") {
     world.phase === "paused" ? resume() : pause();
   } else if (event.key === "Enter" && world.phase === "ready") {
@@ -126,8 +175,12 @@ document.querySelector("#win-restart-button").addEventListener("click", begin);
 document.querySelector("#continue-button").addEventListener("click", resume);
 document.querySelector("#resume-button").addEventListener("click", resume);
 document.querySelector("#pause-button").addEventListener("click", pause);
+document.querySelector("#plant-button").addEventListener("click", startPlanting);
+document.querySelector("#win-plant-button").addEventListener("click", startPlanting);
+document.querySelector("#cancel-plant-button").addEventListener("click", resume);
 
 resize();
+updateHud();
 showPanel("intro");
 requestAnimationFrame(frame);
 

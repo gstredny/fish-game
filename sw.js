@@ -1,4 +1,4 @@
-const CACHE = "little-fish-v3";
+const CACHE = "little-fish-v4";
 const FILES = [
   "./",
   "./index.html",
@@ -8,6 +8,9 @@ const FILES = [
   "./src/rules.js",
   "./src/paint.js",
   "./src/steering.js",
+  "./src/reef.js",
+  "./src/reef-save.js",
+  "./src/reef-paint.js",
   "./manifest.json",
   "./icons/fish.svg",
   "./icons/fish-192.png",

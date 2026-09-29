@@ -1,8 +1,12 @@
 import { canEat, CREATURES, FORMS, nextGrowth } from "./rules.js";
+import { createReef, isSheltered } from "./reef.js";
 
-export function createWorld(width, height) {
+export function createWorld(width, height, reef = createReef()) {
+  const home = reef.corals[0];
   const world = {
-    player: { x: 0, y: 0, direction: 1 },
+    player: { x: home ? home.x - 100 : 0, y: home ? home.y : 0, direction: 1 },
+    reef,
+    sheltered: false,
     stage: 0,
     bites: 0,
     hearts: 3,
@@ -18,7 +22,7 @@ export function createWorld(width, height) {
 }
 
 export function resetWorld(world, width, height) {
-  Object.assign(world, createWorld(width, height));
+  Object.assign(world, createWorld(width, height, world.reef));
 }
 
 export function swim(world, seconds, input, width, height) {
@@ -28,11 +32,13 @@ export function swim(world, seconds, input, width, height) {
   world.time += step;
   world.invulnerable = Math.max(0, world.invulnerable - step);
   movePlayer(world, input, step, width, height);
+  const wasSheltered = world.sheltered;
+  world.sheltered = isSheltered(world);
 
   for (const creature of world.creatures) {
     creature.x += creature.direction * CREATURES[creature.tier].speed * step;
     creature.y += Math.sin(world.time * 2 + creature.wobble) * 8 * step;
-    if (creature.tier > world.stage && distance(world.player, creature) < 180) {
+    if (!world.sheltered && creature.tier > world.stage && distance(world.player, creature) < 180) {
       const chase = creature.tier === 4 ? 18 : 10;
       creature.x += Math.sign(world.player.x - creature.x) * chase * step;
       creature.y += Math.sign(world.player.y - creature.y) * chase * step;
@@ -40,6 +46,9 @@ export function swim(world, seconds, input, width, height) {
     meetCreature(world, creature);
     if (world.phase !== "playing") break;
   }
+
+  world.sheltered = isSheltered(world);
+  if (wasSheltered !== world.sheltered) world.events.push({ type: "shelter" });
 
   world.creatures = world.creatures.filter(creature =>
     !creature.gone && Math.abs(creature.x - world.player.x) < width * 1.4 + 160 &&
@@ -84,11 +93,15 @@ function meetCreature(world, creature) {
     world.stage = growth.stage;
     world.bites = growth.bites;
     world.events.push({ type: growth.grew ? "grow" : "eat" });
-    if (world.stage === FORMS.length - 1 && growth.grew) world.phase = "won";
+    if (world.stage === FORMS.length - 1 && growth.grew) {
+      world.phase = "won";
+      world.reef.pending += 1;
+      world.events.push({ type: "reef" });
+    }
     return;
   }
 
-  if (world.invulnerable > 0) return;
+  if (world.invulnerable > 0 || isSheltered(world)) return;
   creature.gone = true;
   world.hearts -= 1;
   world.invulnerable = 2.4;
@@ -108,11 +121,11 @@ function makeCreature(world, width, height, initial) {
   const side = Math.random() < 0.5 ? -1 : 1;
   const horizontal = (Math.random() - 0.5) * width * 0.9;
   const vertical = (Math.random() - 0.5) * height * 0.84;
-  let x = initial ? horizontal : world.player.x + side * (width / 2 + 45);
-  const y = initial ? vertical : world.player.y + vertical;
-  if (initial && Math.abs(x) < 100 && Math.abs(y) < 100) x += 180;
+  let x = world.player.x + (initial ? horizontal : side * (width / 2 + 45));
+  const y = world.player.y + vertical;
+  if (initial && Math.abs(x - world.player.x) < 100 && Math.abs(vertical) < 100) x += 180;
   let tier = pickTier(world);
-  if (initial && Math.hypot(x, y) < 260) tier = Math.min(tier, world.stage);
+  if (initial && Math.hypot(x - world.player.x, vertical) < 260) tier = Math.min(tier, world.stage);
   return {
     x,
     y,

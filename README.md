@@ -2,6 +2,8 @@
 
 A bright, simple fish-eats-fish ocean game for young children. Swim toward food, avoid larger fish, and grow from a tiny sprat into a great white shark. Once you become a shark, you can keep exploring the reef.
 
+Every shark milestone earns one coral colony. Choose **Plant your coral**, then tap or click open water (or press Enter to plant ahead). The coral and any unplanted rewards are saved on this device across new swims and reloads. Three clownfish live around each colony and retreat when predators approach. Sprats and coral fish can shelter inside the marked circle; larger forms cannot. Each new swim starts beside your reef. If browser storage is unavailable, the reef lasts for the current visit and the game says so.
+
 The idea was inspired by memories of school computer games. [*Odell Down Under*](https://www.computinghistory.org.uk/det/62803/Odell-Down-Under/) is a likely match: it lets players take different roles in an ocean food chain, including a shark. [*Fishy*](https://www.jayisgames.com/review/fishy.php) and [*Feeding Frenzy*](https://www.ea.com/games/feeding-frenzy/feeding-frenzy) have a similar eat-and-grow loop. This game uses original code and drawn graphics.
 
 ## Play on a Mac
@@ -33,4 +35,5 @@ With the local server running, start a headless Chrome and let the scripts play 
 node tools/browser-play.mjs desktop   # real keyboard input, box-pattern swim
 node tools/browser-play.mjs phone     # 390×844 touch input
 node tools/browser-autoplay.mjs       # seek-food controller plays to the shark
+node tools/browser-reef.mjs           # earn, plant, reload, shelter; desktop + phone
 ```

@@ -34,6 +34,11 @@
   </header>
 
   <div id="hint" class="hint" hidden>Touch and hold to swim <span>·</span> Arrow keys work too</div>
+  <div id="reef-bar" class="reef-bar" hidden>
+    <span id="reef-status" role="status" aria-live="polite"></span>
+    <button id="plant-button" class="reef-button" type="button" hidden>Plant coral</button>
+    <button id="cancel-plant-button" class="reef-button" type="button" hidden>Keep for later</button>
+  </div>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
   <main id="overlay" class="overlay">
@@ -55,8 +60,9 @@
     <section id="won" class="panel result-panel" hidden>
       <div class="result-icon" aria-hidden="true">✦</div>
       <h2>You're the shark!</h2>
-      <p>From tiny sprat to ruler of the reef. Now every fish is on the menu.</p>
-      <button id="continue-button" class="primary-button" type="button">Explore the ocean</button>
+      <p>You earned a coral colony! Plant a home for little fish. On your next swim, hide inside it to stay safe.</p>
+      <button id="win-plant-button" class="primary-button" type="button">Plant your coral</button>
+      <button id="continue-button" class="text-button" type="button">Explore the ocean</button>
       <button id="win-restart-button" class="text-button" type="button">Swim again from the start</button>
     </section>
 
