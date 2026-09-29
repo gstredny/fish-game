@@ -19,8 +19,17 @@ export function paintOcean(context, world, width, height, time) {
   }
 
   for (const particle of world.particles) {
-    context.globalAlpha = Math.max(0, particle.life / 0.55);
+    context.globalAlpha = Math.min(1, Math.max(0, particle.life / 0.55));
     context.fillStyle = particle.color;
+    if (particle.text) {
+      context.font = "bold 22px 'Trebuchet MS', sans-serif";
+      context.textAlign = "center";
+      context.strokeStyle = "rgba(4,50,74,.75)";
+      context.lineWidth = 4;
+      context.strokeText(particle.text, particle.x - cameraX, particle.y - cameraY);
+      context.fillText(particle.text, particle.x - cameraX, particle.y - cameraY);
+      continue;
+    }
     context.beginPath();
     context.arc(particle.x - cameraX, particle.y - cameraY, 3.5, 0, Math.PI * 2);
     context.fill();
@@ -29,7 +38,7 @@ export function paintOcean(context, world, width, height, time) {
 
   if (world.invulnerable <= 0 || Math.floor(time * 9) % 2 === 0) {
     const form = FORMS[world.stage];
-    paintFish(context, world.player.x - cameraX, world.player.y - cameraY, form.size, world.stage,
+    paintFish(context, world.player.x - cameraX, world.player.y - cameraY, form.size * (1 + world.gulp * 0.8), world.stage,
       form.color, world.player.direction, time, "player");
   }
 }

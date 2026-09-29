@@ -14,6 +14,7 @@ export function createWorld(width, height, reef = createReef()) {
     bites: 0,
     hearts: 3,
     invulnerable: 2.5,
+    gulp: 0,
     phase: "ready",
     time: 0,
     creatures: [],
@@ -34,6 +35,7 @@ export function swim(world, seconds, input, width, height) {
   const step = Math.min(seconds, 0.05);
   world.time += step;
   world.invulnerable = Math.max(0, world.invulnerable - step);
+  world.gulp = Math.max(0, world.gulp - step);
   movePlayer(world, input, step, width, height);
   followPlayer(world.camera, world.player, width, height);
   const wasSheltered = world.sheltered;
@@ -91,11 +93,17 @@ function movePlayer(world, input, step, width, height) {
 
 function meetCreature(world, creature) {
   const playerSize = FORMS[world.stage].size;
-  if (distance(world.player, creature) > playerSize * 0.68 + CREATURES[creature.tier].size * 0.62) return;
+  const creatureSize = CREATURES[creature.tier].size;
+  const edible = canEat(world.stage, creature.tier);
+  // Snacks count the moment they touch the fish; a bigger fish must really bump it to hurt.
+  const reach = edible ? playerSize + creatureSize : playerSize * 0.68 + creatureSize * 0.62;
+  if (distance(world.player, creature) > reach) return;
 
-  if (canEat(world.stage, creature.tier)) {
+  if (edible) {
     creature.gone = true;
+    world.gulp = 0.25;
     burst(world, creature.x, creature.y, CREATURES[creature.tier].color, 7);
+    world.particles.push({ x: creature.x, y: creature.y - 12, vx: 0, vy: -55, life: 0.9, color: "#fff4ad", text: "+1" });
     const growth = nextGrowth(world.stage, world.bites + 1);
     world.stage = growth.stage;
     world.bites = growth.bites;

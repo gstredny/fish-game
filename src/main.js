@@ -123,7 +123,7 @@ function frame(timestamp) {
 
   if (world.events.length) {
     for (const event of world.events.splice(0)) {
-      if (event.type === "grow") flash(world.stage === 4 ? "You became a shark!" : `You grew into a ${FORMS[world.stage].name}!`);
+      if (event.type === "grow") flash(world.stage === 4 ? "You became a shark!" : `${FORMS[world.stage - 1].goal} snacks! Now you're a ${FORMS[world.stage].name}!`);
       if (event.type === "hurt") flash("Watch out, big fish!");
       if (event.type === "reef") rememberReef();
     }

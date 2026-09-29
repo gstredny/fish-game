@@ -130,3 +130,21 @@ test("a shark's ocean holds every kind of fish", () => {
   assert.equal(tiers.size, 5, `only tiers ${[...tiers].sort()} spawned`);
   assert.ok(sharks / total < 0.5, `${Math.round(sharks / total * 100)}% sharks`);
 });
+
+test("a snack is eaten the moment it touches the fish, with a +1 to show it", () => {
+  const world = createWorld(390, 844);
+  world.phase = "playing";
+  world.creatures = [{ x: 20, y: 0, tier: 0, direction: 1, wobble: 0 }];
+  swim(world, 0.001, idleInput, 390, 844);
+  assert.equal(world.bites, 1);
+  assert.ok(world.particles.some(particle => particle.text === "+1"));
+});
+
+test("a bigger fish only hurts on a real bump, not a brush", () => {
+  const world = createWorld(390, 844);
+  world.phase = "playing";
+  world.invulnerable = 0;
+  world.creatures = [{ x: 25, y: 0, tier: 1, direction: 1, wobble: 0 }];
+  swim(world, 0.001, idleInput, 390, 844);
+  assert.equal(world.hearts, 3);
+});
