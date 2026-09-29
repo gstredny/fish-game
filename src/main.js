@@ -1,5 +1,6 @@
 import { FORMS } from "./rules.js";
 import { paintOcean } from "./paint.js";
+import { createSteering } from "./steering.js";
 import { createWorld, resetWorld, swim } from "./world.js";
 
 const canvas = document.querySelector("#ocean");
@@ -10,6 +11,7 @@ const hint = document.querySelector("#hint");
 const toast = document.querySelector("#toast");
 const panels = ["intro", "paused", "won", "gameover"];
 const input = { keys: new Set(), pointer: null };
+const steering = createSteering(input);
 let width = window.innerWidth;
 let height = window.innerHeight;
 let world = createWorld(width, height);
@@ -57,7 +59,7 @@ function flash(message) {
 function begin() {
   resetWorld(world, width, height);
   world.phase = "playing";
-  input.pointer = null;
+  steering.clear();
   input.keys.clear();
   updateHud();
   showPanel(null);
@@ -66,13 +68,14 @@ function begin() {
 function pause() {
   if (world.phase !== "playing") return;
   world.phase = "paused";
-  input.pointer = null;
+  steering.clear();
   input.keys.clear();
   showPanel("paused");
 }
 
 function resume() {
   world.phase = "playing";
+  world.invulnerable = Math.max(world.invulnerable, 1.2);
   showPanel(null);
 }
 
@@ -96,17 +99,12 @@ function frame(timestamp) {
 }
 
 canvas.addEventListener("pointerdown", event => {
-  canvas.setPointerCapture(event.pointerId);
-  input.pointer = { x: event.clientX, y: event.clientY };
+  if (steering.down(event)) canvas.setPointerCapture(event.pointerId);
 });
-canvas.addEventListener("pointermove", event => {
-  if (event.pointerType === "mouse" || event.buttons) input.pointer = { x: event.clientX, y: event.clientY };
-});
-canvas.addEventListener("pointerup", event => {
-  if (event.pointerType !== "mouse") input.pointer = null;
-});
-canvas.addEventListener("pointercancel", () => { input.pointer = null; });
-canvas.addEventListener("pointerleave", () => { input.pointer = null; });
+canvas.addEventListener("pointermove", event => steering.move(event));
+canvas.addEventListener("pointerup", event => steering.up(event));
+canvas.addEventListener("pointercancel", event => steering.up(event));
+canvas.addEventListener("pointerleave", event => steering.leave(event));
 
 window.addEventListener("keydown", event => {
   if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " "].includes(event.key)) event.preventDefault();

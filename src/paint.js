@@ -12,7 +12,8 @@ export function paintOcean(context, world, width, height, time) {
     if (x < -100 || x > width + 100 || y < -100 || y > height + 100) continue;
     if (creature.tier === 0) paintPlankton(context, x, y, time + creature.wobble);
     else paintFish(context, x, y, CREATURES[creature.tier].size, creature.tier,
-      CREATURES[creature.tier].color, creature.direction, time + creature.wobble, false);
+      CREATURES[creature.tier].color, creature.direction, time + creature.wobble,
+      creature.tier > world.stage ? "predator" : "prey");
   }
 
   for (const particle of world.particles) {
@@ -27,7 +28,7 @@ export function paintOcean(context, world, width, height, time) {
   if (world.invulnerable <= 0 || Math.floor(time * 9) % 2 === 0) {
     const form = FORMS[world.stage];
     paintFish(context, width / 2, height / 2, form.size, world.stage,
-      form.color, world.player.direction, time, true);
+      form.color, world.player.direction, time, "player");
   }
 }
 
@@ -162,13 +163,22 @@ function paintPlankton(context, x, y, time) {
   context.fill();
 }
 
-function paintFish(context, x, y, size, tier, color, direction, time, player) {
+// role: "player", "prey" (safe to eat, soft glow) or "predator" (teeth and a frown).
+function paintFish(context, x, y, size, tier, color, direction, time, role) {
   context.save();
   context.translate(x, y + Math.sin(time * 2.5) * 2);
   context.scale(direction, 1);
   const tail = Math.sin(time * 9) * 0.17;
 
-  if (player) {
+  if (role === "prey") {
+    context.strokeStyle = "rgba(220,255,236,.35)";
+    context.lineWidth = 3;
+    context.beginPath();
+    context.ellipse(0, 0, size * 1.28, size * 0.9, 0, 0, Math.PI * 2);
+    context.stroke();
+  }
+
+  if (role === "player") {
     const halo = context.createRadialGradient(0, 0, size * 0.4, 0, 0, size * 1.85);
     halo.addColorStop(0, "rgba(214,255,238,.22)");
     halo.addColorStop(1, "rgba(214,255,238,0)");
@@ -198,6 +208,11 @@ function paintFish(context, x, y, size, tier, color, direction, time, player) {
   context.beginPath();
   context.ellipse(0, 0, size, size * (tier === 4 ? 0.46 : 0.59), 0, 0, Math.PI * 2);
   context.fill();
+  if (role === "player") {
+    context.strokeStyle = "#fffbe6";
+    context.lineWidth = Math.max(2.5, size * 0.07);
+    context.stroke();
+  }
 
   context.fillStyle = "rgba(239,255,246,.42)";
   context.beginPath();
@@ -239,7 +254,25 @@ function paintFish(context, x, y, size, tier, color, direction, time, player) {
   context.arc(size * 0.75, size * 0.14, size * 0.17, 0.1, 1.7);
   context.stroke();
 
-  if (player && tier < 4) {
+  if (role === "predator") {
+    context.fillStyle = "#ffffff";
+    context.beginPath();
+    context.moveTo(size * 0.58, size * 0.2);
+    for (let tooth = 0; tooth < 3; tooth++) {
+      context.lineTo(size * (0.58 + 0.11 * tooth + 0.055), size * 0.34);
+      context.lineTo(size * (0.58 + 0.11 * (tooth + 1)), size * 0.2);
+    }
+    context.closePath();
+    context.fill();
+    context.strokeStyle = "#173b52";
+    context.lineWidth = Math.max(1.5, size * 0.05);
+    context.beginPath();
+    context.moveTo(size * 0.44, -size * 0.4);
+    context.lineTo(size * 0.7, -size * 0.28);
+    context.stroke();
+  }
+
+  if (role === "player" && tier < 4) {
     context.fillStyle = "#fff1b8";
     context.beginPath();
     context.arc(-size * 0.08, -size * 0.18, Math.max(2, size * 0.09), 0, Math.PI * 2);

@@ -6,7 +6,7 @@ export function createWorld(width, height) {
     stage: 0,
     bites: 0,
     hearts: 3,
-    invulnerable: 0,
+    invulnerable: 2.5,
     phase: "ready",
     time: 0,
     creatures: [],
@@ -105,21 +105,28 @@ function fillOcean(world, width, height, initial) {
 }
 
 function makeCreature(world, width, height, initial) {
-  const roll = Math.random();
-  const offset = roll < 0.25 ? -1 : roll < 0.7 ? 0 : roll < 0.94 ? 1 : 2;
-  const tier = Math.max(0, Math.min(4, world.stage + offset));
   const side = Math.random() < 0.5 ? -1 : 1;
   const horizontal = (Math.random() - 0.5) * width * 0.9;
   const vertical = (Math.random() - 0.5) * height * 0.84;
-  const x = initial ? horizontal : world.player.x + side * (width / 2 + 45);
+  let x = initial ? horizontal : world.player.x + side * (width / 2 + 45);
   const y = initial ? vertical : world.player.y + vertical;
+  if (initial && Math.abs(x) < 100 && Math.abs(y) < 100) x += 180;
+  let tier = pickTier(world);
+  if (initial && Math.hypot(x, y) < 260) tier = Math.min(tier, world.stage);
   return {
-    x: x + (initial && Math.abs(x) < 100 && Math.abs(y) < 100 ? 180 : 0),
+    x,
     y,
     tier,
     direction: initial ? (Math.random() < 0.5 ? -1 : 1) : -side,
     wobble: Math.random() * Math.PI * 2
   };
+}
+
+function pickTier(world) {
+  if (world.stage === FORMS.length - 1) return Math.floor(Math.random() * CREATURES.length);
+  const roll = Math.random();
+  const offset = roll < 0.25 ? -1 : roll < 0.7 ? 0 : roll < 0.94 ? 1 : 2;
+  return Math.max(0, Math.min(CREATURES.length - 1, world.stage + offset));
 }
 
 function burst(world, x, y, color, count) {
