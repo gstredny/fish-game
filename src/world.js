@@ -71,9 +71,9 @@ export function swim(world, seconds, input, width, height) {
 
 function movePlayer(world, input, step, width, height) {
   let horizontal = Number(input.keys.has("ArrowRight") || input.keys.has("d")) -
-    Number(input.keys.has("ArrowLeft") || input.keys.has("a"));
+    Number(input.keys.has("ArrowLeft") || input.keys.has("a")) + (input.pad?.x ?? 0);
   let vertical = Number(input.keys.has("ArrowDown") || input.keys.has("s")) -
-    Number(input.keys.has("ArrowUp") || input.keys.has("w"));
+    Number(input.keys.has("ArrowUp") || input.keys.has("w")) + (input.pad?.y ?? 0);
   let length = Math.hypot(horizontal, vertical);
   let move = (235 - world.stage * 9) * step;
 

@@ -1,6 +1,7 @@
 import { FORMS } from "./rules.js";
 import { paintOcean } from "./paint.js";
 import { createSteering } from "./steering.js";
+import { padDirection } from "./pad.js";
 import { toWorld } from "./camera.js";
 import { createWorld, resetWorld, swim } from "./world.js";
 import { plantCoral } from "./reef.js";
@@ -14,8 +15,16 @@ const hint = document.querySelector("#hint");
 const toast = document.querySelector("#toast");
 const panels = ["intro", "paused", "won", "gameover"];
 const PORTRAIT_PHONE = "(orientation: portrait) and (max-width: 600px) and (pointer: coarse)";
-const input = { keys: new Set(), pointer: null };
+const input = { keys: new Set(), pointer: null, pad: null };
 const steering = createSteering(input);
+const pad = document.querySelector("#pad");
+const touchFirst = window.matchMedia?.("(pointer: coarse)").matches;
+const installed = window.matchMedia?.("(display-mode: standalone), (display-mode: fullscreen)").matches ||
+  navigator.standalone === true;
+const iPhone = /iP(hone|od|ad)/.test(navigator.userAgent) ||
+  (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+let padOwner = null;
+let installPrompt = null;
 let width = window.innerWidth;
 let height = window.innerHeight;
 let world = createWorld(width, height, loadReef());
@@ -39,6 +48,7 @@ function showPanel(name) {
   for (const panel of panels) document.getElementById(panel).hidden = panel !== name;
   hud.hidden = name === "intro";
   hint.hidden = Boolean(name);
+  showPad(!name);
   document.querySelector("#reef-bar").hidden = Boolean(name) || (!world.reef.pending && !world.reef.corals.length);
 }
 
@@ -66,9 +76,28 @@ function rememberReef() {
   updateHud();
 }
 
+// Phones steer with the arrow pad, so a finger never sits on top of the fish.
+function showPad(visible) {
+  pad.hidden = !touchFirst || !visible;
+  if (pad.hidden) releasePad();
+}
+
+function aimPad(event) {
+  const box = pad.getBoundingClientRect();
+  input.pad = padDirection(event.clientX - box.left - box.width / 2, event.clientY - box.top - box.height / 2, box.width / 2);
+  pad.setAttribute("data-dir", input.pad ? `${input.pad.x},${input.pad.y}` : "");
+}
+
+function releasePad() {
+  padOwner = null;
+  input.pad = null;
+  pad.setAttribute("data-dir", "");
+}
+
 function startPlanting() {
   if (!world.reef.pending) return;
   steering.clear();
+  showPad(false);
   input.keys.clear();
   world.phase = "planting";
   world.plantSpot = { x: world.player.x + Math.min(120, width / 4), y: world.player.y + 80 };
@@ -151,15 +180,26 @@ canvas.addEventListener("pointerdown", event => {
     placeCoral(spot.x, spot.y);
     return;
   }
-  if (steering.down(event)) canvas.setPointerCapture(event.pointerId);
+  if (!touchFirst && event.pointerType === "mouse" && steering.down(event)) canvas.setPointerCapture(event.pointerId);
 });
 canvas.addEventListener("pointermove", event => {
   if (world.phase === "planting") world.plantSpot = toWorld(world.camera, { x: event.clientX, y: event.clientY }, width, height);
-  else steering.move(event);
+  else if (!touchFirst) steering.move(event);
 });
 canvas.addEventListener("pointerup", event => steering.up(event));
 canvas.addEventListener("pointercancel", event => steering.up(event));
 canvas.addEventListener("pointerleave", event => steering.leave(event));
+
+pad.addEventListener("pointerdown", event => {
+  if (padOwner !== null) return;
+  padOwner = event.pointerId;
+  pad.setPointerCapture(event.pointerId);
+  aimPad(event);
+});
+pad.addEventListener("pointermove", event => { if (event.pointerId === padOwner) aimPad(event); });
+for (const type of ["pointerup", "pointercancel", "lostpointercapture"]) {
+  pad.addEventListener(type, event => { if (event.pointerId === padOwner) releasePad(); });
+}
 
 window.addEventListener("keydown", event => {
   if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " "].includes(event.key)) event.preventDefault();
@@ -190,6 +230,24 @@ document.querySelector("#pause-button").addEventListener("click", pause);
 document.querySelector("#plant-button").addEventListener("click", startPlanting);
 document.querySelector("#win-plant-button").addEventListener("click", startPlanting);
 document.querySelector("#cancel-plant-button").addEventListener("click", resume);
+
+// Full screen and a home-screen icon come from adding the game to the home screen.
+// iPhone has no install button, so the start screen says how.
+const introFoot = document.querySelector("#intro-foot");
+if (touchFirst) hint.innerHTML = "Hold an arrow to swim";
+if (iPhone && !installed) {
+  introFoot.innerHTML = 'Full screen: tap <strong>Share</strong>, then <strong>Add to Home Screen</strong>';
+  introFoot.classList.add("install-tip");
+}
+window.addEventListener("beforeinstallprompt", event => {
+  event.preventDefault();
+  installPrompt = event;
+  introFoot.innerHTML = '<button id="install-button" class="text-button" type="button">Add to home screen</button>';
+  document.querySelector("#install-button").addEventListener("click", () => {
+    installPrompt?.prompt();
+    installPrompt = null;
+  });
+});
 
 resize();
 updateHud();

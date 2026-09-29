@@ -18,7 +18,9 @@ Open [http://localhost:8778](http://localhost:8778). Move the mouse to swim, or 
 
 ## Play on a phone
 
-On a phone the game plays sideways; upright, it asks you to turn the phone. Touch and hold where you want your fish to swim. To add it to a phone's home screen and play offline, host this folder on an HTTPS website, visit it once, then choose **Add to Home Screen** in Safari or **Install app** in Chrome. The local Mac server is useful for testing, but a phone install needs an HTTPS address.
+Play it at <https://gstredny.github.io/fish-game/>. On a phone the game plays sideways; upright, it asks you to turn the phone. Hold an arrow on the round pad in the bottom-left corner to swim; the fish stays in plain view because your thumb is on the pad, not on the fish.
+
+For full screen and an app icon, add it to the home screen once. On iPhone, tap **Share**, then **Add to Home Screen** (the start screen says so too). On Android, choose **Add to home screen** on the start screen or **Install app** in Chrome's menu. Opened from the icon, it runs full screen and works offline.
 
 ## Ocean art
 
@@ -44,7 +46,7 @@ With the local server running, start a headless Chrome and let the scripts play 
 "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new --remote-debugging-port=9444 --user-data-dir=/tmp/fish-chrome about:blank &
 node tools/browser-play.mjs desktop   # real keyboard input, box-pattern swim
 node tools/browser-play.mjs phone     # 844×390 sideways touch input
-node tools/browser-sideways.mjs       # sideways phone: fish follows the finger, snacks, turn prompt, panels fit
+node tools/browser-sideways.mjs       # sideways phone: arrow pad steers, finger on water doesn't, snacks, turn prompt, panels fit
 node tools/browser-autoplay.mjs       # seek-food controller plays to the shark
 node tools/browser-reef.mjs           # earn, plant, reload, shelter; desktop + phone
 ```
