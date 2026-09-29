@@ -28,8 +28,10 @@ function element() {
 // Canvas calls execute against a no-op context; this is not visual/browser evidence.
 // `extraGlobals` adds browser features the game can use, such as a fake speechSynthesis.
 export async function openGame(storage, extraGlobals = {}) {
-  const nodes = new Map([...html.matchAll(/id="([^"]+)"/g)].map(match => [match[1], element()]));
-  const window = Object.assign(element(), { innerWidth: 390, innerHeight: 844, devicePixelRatio: 1 });
+  // Elements start hidden or shown as the HTML says.
+  const nodes = new Map([...html.matchAll(/<[^>]*\bid="([^"]+)"[^>]*>/g)].map(([tag, id]) =>
+    [id, Object.assign(element(), { hidden: /\shidden[\s>=]/.test(tag) })]));
+  const window = Object.assign(element(), { innerWidth: 390, innerHeight: 844, devicePixelRatio: 1, localStorage: storage });
   const frames = [];
   const globals = { window, document: Object.assign(element(), {
     querySelector: selector => nodes.get(selector.slice(1)), getElementById: id => nodes.get(id),

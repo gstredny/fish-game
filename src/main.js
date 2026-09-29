@@ -97,11 +97,11 @@ function renderIntro() {
   const saved = drawings.length > 0;
   const draw = document.querySelector("#draw-button");
   const start = document.querySelector("#start-button");
-  draw.className = saved ? "text-button" : "primary-button";
-  start.className = saved ? "primary-button" : "text-button";
-  draw.innerHTML = saved ? "Draw a new fish" : 'Draw my fish <span aria-hidden="true">✎</span>';
-  start.innerHTML = saved ? 'Dive in <span aria-hidden="true">↗</span>' : "Just swim";
-  document.querySelector("#intro-actions").prepend(saved ? start : draw);
+  // Playing is always the big button; drawing is the smaller one beside it.
+  start.className = "primary-button";
+  draw.className = "secondary-button";
+  start.innerHTML = 'Dive in <span aria-hidden="true">↗</span>';
+  draw.innerHTML = `${saved ? "Draw a new fish" : "Draw my fish"} <span aria-hidden="true">✎</span>`;
   showArt(document.querySelector("#intro-art"), document.querySelector("#intro-mark"), 0);
 }
 
@@ -532,12 +532,19 @@ for (const button of voiceButtons) button.addEventListener("click", toggleVoice)
 window.addEventListener("click", () => voice.unlock(), true);
 
 // Full screen and a home-screen icon come from adding the game to the home screen.
-// iPhone has no install button, so the start screen says how.
+// iPhone has no install button, so the start screen points at Share and shows the steps.
 const introFoot = document.querySelector("#intro-foot");
 if (touchFirst) hint.innerHTML = "Hold an arrow to swim";
 if (iPhone && !installed) {
-  introFoot.innerHTML = 'Full screen: tap <strong>Share</strong>, then <strong>Add to Home Screen</strong>';
-  introFoot.classList.add("install-tip");
+  const guide = document.querySelector("#install-guide");
+  const agent = navigator.userAgent || "";
+  // Chrome, Firefox and Edge keep Share in the top bar; Safari 26 tucks it under •••.
+  const safari = !/CriOS|FxiOS|EdgiOS/.test(agent);
+  const tucked = safari && Number(/Version\/(\d+)/.exec(agent)?.[1] ?? 0) >= 26;
+  guide.hidden = false;
+  guide.classList.toggle("safari", safari);
+  document.querySelector("#install-more").hidden = !tucked;
+  document.querySelector("#install-more-next").hidden = !tucked;
 }
 const footText = introFoot.innerHTML;
 window.addEventListener("beforeinstallprompt", event => {

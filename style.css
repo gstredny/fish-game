@@ -402,10 +402,60 @@ h1 em { color: #ffdf9c; font-style: normal; }
    voice sit in the empty top-right corner, clear of the start buttons and the child's drawing. */
 .intro-extras {
   position: absolute;
-  top: calc(16px + env(safe-area-inset-top));
   right: max(18px, calc(env(safe-area-inset-right) + 12px));
+  bottom: calc(16px + env(safe-area-inset-bottom));
   display: flex;
   gap: 10px;
+}
+.intro-extras .book-button { background: rgba(5, 52, 74, .9); }
+
+/* Drawing is the smaller start button, beside the big Dive in. */
+.secondary-button {
+  min-height: 48px;
+  padding: 0 18px;
+  border: 2px solid rgba(255, 221, 147, .75);
+  border-radius: 14px;
+  background: rgba(5, 52, 74, .5);
+  color: #ffdd93;
+  font-size: 16px;
+  font-weight: 800;
+}
+.secondary-button span { margin-left: 8px; }
+.intro-actions .secondary-button { margin-top: 18px; }
+
+/* The arrow's middle sits under the browser's Share button: about 209px from the right edge in
+   Chrome on iPhone, about 150px in Safari. The pictures below it are the three steps. */
+.install-guide {
+  position: absolute;
+  top: calc(2px + env(safe-area-inset-top));
+  right: 109px;
+  width: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  pointer-events: none;
+}
+.install-guide.safari { right: 50px; }
+.install-arrow { width: 36px; height: 50px; fill: #ffdd93; filter: drop-shadow(0 2px 6px rgba(3, 35, 55, .6)); animation: point-up 1s ease-in-out infinite; }
+.install-steps {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 10px;
+  border-radius: 16px;
+  background: #f4f6f7;
+  box-shadow: 0 8px 24px rgba(1, 26, 48, .35);
+}
+.install-step { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 10px; background: #fff; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .1); }
+.install-step svg { width: 24px; height: 24px; }
+.install-more { color: #1c1c1e; font-size: 13px; font-weight: 900; letter-spacing: 1px; }
+.install-next { color: #7b858c; font-size: 20px; font-weight: 800; }
+.install-app { width: 36px; height: 36px; border-radius: 9px; }
+
+@keyframes point-up {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-7px); }
 }
 
 .book-button {
@@ -494,6 +544,14 @@ h1 em { color: #ffdf9c; font-style: normal; }
 .book-chain .book-tile:not(:last-child)::after { content: "→"; position: absolute; top: 20px; right: -19px; color: #ffdd93; font-size: 16px; }
 .book-panel .primary-button { margin-top: 16px; }
 
+@media (max-width: 600px) {
+  .intro-extras { top: calc(16px + env(safe-area-inset-top)); bottom: auto; }
+}
+
+@media (max-height: 500px) {
+  .intro-actions .secondary-button { margin-top: 16px; }
+}
+
 @media (max-width: 600px) and (min-height: 501px) {
   .card-panel { flex-direction: column; align-items: stretch; }
   .card-photo { flex: none; }
@@ -568,5 +626,6 @@ h1 em { color: #ffdf9c; font-style: normal; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition-duration: 0s !important; }
+  .install-arrow { animation: none; }
   .rotate-phone { animation: none; }
 }

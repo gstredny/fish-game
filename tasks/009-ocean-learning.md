@@ -74,3 +74,10 @@ Recording George's own voice; other languages; quizzes; renaming the planted cor
   - The offline cache is now v10, and this task file is renamed 009.
   Draw-your-own-fish's `browser-check.mjs` now marks every animal as met, and its bot no longer flees its own schoolmates.
   Results: `npm test` 63/63. The HUD-fade and wake-up tests go red with their fixes undone. Both `browser-check.mjs` (desktop and phone, six fit sizes) and `browser-learn.mjs` pass on the merged game.
+- 2026-09-29: George, on the live game (iPhone, Chrome, sideways): "The biggest button shouldn't say draw your fish… The biggest one should be… to play the game regularly. And it's still not clear how to add it to your home screen… Don't write words, just… point, make it obvious."
+  - **Dive in** is always the big button. **Draw my fish** (later **Draw a new fish**) is a smaller outlined button beside it.
+  - On an iPhone browser that isn't on the home screen yet, a bouncing arrow points up at the browser's Share button: 209px from the right edge in Chrome (measured from George's screenshot), 150px in Safari. Under the arrow, pictures show share → Add to Home Screen → the fish icon, with ••• first in Safari 26. The written tip is gone.
+  - Ocean book and 🔊 move to the bottom-right corner to make room.
+  - Offline cache v11.
+  - The app test harness now respects the HTML `hidden` attribute.
+  - `npm test` 65/65. The new start-screen tests go red with the big-button swap, the guide, or the Safari ••• step undone.

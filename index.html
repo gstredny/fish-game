@@ -60,14 +60,28 @@
       <h1>Little Fish,<br><em>Big Ocean.</em></h1>
       <p>Start small. Chase your snacks. Dodge the big fish. Grow until the whole reef is yours.</p>
       <div id="intro-actions" class="intro-actions">
-        <button id="draw-button" class="primary-button" type="button">Draw my fish <span aria-hidden="true">✎</span></button>
-        <button id="start-button" class="text-button" type="button">Just swim</button>
+        <button id="start-button" class="primary-button" type="button">Dive in <span aria-hidden="true">↗</span></button>
+        <button id="draw-button" class="secondary-button" type="button">Draw my fish <span aria-hidden="true">✎</span></button>
       </div>
       <div class="intro-extras">
         <button id="intro-book-button" class="book-button" type="button">Ocean book</button>
         <button id="intro-voice-button" class="book-button voice-toggle" type="button" aria-label="Turn the voice off">🔊</button>
       </div>
       <div id="intro-foot" class="intro-foot">A little ocean adventure for curious swimmers</div>
+      <!-- iPhone, not yet on the home screen: an arrow at the browser's Share button, then the steps as pictures. -->
+      <div id="install-guide" class="install-guide" role="img" hidden
+        aria-label="For full screen, tap Share at the top of the screen, then Add to Home Screen, then open the fish icon">
+        <svg class="install-arrow" viewBox="0 0 40 56" aria-hidden="true"><path d="M20 3 5 23h10v30h10V23h10Z"/></svg>
+        <div class="install-steps" aria-hidden="true">
+          <span id="install-more" class="install-step install-more" hidden>•••</span>
+          <span id="install-more-next" class="install-next" hidden>›</span>
+          <span class="install-step"><svg viewBox="0 0 24 24"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5" fill="none" stroke="#0a84ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M8.5 10H6.5a1.5 1.5 0 0 0-1.5 1.5v8A1.5 1.5 0 0 0 6.5 21h11a1.5 1.5 0 0 0 1.5-1.5v-8a1.5 1.5 0 0 0-1.5-1.5h-2" fill="none" stroke="#0a84ff" stroke-width="2" stroke-linecap="round"/></svg></span>
+          <span class="install-next">›</span>
+          <span class="install-step"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="4" fill="none" stroke="#1c1c1e" stroke-width="2"/><path d="M12 8.5v7M8.5 12h7" stroke="#1c1c1e" stroke-width="2" stroke-linecap="round"/></svg></span>
+          <span class="install-next">›</span>
+          <img class="install-app" src="icons/apple-touch-icon.png" alt="">
+        </div>
+      </div>
     </section>
 
     <section id="draw" class="panel result-panel draw-panel" hidden>

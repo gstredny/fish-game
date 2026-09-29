@@ -197,7 +197,8 @@ try {
     const browserContext = await browser.newContext({ ...options, serviceWorkers: "block" });
     const { page, errors } = await openGame(browserContext);
 
-    assert.match(await page.textContent("#intro .primary-button"), /Draw my fish/, `${label}: first visit should offer drawing`);
+    assert.match(await page.textContent("#intro .primary-button"), /Dive in/, `${label}: diving in is always the big button`);
+    assert.match(await page.textContent("#draw-button"), /Draw my fish/, `${label}: first visit should offer drawing`);
     await page.click("#draw-button");
     assert.equal(await visible(page, "#sketch"), true);
     await page.screenshot({ path: join(shots, `${label}-1-draw-empty.png`) });

@@ -32,7 +32,7 @@ Choose **Draw my fish** to colour a fish-shaped page with eight crayons. Paint o
 
 Play it at <https://gstredny.github.io/fish-game/>. On a phone the game plays sideways; upright, it asks you to turn the phone. Hold an arrow on the round pad in the bottom-left corner to swim; the fish stays in plain view because your thumb is on the pad, not on the fish.
 
-For full screen and an app icon, add it to the home screen once. On iPhone, tap **Share**, then **Add to Home Screen** (the start screen says so too). On Android, choose **Add to home screen** on the start screen or **Install app** in Chrome's menu. Opened from the icon, it runs full screen and works offline.
+For full screen and an app icon, add it to the home screen once. On iPhone, tap **Share** (in Safari 26, it is under **•••**), then **Add to Home Screen**. The start screen points an arrow at Share and shows these steps as pictures. On Android, choose **Add to home screen** on the start screen or **Install app** in Chrome's menu. Opened from the icon, it runs full screen and works offline.
 
 ## Ocean art
 
