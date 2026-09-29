@@ -1,4 +1,5 @@
 import { canPlantCoral, CORAL_RADIUS, reefResidents } from "./reef.js";
+import { paintClownfish } from "./animal-paint.js";
 
 export function paintOwnedReef(context, world, width, height, time) {
   const cameraX = world.camera.x - width / 2;
@@ -90,34 +91,5 @@ function paintColony(context, time) {
   context.fillStyle = "rgba(8,67,77,.7)";
   context.beginPath();
   context.ellipse(0, 18, 30, 38, 0, 0, Math.PI * 2);
-  context.fill();
-}
-
-function paintClownfish(context) {
-  context.fillStyle = "#ffb058";
-  context.strokeStyle = "#233f50";
-  context.lineWidth = 1;
-  context.beginPath();
-  context.moveTo(-9, 0);
-  context.lineTo(-17, -7);
-  context.lineTo(-17, 7);
-  context.closePath();
-  context.fill();
-  context.stroke();
-  context.beginPath();
-  context.ellipse(0, 0, 12, 7, 0, 0, Math.PI * 2);
-  context.fill();
-  context.stroke();
-  context.strokeStyle = "#fff9df";
-  context.lineWidth = 3;
-  for (const x of [-6, 4]) {
-    context.beginPath();
-    context.moveTo(x, -5);
-    context.lineTo(x + 1, 5);
-    context.stroke();
-  }
-  context.fillStyle = "#163b4b";
-  context.beginPath();
-  context.arc(8, -2, 1.5, 0, Math.PI * 2);
   context.fill();
 }

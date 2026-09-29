@@ -3,6 +3,10 @@
 // The only test-time change is one line appended to main.js in flight (exposes `world` and `input`).
 // Same setup as tools/browser-play.mjs, then:  node tools/browser-autoplay.mjs
 import { mkdirSync, writeFileSync } from "node:fs";
+import { KINDS } from "../src/species.js";
+// Every animal counts as met, so first-meeting fact cards don't pause these checks;
+// tools/browser-learn.mjs checks the cards.
+const MET_ALL = `try { localStorage.setItem("little-fish-met-v1", ${JSON.stringify(JSON.stringify(KINDS))}); } catch {}`;
 
 const OUT = process.env.OUT || "screenshots";
 const GAME = process.env.GAME || "http://127.0.0.1:8778/";
@@ -49,12 +53,14 @@ const hud = () => evaluate(`JSON.stringify({ stage: __game.world.stage, name: do
 await send("Page.enable"); await send("Runtime.enable");
 await send("Fetch.enable", { patterns: [{ urlPattern: "*", requestStage: "Response" }] });
 await send("Emulation.setDeviceMetricsOverride", { width: W, height: H, deviceScaleFactor: 1, mobile: false });
+await send("Page.addScriptToEvaluateOnNewDocument", { source: MET_ALL });
 await send("Page.navigate", { url: GAME });
 await sleep(1500);
 console.log("hooked:", await evaluate(`typeof window.__game`));
 await evaluate(`document.querySelector("#start-button").click()`);
 await sleep(300);
-// Controller: every 40 ms, steer toward the nearest edible creature and away from nearby predators,
+// Controller: every 40 ms, steer toward the nearest edible creature (not a schoolmate of your own kind)
+// and away from nearby predators,
 // written into the real pointer input: a finger held 200 px ahead of the fish on screen.
 await evaluate(`(() => {
   const g = window.__game;
@@ -63,8 +69,8 @@ await evaluate(`(() => {
     let dx = 0, dy = 0, food = null, best = Infinity;
     for (const c of w.creatures) {
       const ox = c.x - w.player.x, oy = c.y - w.player.y, d = Math.hypot(ox, oy) || 1;
-      if (c.tier > w.stage) { if (d < 260) { dx -= ox / d * (260 - d) / 40; dy -= oy / d * (260 - d) / 40; } }
-      else if (d < best) { best = d; food = c; }
+      if (c.tier > w.stage + 1) { if (d < 260) { dx -= ox / d * (260 - d) / 40; dy -= oy / d * (260 - d) / 40; } }
+      else if (c.tier <= w.stage && d < best) { best = d; food = c; }
     }
     if (food) { const ox = food.x - w.player.x, oy = food.y - w.player.y, d = Math.hypot(ox, oy) || 1; dx += ox / d; dy += oy / d; }
     const len = Math.hypot(dx, dy) || 1;

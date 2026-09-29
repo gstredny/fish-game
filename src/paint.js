@@ -1,5 +1,6 @@
-import { CREATURES, FORMS } from "./rules.js";
+import { canEat, CREATURES, FLOOR, FORMS, isFriend } from "./rules.js";
 import { paintOwnedReef } from "./reef-paint.js";
+import { paintAnimal } from "./animal-paint.js";
 
 // The realistic ocean is a Blender render (tools/render-ocean.py): a 360-degree strip that wraps
 // seamlessly. Until it loads, the drawn cartoon water shows.
@@ -13,14 +14,22 @@ export function paintOcean(context, world, width, height, time) {
   paintReef(context, width, height, time, cameraX);
   paintOwnedReef(context, world, width, height, time);
 
+  for (const friend of world.friends) {
+    const x = friend.x - cameraX;
+    const y = friend.floor ? height * FLOOR : friend.y - cameraY;
+    if (x < -120 || x > width + 120 || y < -120 || y > height + 120) continue;
+    paintAnimal(context, friend.kind, x, y, friend.size, friend.direction, time + friend.wobble,
+      friend.floor ? "floor" : "friend");
+  }
+
   for (const creature of world.creatures) {
     const x = creature.x - cameraX;
     const y = creature.y - cameraY;
-    if (x < -100 || x > width + 100 || y < -100 || y > height + 100) continue;
+    if (x < -130 || x > width + 130 || y < -130 || y > height + 130) continue;
+    const { kind, size } = CREATURES[creature.tier];
     if (creature.tier === 0) paintPlankton(context, x, y, time + creature.wobble);
-    else paintFish(context, x, y, CREATURES[creature.tier].size, creature.tier,
-      CREATURES[creature.tier].color, creature.direction, time + creature.wobble,
-      creature.tier > world.stage ? "predator" : "prey");
+    else paintAnimal(context, kind, x, y, size, creature.direction, time + creature.wobble,
+      canEat(world.stage, creature.tier) ? "prey" : isFriend(world.stage, creature.tier) ? "friend" : "predator");
   }
 
   for (const particle of world.particles) {
@@ -43,9 +52,34 @@ export function paintOcean(context, world, width, height, time) {
 
   if (world.invulnerable <= 0 || Math.floor(time * 9) % 2 === 0) {
     const form = FORMS[world.stage];
-    paintFish(context, world.player.x - cameraX, world.player.y - cameraY, form.size * (1 + world.gulp * 0.8), world.stage,
-      form.color, world.player.direction, time, "player");
+    paintAnimal(context, form.kind, world.player.x - cameraX, world.player.y - cameraY, form.size * (1 + world.gulp * 0.8),
+      world.player.direction, time, "player");
   }
+  paintLabels(context, world, width, height, cameraX, cameraY);
+}
+
+// Name tags float over animals as you meet them.
+function paintLabels(context, world, width, height, cameraX, cameraY) {
+  context.font = "bold 15px 'Trebuchet MS', sans-serif";
+  context.textAlign = "center";
+  context.textBaseline = "middle";
+  for (const label of world.labels) {
+    const x = label.target.x - cameraX;
+    const y = (label.target.floor ? height * FLOOR : label.target.y - cameraY) - label.lift;
+    const half = (context.measureText(label.text)?.width ?? label.text.length * 8) / 2 + 10;
+    context.globalAlpha = Math.min(1, label.life / 0.4);
+    context.fillStyle = "rgba(5,52,74,.82)";
+    context.strokeStyle = "rgba(255,242,183,.7)";
+    context.lineWidth = 1.5;
+    context.beginPath();
+    context.roundRect?.(x - half, y - 13, half * 2, 26, 13);
+    context.fill();
+    context.stroke();
+    context.fillStyle = "#fff2b7";
+    context.fillText(label.text, x, y + 1);
+  }
+  context.globalAlpha = 1;
+  context.textBaseline = "alphabetic";
 }
 
 function paintWater(context, width, height, time, cameraX) {
@@ -193,122 +227,4 @@ function paintPlankton(context, x, y, time) {
   context.beginPath();
   context.arc(x, y, 3.2 * pulse, 0, Math.PI * 2);
   context.fill();
-}
-
-// role: "player", "prey" (safe to eat, soft glow) or "predator" (teeth and a frown).
-function paintFish(context, x, y, size, tier, color, direction, time, role) {
-  context.save();
-  context.translate(x, y + Math.sin(time * 2.5) * 2);
-  context.scale(direction, 1);
-  const tail = Math.sin(time * 9) * 0.17;
-
-  if (role === "prey") {
-    context.strokeStyle = "rgba(220,255,236,.35)";
-    context.lineWidth = 3;
-    context.beginPath();
-    context.ellipse(0, 0, size * 1.28, size * 0.9, 0, 0, Math.PI * 2);
-    context.stroke();
-  }
-
-  if (role === "player") {
-    const halo = context.createRadialGradient(0, 0, size * 0.4, 0, 0, size * 1.85);
-    halo.addColorStop(0, "rgba(214,255,238,.22)");
-    halo.addColorStop(1, "rgba(214,255,238,0)");
-    context.fillStyle = halo;
-    context.beginPath();
-    context.arc(0, 0, size * 1.85, 0, Math.PI * 2);
-    context.fill();
-  }
-
-  context.fillStyle = color;
-  context.save();
-  context.translate(-size * 0.83, 0);
-  context.rotate(tail);
-  context.beginPath();
-  context.moveTo(0, 0);
-  context.quadraticCurveTo(-size * 0.55, -size * 0.8, -size * 0.8, -size * 0.72);
-  context.quadraticCurveTo(-size * 0.55, 0, -size * 0.8, size * 0.72);
-  context.quadraticCurveTo(-size * 0.4, size * 0.6, 0, 0);
-  context.fill();
-  context.restore();
-
-  context.beginPath();
-  context.moveTo(-size * 0.35, -size * 0.45);
-  context.quadraticCurveTo(-size * 0.13, -size * 1.03, size * 0.15, -size * 0.52);
-  context.fill();
-
-  context.beginPath();
-  context.ellipse(0, 0, size, size * (tier === 4 ? 0.46 : 0.59), 0, 0, Math.PI * 2);
-  context.fill();
-  if (role === "player") {
-    context.strokeStyle = "#fffbe6";
-    context.lineWidth = Math.max(2.5, size * 0.07);
-    context.stroke();
-  }
-
-  context.fillStyle = "rgba(239,255,246,.42)";
-  context.beginPath();
-  context.ellipse(size * 0.02, size * 0.25, size * 0.72, size * 0.24, -0.08, 0, Math.PI * 2);
-  context.fill();
-
-  context.fillStyle = color;
-  context.beginPath();
-  context.moveTo(-size * 0.2, size * 0.28);
-  context.quadraticCurveTo(-size * 0.45, size * 0.86, size * 0.1, size * 0.58);
-  context.quadraticCurveTo(size * 0.18, size * 0.35, -size * 0.2, size * 0.28);
-  context.fill();
-
-  if (tier === 1 || tier === 2) {
-    context.strokeStyle = "rgba(255,255,255,.45)";
-    context.lineWidth = Math.max(2, size * 0.1);
-    context.beginPath();
-    context.moveTo(-size * 0.32, -size * 0.43);
-    context.lineTo(-size * 0.2, size * 0.41);
-    if (tier === 2) {
-      context.moveTo(size * 0.1, -size * 0.45);
-      context.lineTo(size * 0.2, size * 0.42);
-    }
-    context.stroke();
-  }
-
-  context.fillStyle = "#f7ffef";
-  context.beginPath();
-  context.arc(size * 0.58, -size * 0.17, Math.max(2.5, size * 0.13), 0, Math.PI * 2);
-  context.fill();
-  context.fillStyle = "#173b52";
-  context.beginPath();
-  context.arc(size * 0.62, -size * 0.17, Math.max(1.5, size * 0.07), 0, Math.PI * 2);
-  context.fill();
-
-  context.strokeStyle = "rgba(20,55,70,.55)";
-  context.lineWidth = Math.max(1, size * 0.026);
-  context.beginPath();
-  context.arc(size * 0.75, size * 0.14, size * 0.17, 0.1, 1.7);
-  context.stroke();
-
-  if (role === "predator") {
-    context.fillStyle = "#ffffff";
-    context.beginPath();
-    context.moveTo(size * 0.58, size * 0.2);
-    for (let tooth = 0; tooth < 3; tooth++) {
-      context.lineTo(size * (0.58 + 0.11 * tooth + 0.055), size * 0.34);
-      context.lineTo(size * (0.58 + 0.11 * (tooth + 1)), size * 0.2);
-    }
-    context.closePath();
-    context.fill();
-    context.strokeStyle = "#173b52";
-    context.lineWidth = Math.max(1.5, size * 0.05);
-    context.beginPath();
-    context.moveTo(size * 0.44, -size * 0.4);
-    context.lineTo(size * 0.7, -size * 0.28);
-    context.stroke();
-  }
-
-  if (role === "player" && tier < 4) {
-    context.fillStyle = "#fff1b8";
-    context.beginPath();
-    context.arc(-size * 0.08, -size * 0.18, Math.max(2, size * 0.09), 0, Math.PI * 2);
-    context.fill();
-  }
-  context.restore();
 }

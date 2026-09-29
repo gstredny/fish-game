@@ -175,10 +175,12 @@ button:focus-visible { outline: 3px solid #ffe49b; outline-offset: 4px; }
   top: 25%;
   left: 50%;
   color: #fff2b7;
-  font-size: clamp(24px, 4vw, 42px);
+  font-size: clamp(20px, 3vw, 32px);
   font-weight: 800;
+  line-height: 1.2;
   text-shadow: 0 3px 18px rgba(3, 45, 65, .6);
-  max-width: calc(100% - 32px);
+  width: max-content;
+  max-width: min(720px, calc(100% - 32px));
   white-space: normal;
   text-align: center;
   opacity: 0;
@@ -309,6 +311,118 @@ h1 em { color: #ffdf9c; font-style: normal; }
   .result-panel p { margin-top: 8px; max-width: 470px; font-size: 15px; }
   .result-panel .primary-button { min-height: 48px; margin-top: 16px; }
   .result-panel .text-button { margin-top: 10px; }
+}
+
+/* Learning: fact cards, the Ocean book, and the voice button. */
+.intro-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 18px; margin-top: 30px; }
+.intro-actions > .primary-button, .intro-actions > .book-button { margin-top: 0; }
+
+.book-button {
+  min-height: 57px;
+  padding: 0 20px;
+  border: 2px solid rgba(255, 221, 147, .7);
+  border-radius: 16px;
+  background: rgba(5, 52, 74, .5);
+  color: #ffdd93;
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.card-panel, .book-panel {
+  width: min(760px, 100%);
+  max-width: 760px;
+  max-height: 100%;
+  overflow-y: auto;
+  padding: 22px;
+  border: 1px solid rgba(233, 255, 239, .24);
+  border-radius: 28px;
+  background: rgba(7, 65, 87, .93);
+  box-shadow: 0 25px 80px rgba(1, 26, 48, .3);
+  touch-action: pan-y;
+}
+
+.card-panel { display: flex; align-items: center; gap: 22px; }
+.card-photo { flex: 0 0 42%; margin: 0; }
+.card-photo img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  object-fit: cover;
+  border-radius: 18px;
+  background: rgba(222, 255, 245, .12);
+}
+.card-photo figcaption { margin-top: 5px; color: rgba(214, 245, 233, .7); font-size: 10px; }
+.card-text { flex: 1; min-width: 0; }
+.card-kicker { color: #ffdd93; font-size: 13px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; }
+.card-text h2 { margin-top: 4px; font-size: clamp(28px, 4.4vw, 40px); line-height: 1; letter-spacing: -.03em; }
+.card-facts { margin-top: 10px; color: #e2f8ef; font-size: 16px; line-height: 1.4; }
+.card-chain { display: grid; gap: 6px; margin: 12px 0 0; }
+.card-chain div { display: flex; align-items: baseline; gap: 8px; }
+.card-chain dt {
+  flex: none;
+  min-width: 74px;
+  padding: 3px 8px;
+  border-radius: 9px;
+  background: rgba(255, 221, 147, .18);
+  color: #ffdd93;
+  font-size: 12px;
+  font-weight: 800;
+  text-align: center;
+}
+.card-chain dd { margin: 0; font-size: 14px; line-height: 1.35; }
+.card-actions { display: flex; align-items: center; gap: 12px; margin-top: 16px; }
+.card-actions .primary-button { margin-top: 0; }
+
+.book-panel { text-align: center; }
+.book-panel h2 { font-size: clamp(26px, 4vw, 36px); letter-spacing: -.03em; }
+.book-count { margin-top: 4px; color: #d6f5e9; font-size: 14px; }
+.book-panel h3 { margin: 14px 0 8px; color: #ffdd93; font-size: 13px; letter-spacing: .05em; text-transform: uppercase; }
+.book-panel h3 span { color: #c8ece7; font-weight: 400; letter-spacing: 0; text-transform: none; }
+.book-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.book-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  width: 84px;
+  padding: 5px;
+  border: 1px solid rgba(221, 255, 245, .25);
+  border-radius: 14px;
+  background: rgba(5, 52, 74, .64);
+  color: #f4fff6;
+  font-size: 11px;
+  font-weight: 700;
+}
+.book-tile img, .book-q { width: 72px; height: 48px; border-radius: 9px; object-fit: cover; }
+.book-tile.locked { border-style: dashed; color: rgba(214, 245, 233, .55); }
+.book-q { display: grid; place-items: center; background: rgba(222, 255, 245, .08); color: rgba(255, 221, 147, .6); font-size: 24px; }
+.book-chain .book-tile { position: relative; }
+.book-chain .book-tile:not(:last-child) { margin-right: 14px; }
+.book-chain .book-tile:not(:last-child)::after { content: "→"; position: absolute; top: 20px; right: -19px; color: #ffdd93; font-size: 16px; }
+.book-panel .primary-button { margin-top: 16px; }
+
+@media (max-width: 600px) {
+  .intro-actions { margin-top: 22px; }
+  .card-panel { flex-direction: column; align-items: stretch; }
+  .card-photo { flex: none; }
+}
+
+@media (max-height: 500px) {
+  .intro-actions { margin-top: 16px; }
+  .card-panel, .book-panel { padding: 14px 18px; }
+  .card-text h2 { font-size: 28px; }
+  .card-facts { margin-top: 6px; font-size: 14px; line-height: 1.35; }
+  .card-chain { margin-top: 8px; gap: 4px; }
+  .card-chain dd { font-size: 13px; }
+  .card-actions { margin-top: 10px; }
+  .card-actions .primary-button { min-height: 46px; }
+  .book-panel h2 { font-size: 24px; }
+  .book-count { margin-top: 0; font-size: 13px; }
+  .book-panel h3 { margin: 6px 0 4px; font-size: 12px; }
+  .book-tile { width: 78px; padding: 4px; font-size: 10px; }
+  .book-tile img, .book-q { width: 66px; height: 38px; }
+  .book-chain .book-tile:not(:last-child)::after { top: 16px; }
+  .book-panel .primary-button { min-height: 44px; margin-top: 10px; }
 }
 
 .rotate { display: none; }

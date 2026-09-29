@@ -3,6 +3,10 @@
 // Planting, reload, restart, and swimming use real mouse/touch/keyboard input.
 import assert from "node:assert/strict";
 import { mkdirSync, writeFileSync } from "node:fs";
+import { KINDS } from "../src/species.js";
+// Every animal counts as met, so first-meeting fact cards don't pause these checks;
+// tools/browser-learn.mjs checks the cards.
+const MET_ALL = `try { localStorage.setItem("little-fish-met-v1", ${JSON.stringify(JSON.stringify(KINDS))}); } catch {}`;
 
 const GAME = process.env.GAME || "http://127.0.0.1:8778/";
 const CDP = process.env.CDP || "http://127.0.0.1:9444";
@@ -88,6 +92,7 @@ async function checkReef(browser, mode) {
     await page.send("Fetch.enable", { patterns: [{ urlPattern: "*/src/main.js", requestStage: "Response" }] });
     await page.send("Emulation.setDeviceMetricsOverride", { width, height, deviceScaleFactor: 1, mobile: mode === "phone" });
     if (mode === "phone") await page.send("Emulation.setTouchEmulationEnabled", { enabled: true });
+    await page.send("Page.addScriptToEvaluateOnNewDocument", { source: MET_ALL });
     await page.send("Page.navigate", { url: GAME });
     await waitFor("Boolean(window.__reefGame)");
     await clickButton("#start-button");
@@ -109,12 +114,12 @@ async function checkReef(browser, mode) {
     assert.equal(await evaluate("__reefGame.world.stage"), 0);
     assert.deepEqual(await evaluate("__reefGame.world.reef"), saved);
     await evaluate("__reefGame.input.pointer = null; __reefGame.world.creatures = []");
-    await shot("reloaded-sprat");
+    await shot("reloaded-sardine");
     // Swim from the spawn beside coral into its shelter, with actual keyboard input.
     await page.send("Input.dispatchKeyEvent", { type: "keyDown", key: "ArrowRight", code: "ArrowRight", windowsVirtualKeyCode: 39 });
     await waitFor("__reefGame.world.sheltered");
     await page.send("Input.dispatchKeyEvent", { type: "keyUp", key: "ArrowRight", code: "ArrowRight", windowsVirtualKeyCode: 39 });
-    const meetShark = "(() => { const w = __reefGame.world; w.invulnerable = 0; w.creatures = [{ ...w.player, tier: 4, wobble: 0 }]; })()";
+    const meetShark = "(() => { const w = __reefGame.world; w.invulnerable = 0; w.creatures = [{ ...w.player, tier: 5, wobble: 0 }]; })()";
     await evaluate(meetShark);
     await sleep(100);
     assert.equal(await evaluate("__reefGame.world.hearts"), 3);
@@ -130,7 +135,7 @@ async function checkReef(browser, mode) {
     await page.send("Emulation.setDeviceMetricsOverride", { width: height, height: width, deviceScaleFactor: 1, mobile: mode === "phone" });
     await shot("turned");
     assert.deepEqual(errors, []);
-    console.log(`${mode}: earn → plant → reload → sprat → shelter → leave: PASS; console errors: 0; screenshots: 7`);
+    console.log(`${mode}: earn → plant → reload → sardine → shelter → leave: PASS; console errors: 0; screenshots: 7`);
   } finally {
     page?.close();
     await browser.send("Target.disposeBrowserContext", { browserContextId });

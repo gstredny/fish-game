@@ -3,6 +3,10 @@
 // asks to turn, and every panel fits. Same server/Chrome setup as browser-play.mjs.
 import assert from "node:assert/strict";
 import { mkdirSync, writeFileSync } from "node:fs";
+import { KINDS } from "../src/species.js";
+// Every animal counts as met, so first-meeting fact cards don't pause these checks;
+// tools/browser-learn.mjs checks the cards.
+const MET_ALL = `try { localStorage.setItem("little-fish-met-v1", ${JSON.stringify(JSON.stringify(KINDS))}); } catch {}`;
 
 const GAME = process.env.GAME || "http://127.0.0.1:8778/";
 const CDP = process.env.CDP || "http://127.0.0.1:9444";
@@ -83,6 +87,7 @@ await page.send("Network.setBypassServiceWorker", { bypass: true });
 await page.send("Fetch.enable", { patterns: [{ urlPattern: "*/src/main.js", requestStage: "Response" }] });
 await page.send("Emulation.setTouchEmulationEnabled", { enabled: true, maxTouchPoints: 5 });
 await size(844, 390);
+await page.send("Page.addScriptToEvaluateOnNewDocument", { source: MET_ALL });
 await page.send("Page.navigate", { url: GAME });
 await sleep(1500);
 console.log("1. intro, sideways: start button fits:", await fitsOnScreen("#start-button"));
