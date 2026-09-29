@@ -22,6 +22,7 @@
     <div class="growth-card">
       <div class="stage-row">
         <span id="stage-dot" class="stage-dot"></span>
+        <img id="stage-art" class="stage-art" alt="" hidden>
         <div>
           <strong id="stage-name">Little sardine</strong>
           <span id="growth-text">Eat plankton to grow</span>
@@ -54,15 +55,29 @@
 
   <main id="overlay" class="overlay">
     <section id="intro" class="panel intro-panel">
-      <div class="tiny-fish" aria-hidden="true">✦</div>
+      <div id="intro-mark" class="tiny-fish" aria-hidden="true">✦</div>
+      <img id="intro-art" class="intro-art" alt="Your fish" hidden>
       <h1>Little Fish,<br><em>Big Ocean.</em></h1>
       <p>Start small. Chase your snacks. Dodge the big fish. Grow until the whole reef is yours.</p>
-      <div class="intro-actions">
-        <button id="start-button" class="primary-button" type="button">Dive in <span aria-hidden="true">↗</span></button>
+      <div id="intro-actions" class="intro-actions">
+        <button id="draw-button" class="primary-button" type="button">Draw my fish <span aria-hidden="true">✎</span></button>
+        <button id="start-button" class="text-button" type="button">Just swim</button>
+      </div>
+      <div class="intro-extras">
         <button id="intro-book-button" class="book-button" type="button">Ocean book</button>
         <button id="intro-voice-button" class="book-button voice-toggle" type="button" aria-label="Turn the voice off">🔊</button>
       </div>
       <div id="intro-foot" class="intro-foot">A little ocean adventure for curious swimmers</div>
+    </section>
+
+    <section id="draw" class="panel result-panel draw-panel" hidden>
+      <h2>Draw your fish</h2>
+      <canvas id="sketch" class="sketch" aria-label="Fish-shaped drawing space"></canvas>
+      <div id="crayons" class="crayons" role="group" aria-label="Crayons"></div>
+      <div class="draw-actions">
+        <button id="clear-button" class="text-button" type="button">Start over</button>
+        <button id="swim-button" class="primary-button" type="button">Swim! <span aria-hidden="true">↗</span></button>
+      </div>
     </section>
 
     <section id="paused" class="panel result-panel" hidden>
@@ -104,7 +119,8 @@
     </section>
 
     <section id="won" class="panel result-panel" hidden>
-      <div class="result-icon" aria-hidden="true">✦</div>
+      <div id="won-mark" class="result-icon" aria-hidden="true">✦</div>
+      <img id="won-art" class="won-art" alt="Your fish as a shark" hidden>
       <h2>You're the shark!</h2>
       <p>You earned a coral colony! Plant a home for little fish. On your next swim, hide inside it to stay safe.</p>
       <button id="win-plant-button" class="primary-button" type="button">Plant your coral</button>

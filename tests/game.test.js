@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { canEat, CREATURES, FORMS, isDanger, isFriend, nextGrowth } from "../src/rules.js";
-import { createWorld, swim } from "../src/world.js";
+import { createWorld, dangerBehind, resetWorld, swim } from "../src/world.js";
 
 const idleInput = { keys: new Set(), pointer: null };
 
@@ -176,4 +176,49 @@ test("a bigger fish only hurts on a real bump, not a brush", () => {
   world.creatures = [{ x: 25, y: 0, tier: 2, direction: 1, wobble: 0 }];
   swim(world, 0.001, idleInput, 390, 844);
   assert.equal(world.hearts, 3);
+});
+
+test("drawn fish replace about half the ocean's fish, never plankton", () => {
+  const world = createWorld(390, 844, undefined, 3);
+  world.phase = "playing";
+  world.stage = 1;
+  world.invulnerable = 99;
+  const made = [];
+  for (let round = 0; round < 120; round++) {
+    world.creatures = [];
+    swim(world, 0.016, idleInput, 390, 844);
+    made.push(...world.creatures);
+  }
+  const fish = made.filter(creature => creature.tier > 0);
+  const drawn = fish.filter(creature => creature.art !== null);
+  const plankton = made.filter(creature => creature.tier === 0);
+  assert.ok(fish.length > 1000 && plankton.length > 200);
+  assert.ok(drawn.length / fish.length > 0.4 && drawn.length / fish.length < 0.6);
+  assert.ok(drawn.every(creature => Number.isInteger(creature.art) && creature.art >= 0 && creature.art < 3));
+  assert.ok(plankton.every(creature => creature.art === null));
+});
+
+test("without saved drawings every fish is a built-in fish", () => {
+  const world = createWorld(390, 844);
+  assert.ok(world.creatures.length > 0);
+  assert.ok(world.creatures.every(creature => creature.art === null));
+  resetWorld(world, 390, 844, 2);
+  assert.equal(world.artCount, 2);
+  resetWorld(world, 390, 844);
+  assert.equal(world.artCount, 2, "a restart keeps the drawings");
+});
+
+test("the HUD only turns see-through for fish that can hurt the player", () => {
+  const world = createWorld(390, 844);
+  world.camera = { x: 500, y: 300 };
+  const box = { left: 10, top: 10, right: 240, bottom: 80 };
+  const behindHud = { x: 500 + 100 - 195, y: 300 + 40 - 422, direction: 1, wobble: 0, art: null };
+  world.creatures = [{ ...behindHud, tier: 0 }];
+  assert.equal(dangerBehind(world, box, 390, 844), false);
+  world.creatures = [{ ...behindHud, tier: 1 }];
+  assert.equal(dangerBehind(world, box, 390, 844), false, "a sardine schoolmate is no danger to a sardine");
+  world.creatures = [{ ...behindHud, tier: 2 }];
+  assert.equal(dangerBehind(world, box, 390, 844), true);
+  world.creatures = [{ ...behindHud, y: 300, tier: 2 }];
+  assert.equal(dangerBehind(world, box, 390, 844), false);
 });

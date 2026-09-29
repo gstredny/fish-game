@@ -64,3 +64,13 @@ Recording George's own voice; other languages; quizzes; renaming the planted cor
   - A grow line could cut off a card's reading.
   - The card stacked into a column on small sideways phones (568×320).
 - 2026-09-29: Photos done: 13 WebP files, 9–78 KB each. Rejected along the way: tuna caught in a net, dead or market mackerel, and a shark with its mouth wide open. With the real photos: `npm test` 53/53, and every browser check above passes. Only the iPhone check is left.
+- 2026-09-29: George: "get everything, all this working and live into production". Master had gained draw-your-own-fish (task 008-draw-your-own-fish, cache v9), so I merged it into this branch and kept both features:
+  - A drawn fish plays each real stage (the stage names and spoken lines still teach the chain). Drawn ocean fish take their tier's role: snack, schoolmate or hunter.
+  - Drawn fish get the shark fin at the shark tier, which is now tier 5. Tier 4 is the tuna, so keeping the old tier-4 rule would have put a fin on it.
+  - The top card fades only for real hunters, not for your own school.
+  - Growing says the food-chain line. It replaces "Your fish grew bigger!".
+  - Ocean book and the voice button sit in the top-right corner of the start screen, clear of "Draw my fish / Just swim" and the child's drawing.
+  - The first tap anywhere wakes the voice silently. Swim! starts the swim only after the drawing is saved, which would otherwise miss iPhone's tap-only speech rule.
+  - The offline cache is now v10, and this task file is renamed 009.
+  Draw-your-own-fish's `browser-check.mjs` now marks every animal as met, and its bot no longer flees its own schoolmates.
+  Results: `npm test` 63/63. The HUD-fade and wake-up tests go red with their fixes undone. Both `browser-check.mjs` (desktop and phone, six fit sizes) and `browser-learn.mjs` pass on the merged game.

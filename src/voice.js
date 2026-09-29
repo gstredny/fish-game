@@ -15,6 +15,7 @@ export function createVoice(storage = globalThis.localStorage, synth = globalThi
   pickVoice();
   synth?.addEventListener?.("voiceschanged", pickVoice);
   const busy = () => Boolean(synth?.speaking || synth?.pending);
+  let unlocked = false;
   return {
     available: Boolean(synth && Utterance),
     get muted() { return muted; },
@@ -33,6 +34,14 @@ export function createVoice(storage = globalThis.localStorage, synth = globalThi
     },
     stop() {
       if (busy()) synth.cancel();
+    },
+    // A silent line from the first tap, so lines said later (after a drawing is saved, say) are heard.
+    unlock() {
+      if (unlocked || !synth || !Utterance) return;
+      unlocked = true;
+      const line = new Utterance(" ");
+      line.volume = 0;
+      synth.speak(line);
     },
     setMuted(value) {
       muted = value;

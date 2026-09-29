@@ -1,9 +1,12 @@
 import { FORMS } from "./rules.js";
-import { paintOcean } from "./paint.js";
+import { paintOcean, portrait } from "./paint.js";
+import { CRAYONS, prepareArt } from "./art.js";
+import { loadDrawings, saveDrawing } from "./gallery.js";
+import { createSketchpad } from "./sketchpad.js";
 import { createSteering } from "./steering.js";
 import { padDirection } from "./pad.js";
 import { toWorld } from "./camera.js";
-import { createWorld, nearbyAnimals, resetWorld, swim } from "./world.js";
+import { createWorld, dangerBehind, nearbyAnimals, resetWorld, swim } from "./world.js";
 import { plantCoral } from "./reef.js";
 import { loadReef, saveReef } from "./reef-save.js";
 import { cardSpeech, FOOD_CHAIN, growLine, hurtLine, KINDS, meetLine, SEA_FRIEND_KINDS, SPECIES } from "./species.js";
@@ -17,7 +20,7 @@ const overlay = document.querySelector("#overlay");
 const hud = document.querySelector("#hud");
 const hint = document.querySelector("#hint");
 const toast = document.querySelector("#toast");
-const panels = ["intro", "paused", "won", "gameover", "card", "book"];
+const panels = ["intro", "draw", "paused", "won", "gameover", "card", "book"];
 const PORTRAIT_PHONE = "(orientation: portrait) and (max-width: 600px) and (pointer: coarse)";
 const input = { keys: new Set(), pointer: null, pad: null };
 const steering = createSteering(input);
@@ -46,6 +49,61 @@ const voiceButtons = [document.querySelector("#voice-button"), document.querySel
 let cardKind = null;
 let cardFrom = null;
 let bookFrom = null;
+let hintFrom = null;
+let artLoaded = false;
+let startTicket = 0;
+
+// The child's drawings, newest first: the newest is their fish, older ones swim in the ocean.
+let storage = null;
+try { storage = window.localStorage; } catch { /* private mode: drawings last for this visit */ }
+let drawings = loadDrawings(storage);
+const art = { player: null, npc: [] };
+const portraits = new Map();
+const sketchpad = createSketchpad(document.querySelector("#sketch"));
+
+async function decode(drawing) {
+  try {
+    const image = new Image();
+    image.src = drawing;
+    await image.decode();
+    return prepareArt(image);
+  } catch {
+    return null;
+  }
+}
+
+// Layers line up with `drawings`; a drawing that fails to decode leaves a gap
+// that a built-in fish fills.
+function setArt(layers) {
+  art.player = layers[0] || null;
+  art.npc = layers.slice(1);
+  portraits.clear();
+  renderIntro();
+  updateHud();
+}
+
+function portraitAt(stage) {
+  if (!portraits.has(stage)) portraits.set(stage, portrait(art.player, stage));
+  return portraits.get(stage);
+}
+
+function showArt(image, mark, stage) {
+  image.hidden = !art.player;
+  mark.hidden = Boolean(art.player);
+  if (art.player) image.src = portraitAt(stage);
+}
+
+function renderIntro() {
+  const saved = drawings.length > 0;
+  const draw = document.querySelector("#draw-button");
+  const start = document.querySelector("#start-button");
+  draw.className = saved ? "text-button" : "primary-button";
+  start.className = saved ? "primary-button" : "text-button";
+  draw.innerHTML = saved ? "Draw a new fish" : 'Draw my fish <span aria-hidden="true">✎</span>';
+  start.innerHTML = saved ? 'Dive in <span aria-hidden="true">↗</span>' : "Just swim";
+  document.querySelector("#intro-actions").prepend(saved ? start : draw);
+  showArt(document.querySelector("#intro-art"), document.querySelector("#intro-mark"), 0);
+}
 
 function resize() {
   width = window.innerWidth;
@@ -60,9 +118,10 @@ function showPanel(name) {
   overlay.hidden = !name;
   overlay.classList.toggle("result-mode", name !== "intro" && Boolean(name));
   for (const panel of panels) document.getElementById(panel).hidden = panel !== name;
-  hud.hidden = name === "intro" || world.phase === "ready";
+  hud.hidden = name === "intro" || name === "draw" || world.phase === "ready";
   hint.hidden = Boolean(name);
   showPad(!name);
+  if (name === "won") showArt(document.querySelector("#won-art"), document.querySelector("#won-mark"), 4);
   document.querySelector("#reef-bar").hidden = Boolean(name) || (!world.reef.pending && !world.reef.corals.length);
 }
 
@@ -70,6 +129,7 @@ function updateHud() {
   const form = FORMS[world.stage];
   document.querySelector("#stage-name").textContent = form.name;
   document.querySelector("#stage-dot").style.background = form.color;
+  showArt(document.querySelector("#stage-art"), document.querySelector("#stage-dot"), world.stage);
   document.querySelector("#growth-text").textContent = form.goal ?
     `${world.bites} / ${form.goal} snacks to grow` : "The whole ocean is yours";
   document.querySelector("#progress-fill").style.width = form.goal ?
@@ -255,16 +315,56 @@ function goFullScreen() {
     .catch(() => {});
 }
 
+// Starts at once when saved drawings are ready, so the fish never switches mid-swim.
 function begin() {
   cardFrom = bookFrom = null;
   goFullScreen();
-  resetWorld(world, width, height);
+  const ticket = ++startTicket;
+  if (artLoaded) startSwim();
+  else artReady.then(() => { if (ticket === startTicket) startSwim(); });
+}
+
+function startSwim() {
+  resetWorld(world, width, height, Math.max(0, drawings.length - 1));
   world.phase = "playing";
+  hintFrom = { ...world.player };
   steering.clear();
   input.keys.clear();
   updateHud();
   showPanel(null);
   tell(growLine(0), 3200);
+  if (document.hidden) pause();
+}
+
+function openSketchpad() {
+  startTicket++;
+  sketchpad.clear();
+  showPanel("draw");
+}
+
+async function finishDrawing() {
+  const swimButton = document.querySelector("#swim-button");
+  if (swimButton.disabled) return;
+  goFullScreen();
+  swimButton.disabled = true;
+  try {
+    if (sketchpad.painted) {
+      const drawing = sketchpad.save();
+      await artReady;
+      drawings = saveDrawing(storage, drawing, drawings);
+      setArt([await decode(drawing), art.player, ...art.npc].slice(0, drawings.length));
+    }
+  } finally {
+    swimButton.disabled = false;
+  }
+  begin();
+}
+
+// Keep the HUD from hiding a fish that can hurt the player.
+function watchBehindHud() {
+  const hidden = world.phase === "playing" && [...hud.children].some(part =>
+    dangerBehind(world, part.getBoundingClientRect(), width, height));
+  hud.classList.toggle("see-through", hidden);
 }
 
 function pause() {
@@ -290,7 +390,10 @@ function frame(timestamp) {
   visualTime += Math.min(seconds, 0.05);
   if (!pad.hidden) placePad();
   swim(world, seconds, input, width, height);
-  paintOcean(context, world, width, height, visualTime);
+  paintOcean(context, world, width, height, visualTime, art);
+  watchBehindHud();
+  if (!hint.hidden && hintFrom && world.phase === "playing" &&
+    (world.time > 8 || Math.hypot(world.player.x - hintFrom.x, world.player.y - hintFrom.y) > 250)) hint.hidden = true;
 
   if (world.events.length) {
     for (const event of world.events.splice(0)) {
@@ -374,8 +477,9 @@ window.addEventListener("keydown", event => {
   }
   if (event.key === "Escape" || event.key.toLowerCase() === "p") {
     world.phase === "paused" ? resume() : pause();
-  } else if (event.key === "Enter" && world.phase === "ready") {
-    begin();
+  } else if (event.key === "Enter" && !event.repeat && event.target?.tagName !== "BUTTON") {
+    if (!document.querySelector("#draw").hidden) finishDrawing();
+    else if (world.phase === "ready" && !document.querySelector("#intro").hidden) begin();
   }
   input.keys.add(event.key.length === 1 ? event.key.toLowerCase() : event.key);
 });
@@ -389,6 +493,24 @@ document.addEventListener("visibilitychange", () => {
 window.addEventListener("resize", resize);
 window.addEventListener("resize", () => { if (window.matchMedia?.(PORTRAIT_PHONE).matches) pause(); });
 
+const crayons = document.querySelector("#crayons");
+for (const [index, crayon] of CRAYONS.entries()) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "crayon";
+  button.style.setProperty("--crayon", crayon.color);
+  button.setAttribute("aria-label", crayon.name);
+  button.setAttribute("aria-pressed", String(index === 0));
+  button.addEventListener("click", () => {
+    sketchpad.setColor(crayon.color);
+    for (const other of crayons.children) other.setAttribute("aria-pressed", String(other === button));
+  });
+  crayons.append(button);
+}
+
+document.querySelector("#draw-button").addEventListener("click", openSketchpad);
+document.querySelector("#clear-button").addEventListener("click", () => sketchpad.clear());
+document.querySelector("#swim-button").addEventListener("click", finishDrawing);
 document.querySelector("#start-button").addEventListener("click", begin);
 document.querySelector("#restart-button").addEventListener("click", begin);
 document.querySelector("#win-restart-button").addEventListener("click", begin);
@@ -406,6 +528,8 @@ document.querySelector("#book-close").addEventListener("click", closeBook);
 document.querySelector("#book-chain").addEventListener("click", chooseFromBook);
 document.querySelector("#book-friends").addEventListener("click", chooseFromBook);
 for (const button of voiceButtons) button.addEventListener("click", toggleVoice);
+// iPhone speaks only after a tap has spoken; the first tap anywhere wakes the voice silently.
+window.addEventListener("click", () => voice.unlock(), true);
 
 // Full screen and a home-screen icon come from adding the game to the home screen.
 // iPhone has no install button, so the start screen says how.
@@ -430,9 +554,11 @@ window.addEventListener("beforeinstallprompt", event => {
 window.addEventListener("appinstalled", () => { installPrompt = null; introFoot.innerHTML = footText; });
 
 resize();
+renderIntro();
 updateHud();
 showVoice();
 showPanel("intro");
+const artReady = Promise.all(drawings.map(decode)).then(setArt).catch(() => {}).finally(() => { artLoaded = true; });
 requestAnimationFrame(frame);
 
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js");

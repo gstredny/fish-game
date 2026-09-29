@@ -8,7 +8,7 @@ The first time a child meets an animal, the game pauses and a card shows a real 
 
 Gentle sea friends drift by as well: a sea turtle and a parrotfish in open water; a seahorse, an octopus, a sea star, a crab and clownfish in their anemone on the sea bed (swim low to meet them). They never eat you and are never eaten.
 
-The **Ocean book** (on the start and pause screens) keeps every card met on this device, so a second child can hear them all again. The speaker button at the top turns the voice off; the device remembers. The voice is the phone's or computer's own and works offline. On iPhone, sound is allowed once **Dive in** is tapped. The facts are in `src/species.js`; photo credits are in [CREDITS.md](CREDITS.md).
+The **Ocean book** (on the start and pause screens) keeps every card met on this device, so a second child can hear them all again. The speaker button at the top turns the voice off; the device remembers. The voice is the phone's or computer's own and works offline. On iPhone, the voice wakes up with the first tap. The facts are in `src/species.js`; photo credits are in [CREDITS.md](CREDITS.md).
 
 Every shark milestone earns one coral colony. Choose **Plant your coral**, then tap or click open water (or press Enter to plant ahead). The coral and any unplanted rewards are saved on this device across new swims and reloads. Three clownfish live around each colony and retreat when predators approach. Sardines and mackerel can shelter inside the marked circle; larger forms cannot. Each new swim starts beside your reef. If browser storage is unavailable, the reef lasts for the current visit and the game says so.
 
@@ -23,6 +23,10 @@ python3 -m http.server 8778
 ```
 
 Open [http://localhost:8778](http://localhost:8778). Move the mouse to swim, or use the arrow or WASD keys. Press `P` or `Esc` to pause. No packages or build step are needed.
+
+## Draw your own fish
+
+Choose **Draw my fish** to colour a fish-shaped page with eight crayons. Paint outside the lines is trimmed away, so any scribble becomes a tidy fish. That drawing is the fish you play: it grows through every stage and gets a shark fin at the end. Earlier drawings swim around the ocean as other fish, so a family's drawings fill the reef over time. Up to 30 drawings are kept in the browser on this device; nothing is uploaded.
 
 ## Play on a phone
 
@@ -59,3 +63,5 @@ node tools/browser-autoplay.mjs       # seek-food controller plays to the shark
 node tools/browser-reef.mjs           # earn, plant, reload, shelter; desktop + phone
 node tools/browser-learn.mjs          # fact cards, voice, Ocean book, sea-bed friends, fits; "zoo" screenshots
 ```
+
+`tools/browser-check.mjs` checks drawing: it draws a fish, checks the saved drawing stays inside the fish shape, swims to shark form on a computer and a sideways phone, and checks the drawing screens fit. It uses [Playwright](https://playwright.dev) instead of the Chrome above: `npm i --no-save playwright && npx playwright install chromium`, then `node tools/browser-check.mjs screenshots` (or point `PLAYWRIGHT_MODULE` at an installed copy).

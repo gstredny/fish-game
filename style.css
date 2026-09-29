@@ -54,6 +54,12 @@ button:focus-visible { outline: 3px solid #ffe49b; outline-offset: 4px; }
   box-shadow: inset -5px -4px 0 rgba(9, 57, 78, .17), 0 0 16px rgba(255, 228, 155, .45);
 }
 
+.stage-art { width: 44px; height: 32px; flex: none; object-fit: contain; }
+
+/* The HUD fades when a fish that can hurt the player swims behind it. */
+.hud .growth-card, .hud .hud-actions > * { transition: opacity .25s; }
+.hud.see-through .growth-card, .hud.see-through .hud-actions > * { opacity: .22; }
+
 .stage-row strong { display: block; font-size: 15px; letter-spacing: .01em; }
 .stage-row span:last-child { display: block; margin-top: 2px; font-size: 11px; color: #c8ece7; }
 
@@ -254,6 +260,7 @@ h1 em { color: #ffdf9c; font-style: normal; }
 
 .primary-button:hover { transform: translateY(-2px); box-shadow: 0 10px 0 #d58e66, 0 20px 35px rgba(3, 35, 55, .3); }
 .primary-button:active { transform: translateY(5px); box-shadow: 0 3px 0 #d58e66; }
+.primary-button:disabled { opacity: .6; cursor: progress; }
 .primary-button span { margin-left: 19px; font-size: 25px; font-weight: 400; }
 
 .intro-foot { margin-top: 31px; color: rgba(225, 252, 243, .68); font-size: 12px; letter-spacing: .02em; }
@@ -276,6 +283,52 @@ h1 em { color: #ffdf9c; font-style: normal; }
 
 #won { max-height: 100%; overflow-y: auto; touch-action: pan-y; }
 
+.intro-actions { display: flex; flex-direction: column; align-items: flex-start; }
+.intro-actions .text-button { margin: 18px 0 0 -6px; }
+/* The child's own fish swims in the empty ocean beside the title. */
+.intro-art {
+  position: absolute;
+  top: 50%;
+  right: max(8vw, calc(env(safe-area-inset-right) + 20px));
+  width: min(32vw, 300px);
+  aspect-ratio: 300 / 220;
+  object-fit: contain;
+  transform: translateY(-50%) rotate(-6deg);
+  pointer-events: none;
+}
+
+.draw-panel { width: min(560px, 100%); padding: 22px 22px 26px; }
+#draw { max-height: 100%; overflow-y: auto; }
+.draw-panel h2 { margin-top: 0; }
+.sketch {
+  display: block;
+  width: min(100%, calc((100vh - 12vw - 255px) * 14 / 9));
+  width: min(100%, calc((100dvh - 12vw - 255px) * 14 / 9));
+  aspect-ratio: 14 / 9;
+  margin: 12px auto 0;
+  border-radius: 20px;
+  background: rgba(222, 255, 245, .1);
+  touch-action: none;
+  cursor: crosshair;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+.crayons { display: flex; flex-wrap: wrap; justify-content: center; gap: 9px; margin-top: 14px; }
+.crayon {
+  width: 44px;
+  height: 44px;
+  border: 3px solid rgba(255, 255, 255, .35);
+  border-radius: 50%;
+  background: var(--crayon);
+  transition: transform .12s;
+}
+.crayon[aria-pressed="true"] { border-color: #fff; transform: scale(1.15); box-shadow: 0 0 0 3px rgba(255, 223, 156, .7); }
+.draw-actions { display: flex; align-items: center; justify-content: center; gap: 22px; margin-top: 6px; }
+.draw-actions .text-button { margin: 18px 0 0; }
+.draw-panel .primary-button { margin-top: 18px; }
+.won-art { display: block; width: 190px; height: 140px; margin: -10px auto -6px; object-fit: contain; }
+
 @media (max-width: 600px) {
   .reef-bar { top: calc(103px + env(safe-area-inset-top)); left: 10px; right: 10px; font-size: 11px; }
   .hud { top: calc(10px + env(safe-area-inset-top)); left: 10px; right: 10px; }
@@ -283,6 +336,11 @@ h1 em { color: #ffdf9c; font-style: normal; }
   .stage-row strong { font-size: 13px; }
   .stage-row span:last-child { font-size: 10px; }
   .stage-dot { width: 23px; height: 23px; }
+  .stage-art { width: 36px; height: 26px; }
+  .intro-art { position: static; display: block; width: 120px; height: 88px; margin: 0 0 6px -12px; transform: rotate(-6deg); }
+  .draw-panel { padding: 16px 14px 20px; border-radius: 22px; }
+  .crayon { width: 40px; height: 40px; }
+  .crayons { display: grid; grid-template-columns: repeat(4, auto); justify-content: center; gap: 10px 16px; }
   .hearts { min-width: 0; padding: 8px; font-size: 14px; letter-spacing: 0; }
   .icon-button { width: 37px; height: 37px; border-radius: 12px; font-size: 17px; }
   .hud-actions { gap: 5px; }
@@ -311,14 +369,47 @@ h1 em { color: #ffdf9c; font-style: normal; }
   .result-panel p { margin-top: 8px; max-width: 470px; font-size: 15px; }
   .result-panel .primary-button { min-height: 48px; margin-top: 16px; }
   .result-panel .text-button { margin-top: 10px; }
+  /* Sideways phones: the two start buttons sit side by side to save height. */
+  .intro-actions { flex-direction: row; align-items: center; gap: 22px; }
+  .intro-actions .text-button { margin: 16px 0 0; }
+  /* The shark portrait sits beside the win panel instead of above it. */
+  #won { overflow: visible; }
+  .result-panel { position: relative; }
+  .won-art {
+    position: absolute;
+    top: 50%;
+    /* Beside the panel, pulled in and shrunk on narrower phones so it stays on screen. */
+    left: max(-104px, calc((100% - 100vw) / 2 + 12px));
+    width: clamp(84px, calc((100vw - 100%) / 2 + 30px), 120px);
+    height: auto;
+    aspect-ratio: 300 / 220;
+    margin: 0;
+    transform: translateY(-50%) rotate(-8deg);
+  }
+  .draw-panel { padding: 10px 16px 14px; border-radius: 20px; }
+  .draw-panel h2 { font-size: 22px; }
+  .sketch { width: min(100%, calc((100vh - 184px) * 14 / 9)); width: min(100%, calc((100dvh - 184px) * 14 / 9)); margin-top: 6px; }
+  .crayons { display: flex; }
+  /* Keep the child's fish beside the title even on the narrowest sideways phones. */
+  .intro-art { position: absolute; display: block; width: min(32vw, 300px); height: auto; margin: 0; transform: translateY(-50%) rotate(-6deg); }
+  .crayons { margin-top: 8px; }
+  .crayon { width: 36px; height: 36px; }
+  .draw-actions .text-button { margin-top: 8px; }
+  .draw-panel .primary-button { min-height: 44px; margin-top: 8px; }
 }
 
-/* Learning: fact cards, the Ocean book, and the voice button. */
-.intro-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 18px; margin-top: 30px; }
-.intro-actions > .primary-button, .intro-actions > .book-button { margin-top: 0; }
+/* Learning: fact cards, the Ocean book, and the voice button. On the start screen the book and
+   voice sit in the empty top-right corner, clear of the start buttons and the child's drawing. */
+.intro-extras {
+  position: absolute;
+  top: calc(16px + env(safe-area-inset-top));
+  right: max(18px, calc(env(safe-area-inset-right) + 12px));
+  display: flex;
+  gap: 10px;
+}
 
 .book-button {
-  min-height: 57px;
+  min-height: 48px;
   padding: 0 20px;
   border: 2px solid rgba(255, 221, 147, .7);
   border-radius: 16px;
@@ -328,7 +419,7 @@ h1 em { color: #ffdf9c; font-style: normal; }
   font-weight: 800;
 }
 
-.voice-toggle { width: 57px; padding: 0; font-size: 22px; }
+.voice-toggle { width: 48px; padding: 0; font-size: 20px; }
 
 .card-panel, .book-panel {
   width: min(760px, 100%);
@@ -403,17 +494,12 @@ h1 em { color: #ffdf9c; font-style: normal; }
 .book-chain .book-tile:not(:last-child)::after { content: "→"; position: absolute; top: 20px; right: -19px; color: #ffdd93; font-size: 16px; }
 .book-panel .primary-button { margin-top: 16px; }
 
-@media (max-width: 600px) {
-  .intro-actions { margin-top: 22px; }
-}
-
 @media (max-width: 600px) and (min-height: 501px) {
   .card-panel { flex-direction: column; align-items: stretch; }
   .card-photo { flex: none; }
 }
 
 @media (max-height: 500px) {
-  .intro-actions { margin-top: 16px; }
   .card-panel, .book-panel { padding: 14px 18px; }
   .card-text h2 { font-size: 28px; }
   .card-facts { margin-top: 6px; font-size: 14px; line-height: 1.35; }
@@ -474,6 +560,10 @@ h1 em { color: #ffdf9c; font-style: normal; }
 @keyframes turn-sideways {
   0%, 25% { transform: rotate(0); }
   60%, 100% { transform: rotate(-90deg); }
+}
+
+@media (max-height: 500px) and (max-width: 620px) {
+  .won-art { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {

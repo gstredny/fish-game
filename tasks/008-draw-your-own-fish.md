@@ -1,0 +1,104 @@
+# Draw your own fish
+
+Status: Done and on `master`; not yet tried on George's own phone.
+
+## Intent Contract
+
+### Today the customer/user sees
+A ready-made yellow sprat that grows through built-in fish shapes into a shark. Every fish in the ocean is a built-in drawing. All feedback is written text.
+
+### After this change the customer/user should see
+Proposal approved by George on 2026-09-29 ("go, rulings 1-3 as recommended"):
+- Start screen: the child finger-paints on a fish outline with 8 big crayon colours. Paint is clipped to the fish shape, and the game adds the eye and tail, so a scribble still looks like a real fish.
+- Their drawing is the fish they play. It grows through all 5 stages, wags its tail, and flips when it turns.
+- Ruling 1: one drawing scales up through all 5 stages, with a shark fin added at the shark stage.
+- Ruling 2: saved drawings randomly replace the built-in fish, at up to 50% of the ocean. A sibling draws the plankton; a parent draws the shark that chases the kid.
+- Ruling 3: the phone hint and the HUD covering the playfield are fixed too.
+- Everything stays on the device and offline. No build step, no dependencies, no upload.
+
+### Smoke test (no code, just clicks)
+1. Open the game on a phone. Tap **Draw my fish**.
+2. Scribble across the whole drawing space in two colours, including outside the fish. Only the fish shape keeps the colour.
+3. Tap **Swim!**. Your fish is in the middle of the ocean and in the top-left card.
+4. Eat snacks until you become a shark. Your fish gets a shark fin, and the win screen shows it.
+5. Reload. Tap **Draw a new fish**, draw a different fish, tap **Swim!**. Your first fish now swims around the ocean.
+6. When a bigger fish swims behind the top card, the card fades so you can see it.
+
+### Out of scope for this contract
+Sound or voice, redrawing at each growth stage, deleting saved drawings, sharing drawings between devices, the sea floor scrolling up and down.
+
+## Done criteria
+
+- `npm test` passes, including the new drawing, fish-mix, HUD, and offline-cache rules, each shown red by a control.
+- `node tools/browser-check.mjs` passes on desktop, phone, and landscape phone, and fails when the fish-shape clip is removed.
+- Screenshots of drawing, play, shark, and the drawn ocean are inspected.
+- An independent read-only review finds nothing blocking.
+
+## Attempt log
+
+- 2026-09-29: First real-browser run of the existing game in headless Chromium, at desktop and iPhone-13 sizes: loads with no console errors; start, movement, eating, and damage all work. Found the phone HUD hiding a predator, the phone hint mentioning arrow keys, and the hint staying on screen.
+- 2026-09-29: Built the drawing page, saved drawings, drawn player and ocean fish, shark fin and gills, HUD thumbnail, win-screen portrait, fading HUD, device-specific hint, and cache `little-fish-v3`.
+- 2026-09-29: Controls, each confirmed red then restored: plankton allowed to be drawn; 90% drawn share; HUD fading for prey; `gallery.js` missing from the offline cache; no storage-full fallback; junk storage not filtered. Browser check with the fish-shape clip removed failed: `paint leaked outside the fish at 0.95,-0.75 (rgba 58,155,255,255)`.
+- 2026-09-29: Screenshots showed the 8th crayon wrapping (panel styles overridden by later rules), the secondary intro button above the main one on return visits, and a 150px drawing space in landscape. Fixed all three.
+- 2026-09-29: Independent read-only review of `ac3e389` found no blocking code defects. It reproduced four problems:
+  - Two fingers on the drawing page drew a line between them, and the second finger stopped drawing when the first lifted.
+  - A service-worker update could cache old files under the new cache name.
+  - Holding Enter skipped the drawing.
+  - The browser check let three mutants pass: player and ocean drawings swapped, the hint never hiding, and no clip on the drawing page.
+- 2026-09-29: Fixed all four:
+  - Each finger now paints its own stroke.
+  - The offline install bypasses the HTTP cache.
+  - Enter ignores key repeat.
+  - Play waits for saved drawings to load, so the fish no longer switches mid-swim.
+  - Saving a new drawing decodes only that drawing, and Swim! can't stay stuck on an error.
+  - Starting play while the app is hidden pauses it.
+  - Busy buttons dim.
+- 2026-09-29: Added browser checks for each gap and ran them against mutant copies. Each went red on its own assertion:
+  - "two fingers drew a line between them"
+  - "the newest drawing should be the player"
+  - "hint should hide once the player swims away"
+  - "paint shows outside the fish on the drawing page"
+- 2026-09-29: Service-worker update repro, with v2 installed and `max-age=600` headers:
+  - Before the fix, `little-fish-v3` held the v2 `index.html` and `main.js` (no draw button).
+  - After the fix, it holds the v3 files and the page shows the draw button.
+- Open ruling for George: the contract line "A sibling draws the plankton" does not match the build. Plankton stay glowing dots, 5px across, too small to show a drawing. Drawings appear as fish, anchovy size and up. At the sprat stage, every drawn fish on screen is therefore one that can hurt the player.
+- Deferred, not blocking:
+  - Drawn fish are shrunk from full size every frame, about 0.35ms each in headless software rendering. Not measured on a real phone.
+  - A full store drops the new drawing silently.
+  - The drawing panel's Swim! button sits 8px off-screen on 533×320 landscape screens.
+
+- 2026-09-29: George: "Just put everything on the main master branch so that it's live on my app on my phone."
+  - Combined this branch with `master`, which had gained 13 commits: living reef, finger then arrow steering, a moving camera, realistic ocean, and predator faces.
+  - Kept `master`'s code and re-added drawing on top.
+  - Drawn fish now wear the same prey ring, predator teeth, and player halo as built-in fish.
+  - The HUD fade uses the camera.
+  - On sideways phones, the child's fish shows large in the empty ocean beside the title, and the shark portrait sits beside the win panel.
+  - Enter on the start screen still starts swimming; on the drawing page it means Swim!.
+  - Offline cache v8. The app-level test fixture gained canvas, `createElement`, and list APIs.
+- 2026-09-29: Integration checks:
+  - `npm test`: 44 passed.
+  - `tools/browser-check.mjs`: desktop and sideways phone pass (mask, two fingers, HUD fade, shark, drawn ocean); 844×390 and 844×330 fit.
+  - `browser-sideways.mjs` passes.
+  - `browser-play` desktop/phone and `browser-autoplay` (shark) pass with no errors.
+  - `browser-reef.mjs` failed 1 of 2, at the same step as on `master` before this change.
+  - Control: HUD fade computed without the camera → "the HUD only turns see-through for fish that can hurt the player" red.
+
+- 2026-09-29: An independent read-only review of `d3c7ca2`, live on `master`, found nothing blocking and no regressions. Fixed:
+  - The drawing page was 24px too tall at every sideways size, cutting off Swim! and scrolling the panel. On a 1280×600 laptop window the buttons were below the fold. Sizing now allows for the overlay padding.
+  - A tap on Dive in, followed quickly by Draw a new fish while drawings were still loading, dropped the child out of the drawing page. Opening the drawing page now cancels the queued start.
+  - A failed drawing load could block starting for the whole visit. Starting now always works.
+  - The shark picture ran off the left edge at 667px. It now slides and shrinks to stay on screen and off the words, and hides only below 620px wide.
+  - The drawing space now blocks iOS long-press selection.
+  - At 568×320 the start screen and drawing page overflowed. Both now fit.
+- 2026-09-29: New browser checks:
+  - the drawing page fits without scrolling at 844×390, 844×330, 667×375, 932×430, 568×320 and 1280×600;
+  - the shark picture never covers the win screen's words;
+  - the hint hides after two seconds of swimming (the old bot-path check was flaky);
+  - a drawn fish's stripe is sampled on the ocean canvas.
+  - Controls: `const drawing = null` → "the older drawing should be painted in the ocean"; old 160px sizing → "844x390: drawing panel does not fit the screen".
+
+## Evidence
+
+- `npm test` → 18 tests, 18 passed, 0 failed.
+- `node tools/browser-check.mjs` → desktop: shark in 25s, 0 retries, 9 drawn fish. Phone: shark in 36s, 0 retries, 7 drawn fish, two-finger drawing ok. Landscape drawing space 283px wide. No page errors.
+- Without Playwright: `browser-check FAILED: cannot load Playwright`, exit code 2.

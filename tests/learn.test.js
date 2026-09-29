@@ -124,6 +124,18 @@ test("the voice speaks, waits its turn, can be switched off, and remembers that"
   silent.stop();
 });
 
+test("the first tap wakes the voice with one silent line", () => {
+  const { synth, Utterance } = fakeSpeech();
+  const lines = [];
+  synth.speak = line => lines.push(line);
+  const voice = createVoice(memoryStorage(), synth, Utterance);
+  voice.unlock();
+  voice.unlock();
+  assert.equal(lines.length, 1, "only once");
+  assert.equal(lines[0].volume, 0, "and silent");
+  createVoice(memoryStorage(), undefined, undefined).unlock();
+});
+
 test("the animals met are saved on this device, and bad saved data is ignored", () => {
   const storage = memoryStorage();
   assert.deepEqual(loadMet(storage), new Set());

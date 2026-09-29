@@ -2,7 +2,7 @@ import { canEat, CREATURES, FLOOR, FORMS, isDanger, isFriend, nextGrowth, SEA_FR
 import { createReef, isSheltered } from "./reef.js";
 import { followPlayer, toWorld } from "./camera.js";
 
-export function createWorld(width, height, reef = createReef()) {
+export function createWorld(width, height, reef = createReef(), artCount = 0) {
   const home = reef.corals[0];
   const start = { x: home ? home.x - 100 : 0, y: home ? home.y : 0 };
   const world = {
@@ -21,6 +21,7 @@ export function createWorld(width, height, reef = createReef()) {
     friends: [],
     particles: [],
     events: [],
+    artCount,
     // Learning: kinds already met this swim, floating name tags, and when the next fact card may open.
     greeted: new Set(),
     labels: [],
@@ -30,8 +31,8 @@ export function createWorld(width, height, reef = createReef()) {
   return world;
 }
 
-export function resetWorld(world, width, height) {
-  Object.assign(world, createWorld(width, height, world.reef));
+export function resetWorld(world, width, height, artCount = world.artCount) {
+  Object.assign(world, createWorld(width, height, world.reef, artCount));
 }
 
 export function swim(world, seconds, input, width, height) {
@@ -217,8 +218,21 @@ function makeCreature(world, width, height, initial) {
     y,
     tier,
     direction: initial ? (Math.random() < 0.5 ? -1 : 1) : -side,
-    wobble: Math.random() * Math.PI * 2
+    wobble: Math.random() * Math.PI * 2,
+    // About half the fish (never plankton) wear one of the child's older drawings.
+    art: tier > 0 && world.artCount > 0 && Math.random() < 0.5 ? Math.floor(Math.random() * world.artCount) : null
   };
+}
+
+// True when a fish that could hurt the player is on screen behind this box.
+export function dangerBehind(world, box, width, height) {
+  return world.creatures.some(creature => {
+    if (!isDanger(world.stage, creature.tier)) return false;
+    const reach = CREATURES[creature.tier].size * 1.6;
+    const x = creature.x - world.camera.x + width / 2;
+    const y = creature.y - world.camera.y + height / 2;
+    return x > box.left - reach && x < box.right + reach && y > box.top - reach && y < box.bottom + reach;
+  });
 }
 
 function pickTier(world) {

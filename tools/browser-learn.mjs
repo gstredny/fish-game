@@ -80,7 +80,7 @@ const tapButton = async selector => {
 const fitsOnScreen = selector => evaluate(`(() => { const r = document.querySelector(${JSON.stringify(selector)}).getBoundingClientRect();
   return r.width > 0 && r.height > 0 && r.top >= 0 && r.bottom <= innerHeight && r.left >= 0 && r.right <= innerWidth; })()`);
 const visible = selector => evaluate(`!document.querySelector(${JSON.stringify(selector)}).hidden`);
-const spoken = () => evaluate("window.__spoken.slice()");
+const spoken = () => evaluate("window.__spoken.filter(line => line.trim())"); // minus the silent wake-up line
 const reload = async () => {
   await page.send("Page.reload", { ignoreCache: true });
   await waitFor("Boolean(window.__game) && !document.querySelector('#intro').hidden", "game loaded");
