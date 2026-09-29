@@ -42,7 +42,7 @@ let toastTimer;
 const CARD_GAP = 20;
 const voice = createVoice();
 const met = loadMet();
-const voiceButton = document.querySelector("#voice-button");
+const voiceButtons = [document.querySelector("#voice-button"), document.querySelector("#intro-voice-button")];
 let cardKind = null;
 let cardFrom = null;
 let bookFrom = null;
@@ -150,9 +150,18 @@ function tell(line, duration) {
 }
 
 function showVoice() {
-  voiceButton.hidden = !voice.available;
-  voiceButton.textContent = voice.muted ? "🔇" : "🔊";
-  voiceButton.setAttribute("aria-label", voice.muted ? "Turn the voice on" : "Turn the voice off");
+  for (const button of voiceButtons) {
+    button.hidden = !voice.available;
+    button.textContent = voice.muted ? "🔇" : "🔊";
+    button.setAttribute("aria-label", voice.muted ? "Turn the voice on" : "Turn the voice off");
+  }
+}
+
+// Turning the voice on says so from the tap itself: iPhone speaks only once a tap has spoken.
+function toggleVoice() {
+  voice.setMuted(!voice.muted);
+  if (!voice.muted) voice.say("Voice on!");
+  showVoice();
 }
 
 // A new animal pauses the swim for its card; one met before gets a name tag and a short line.
@@ -247,6 +256,7 @@ function goFullScreen() {
 }
 
 function begin() {
+  cardFrom = bookFrom = null;
   goFullScreen();
   resetWorld(world, width, height);
   world.phase = "playing";
@@ -267,6 +277,7 @@ function pause() {
 }
 
 function resume() {
+  cardFrom = bookFrom = null;
   world.phase = "playing";
   world.invulnerable = Math.max(world.invulnerable, 1.2);
   showPanel(null);
@@ -279,7 +290,6 @@ function frame(timestamp) {
   visualTime += Math.min(seconds, 0.05);
   if (!pad.hidden) placePad();
   swim(world, seconds, input, width, height);
-  meetAnimals();
   paintOcean(context, world, width, height, visualTime);
 
   if (world.events.length) {
@@ -290,6 +300,8 @@ function frame(timestamp) {
     }
     updateHud();
   }
+  // After this frame's grow or bump line, so a new card's reading is not cut off by it.
+  meetAnimals();
   if (world.phase === "won" && overlay.hidden) showPanel("won");
   if (world.phase === "gameover" && overlay.hidden) showPanel("gameover");
   requestAnimationFrame(frame);
@@ -341,6 +353,8 @@ window.addEventListener("pointerdown", event => {
 }, true);
 
 window.addEventListener("keydown", event => {
+  // Enter or Space on a focused button presses that button, and nothing else.
+  if ((event.key === "Enter" || event.key === " ") && event.target?.closest?.("button")) return;
   if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " "].includes(event.key)) event.preventDefault();
   if (cardFrom) {
     if (["Enter", " ", "Escape"].includes(event.key)) {
@@ -391,10 +405,7 @@ document.querySelector("#paused-book-button").addEventListener("click", () => op
 document.querySelector("#book-close").addEventListener("click", closeBook);
 document.querySelector("#book-chain").addEventListener("click", chooseFromBook);
 document.querySelector("#book-friends").addEventListener("click", chooseFromBook);
-voiceButton.addEventListener("click", () => {
-  voice.setMuted(!voice.muted);
-  showVoice();
-});
+for (const button of voiceButtons) button.addEventListener("click", toggleVoice);
 
 // Full screen and a home-screen icon come from adding the game to the home screen.
 // iPhone has no install button, so the start screen says how.

@@ -45,7 +45,8 @@ export async function openGame(storage, extraGlobals = {}) {
     const game = await import(`data:text/javascript;base64,${Buffer.from(source + hook).toString("base64")}`);
     return { ...game, nodes, window, close, frame: time => frames.shift()(time),
       click: id => nodes.get(id).emit("click"),
-      key: key => window.emit("keydown", { key }) };
+      // `target` is the focused element; a button's own click is sent separately, as browsers do.
+      key: (key, target) => window.emit("keydown", { key, target }) };
   } catch (error) { close(); throw error; }
 }
 

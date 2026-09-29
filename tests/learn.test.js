@@ -35,7 +35,7 @@ test("every animal in the game has a card: a name, two facts, what it eats and w
 test("what the cards say about eating matches what happens in the game", () => {
   for (let stage = 1; stage < FORMS.length; stage++) {
     const food = SPECIES[FOOD_CHAIN[stage]];
-    assert.match(SPECIES[FORMS[stage].kind].eats.toLowerCase(), new RegExp(stage === 4 ? "fish" : food.plural),
+    assert.match(SPECIES[FORMS[stage].kind].eats.toLowerCase(), new RegExp(food.plural),
       `${FORMS[stage].name} eats ${food.plural} in the game, so its card should say so`);
   }
   for (let stage = 0; stage < FORMS.length - 1; stage++) {

@@ -44,3 +44,14 @@ Recording George's own voice; other languages; quizzes; renaming the planted cor
 ## Attempt log
 
 - 2026-09-29: Intent captured; George picked all four recommended options.
+- 2026-09-29: Built the true chain (sardine → mackerel → squid → tuna → great white; own kind = school), sea friends (turtle and parrotfish swim; seahorse, octopus, sea star, crab and clownfish-in-anemone on the sea bed), fact cards with voice, name tags, spoken grow/bump lines, Ocean book, voice button. A helper session is sourcing free-to-share photos from Wikimedia Commons.
+- 2026-09-29: On a preview copy with placeholder photos, `browser-sideways`, `browser-reef` (desktop and phone) and `browser-autoplay` pass. The autoplay bot first stalled at mackerel for 76 s, because it chased its own schoolmates as food (a bot bug). With the bot fixed, it reached the shark in 20.6 s with 3 hearts (23.2 s before this change).
+- 2026-09-29: An independent read-only review found 9 issues, all fixed. Each fix has a test that went red with the fix undone:
+  - Enter on a focused button also ran the global Enter action, which started a swim behind the book and left the keys stuck.
+  - Turning the voice on made no sound in that tap, so iPhone stayed silent.
+  - The great white ate plankton after the win, which contradicts its card.
+  - Clownfish in your coral had no anemone (their card says they live in one); the crab had 8 legs, not 10.
+  - Enter on "Hear it again" closed the card instead of replaying it.
+  - There was no voice switch on the start screen.
+  - A grow line could cut off a card's reading.
+  - The card stacked into a column on small sideways phones (568×320).

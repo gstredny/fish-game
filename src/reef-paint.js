@@ -1,5 +1,5 @@
 import { canPlantCoral, CORAL_RADIUS, reefResidents } from "./reef.js";
-import { paintClownfish } from "./animal-paint.js";
+import { paintAnemoneHome, paintClownfish } from "./animal-paint.js";
 
 export function paintOwnedReef(context, world, width, height, time) {
   const cameraX = world.camera.x - width / 2;
@@ -92,4 +92,9 @@ function paintColony(context, time) {
   context.beginPath();
   context.ellipse(0, 18, 30, 38, 0, 0, Math.PI * 2);
   context.fill();
+  // Clownfish live in sea anemones on the reef; theirs grows in the middle of your coral.
+  context.save();
+  context.translate(0, 32);
+  paintAnemoneHome(context, 24, time);
+  context.restore();
 }

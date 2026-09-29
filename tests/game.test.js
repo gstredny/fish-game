@@ -145,7 +145,7 @@ test("a new swim starts with a safe period and no predator close by", () => {
   }
 });
 
-test("a shark's ocean holds every kind of fish", () => {
+test("a shark's ocean holds every kind of fish, but no plankton", () => {
   const world = createWorld(1440, 900);
   world.phase = "playing";
   world.stage = 4;
@@ -156,7 +156,7 @@ test("a shark's ocean holds every kind of fish", () => {
     swim(world, 0.016, idleInput, 1440, 900);
     for (const creature of world.creatures) { tiers.add(creature.tier); total++; if (creature.tier === 5) sharks++; }
   }
-  assert.equal(tiers.size, 6, `only tiers ${[...tiers].sort()} spawned`);
+  assert.deepEqual([...tiers].sort(), [1, 2, 3, 4, 5], "every fish, and no plankton: great whites don't eat it");
   assert.ok(sharks / total < 0.5, `${Math.round(sharks / total * 100)}% sharks`);
 });
 

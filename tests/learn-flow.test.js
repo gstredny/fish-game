@@ -159,23 +159,62 @@ test("the Ocean book shows who you have met and replays their cards", async () =
   } finally { app.close(); }
 });
 
-test("the voice button turns speech off, and the choice is kept", async () => {
+test("the voice can be switched off from the start screen, and the choice is kept", async () => {
   const storage = memoryStorage();
   const speech = fakeSpeech();
   let app = await openGame(storage, speech.globals);
   try {
-    assert.equal(app.nodes.get("voice-button").hidden, false);
-    app.click("voice-button");
+    assert.equal(app.nodes.get("intro-voice-button").hidden, false);
+    app.click("intro-voice-button");
     assert.equal(storage.getItem(VOICE_KEY), "off");
-    assert.equal(app.nodes.get("voice-button").textContent, "🔇");
+    assert.equal(app.nodes.get("intro-voice-button").textContent, "🔇");
+    assert.equal(app.nodes.get("voice-button").textContent, "🔇", "the in-game button agrees");
     app.click("start-button");
     assert.deepEqual(speech.spoken, [], "nothing is said with the voice off");
     assert.equal(app.nodes.get("toast").textContent, growLine(0), "the words still show");
+    app.click("voice-button");
+    assert.deepEqual(speech.spoken, ["Voice on!"], "turning it on speaks from the tap, which iPhone needs");
+    app.click("voice-button");
     app.close();
     app = await openGame(storage, speech.globals);
     assert.equal(app.nodes.get("voice-button").textContent, "🔇");
     app.close();
     app = await openGame(storage);
     assert.equal(app.nodes.get("voice-button").hidden, true, "no button on a device that cannot speak");
+    assert.equal(app.nodes.get("intro-voice-button").hidden, true);
+  } finally { app.close(); }
+});
+
+test("Enter on a focused button only presses that button", async () => {
+  const speech = fakeSpeech();
+  const app = await openGame(memoryStorage({ [MET_KEY]: '["crab"]' }), speech.globals);
+  const button = { closest: selector => selector === "button" ? {} : null };
+  try {
+    app.key("Enter", button);
+    assert.equal(app.world.phase, "ready", "Enter on the Ocean book button does not also start a swim");
+    app.click("intro-book-button");
+    app.nodes.get("book-friends").emit("click", { target: { closest: () => ({ dataset: { kind: "crab" } }) } });
+    app.key("Enter", button);
+    assert.equal(app.nodes.get("card").hidden, false, "Enter on Hear it again keeps the card open");
+    app.click("card-close");
+    app.click("book-close");
+    app.click("start-button");
+    app.key("ArrowRight");
+    assert.ok(app.input.keys.has("ArrowRight"), "arrow keys steer after using the book");
+  } finally { app.close(); }
+});
+
+test("a card that opens in the same moment as growing is read out, not cut off", async () => {
+  const speech = fakeSpeech();
+  const app = await openGame(memoryStorage(), speech.globals);
+  try {
+    app.click("start-button");
+    Object.assign(app.world, { bites: 5, time: 5.1, friends: [], creatures: [
+      { ...app.world.player, tier: 0, direction: 1, wobble: 0 },
+      { x: app.world.player.x + 100, y: app.world.player.y, tier: 3, direction: 1, wobble: 0 }] });
+    app.frame(16);
+    assert.equal(app.world.stage, 1);
+    assert.equal(app.world.phase, "meeting");
+    assert.equal(speech.spoken.at(-1), cardSpeech("squid"));
   } finally { app.close(); }
 });

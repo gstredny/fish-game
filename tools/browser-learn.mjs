@@ -177,25 +177,26 @@ assert.ok(await visible("#paused"), "back to the pause screen");
 const WORDIEST = KINDS.map(kind => [kind, [...SPECIES[kind].facts, SPECIES[kind].eats, SPECIES[kind].eatenBy].join(" ").length])
   .sort((first, second) => second[1] - first[1])[0][0];
 await evaluate(`localStorage.setItem("little-fish-met-v1", JSON.stringify(["plankton", "crab", "${WORDIEST}"]))`);
-for (const height of [390, 340, 330]) {
-  await size(844, height);
+for (const [width, height] of [[844, 390], [844, 340], [844, 330], [667, 375], [568, 320]]) {
+  await size(width, height);
   await reload();
   await tapButton("#intro-book-button");
   await sleep(300);
   const bookFits = await fitsOnScreen("#book-close") && await fitsOnScreen("#book-title") &&
     await fitsOnScreen('.book-tile[data-kind="clownfish"]');
-  await shot(`06-book-844x${height}`);
+  await shot(`06-book-${width}x${height}`);
   await tapButton(`.book-tile[data-kind="${WORDIEST}"]`);
   await sleep(400);
   const cardFits = await fitsOnScreen("#card-close") && await fitsOnScreen("#card-hear") && await fitsOnScreen("#card-name");
-  await shot(`07-card-844x${height}`);
-  console.log(`7. 844x${height}: book fits: ${bookFits}; card fits: ${cardFits}`);
-  assert.ok(bookFits && cardFits, `844x${height}: the book or card does not fit`);
+  await shot(`07-card-${width}x${height}`);
+  console.log(`7. ${width}x${height}: book fits: ${bookFits}; card fits: ${cardFits}`);
+  assert.ok(bookFits && cardFits, `${width}x${height}: the book or card does not fit`);
   await tapButton("#card-close");
   await sleep(200);
   await tapButton("#book-close");
   await sleep(200);
-  assert.ok(await fitsOnScreen("#start-button") && await fitsOnScreen("#intro-book-button"), `844x${height}: start buttons fit`);
+  assert.ok(await fitsOnScreen("#start-button") && await fitsOnScreen("#intro-book-button") &&
+    await fitsOnScreen("#intro-voice-button"), `${width}x${height}: start buttons fit`);
 }
 
 // 8. The zoo: every animal drawing, as a squid (so snacks, schoolmates and hunters all show).

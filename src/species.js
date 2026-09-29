@@ -8,7 +8,7 @@ export const SPECIES = {
     eats: "Sunlight! Plant plankton make food from it, like trees do",
     eatenBy: "Sardines, mackerel, and even giant whales",
     say: "Plant plankton make their food from sunlight, like trees. Lots of animals eat plankton, even giant whales!",
-    lines: ["Eat it to grow!", "Tiny food for little fish."]
+    lines: ["Little fish eat plankton.", "Tiny food for little fish."]
   },
   sardine: {
     name: "Sardine", plural: "sardines", hello: "This is a sardine!",

@@ -222,7 +222,8 @@ function makeCreature(world, width, height, initial) {
 }
 
 function pickTier(world) {
-  if (world.stage === FORMS.length - 1) return Math.floor(Math.random() * CREATURES.length);
+  // The shark's ocean holds every kind of fish, but no plankton: great whites don't eat it.
+  if (world.stage === FORMS.length - 1) return 1 + Math.floor(Math.random() * (CREATURES.length - 1));
   const roll = Math.random();
   // Mostly snacks, a few of your own kind, and about one in four bigger hunters.
   const offset = roll < 0.25 ? -1 : roll < 0.65 ? 0 : roll < 0.75 ? 1 : roll < 0.95 ? 2 : 3;

@@ -423,13 +423,13 @@ function paintCrab(context, size, time) {
   context.strokeStyle = shell;
   context.lineCap = "round";
   context.lineWidth = Math.max(1.5, size * 0.1);
-  for (let leg = 0; leg < 3; leg++) {
+  for (let leg = 0; leg < 4; leg++) {
     const step = Math.sin(time * 10 + leg * 2) * size * 0.1;
     for (const side of [-1, 1]) {
       context.beginPath();
-      context.moveTo(side * size * 0.5, -size * 0.45);
-      context.lineTo(side * size * (0.95 + leg * 0.12), -size * 0.55 + step);
-      context.lineTo(side * size * (1.05 + leg * 0.15), 0);
+      context.moveTo(side * size * (0.3 + leg * 0.1), -size * 0.45);
+      context.lineTo(side * size * (0.85 + leg * 0.12), -size * 0.55 + step);
+      context.lineTo(side * size * (0.95 + leg * 0.15), 0);
       context.stroke();
     }
   }
@@ -476,6 +476,19 @@ function paintCrab(context, size, time) {
 
 // A sea anemone with its clownfish living among the tentacles.
 function paintAnemone(context, size, time) {
+  paintAnemoneHome(context, size, time);
+  for (let fish = 0; fish < 2; fish++) {
+    const phase = time * 1.1 + fish * Math.PI;
+    context.save();
+    context.translate(Math.cos(phase) * size * 0.8, -size * (1.05 + fish * 0.35) + Math.sin(phase * 2) * size * 0.1);
+    context.scale((Math.sin(phase) > 0 ? -1 : 1) * size / 30, size / 30);
+    paintClownfish(context);
+    context.restore();
+  }
+}
+
+// The anemone alone, standing on (0, 0).
+export function paintAnemoneHome(context, size, time) {
   context.lineCap = "round";
   for (let arm = 0; arm < 13; arm++) {
     const spread = (arm - 6) / 6;
@@ -496,14 +509,6 @@ function paintAnemone(context, size, time) {
   context.beginPath();
   context.ellipse(0, -size * 0.2, size * 0.75, size * 0.25, 0, 0, Math.PI * 2);
   context.fill();
-  for (let fish = 0; fish < 2; fish++) {
-    const phase = time * 1.1 + fish * Math.PI;
-    context.save();
-    context.translate(Math.cos(phase) * size * 0.8, -size * (1.05 + fish * 0.35) + Math.sin(phase * 2) * size * 0.1);
-    context.scale((Math.sin(phase) > 0 ? -1 : 1) * size / 30, size / 30);
-    paintClownfish(context);
-    context.restore();
-  }
 }
 
 export function paintClownfish(context) {
