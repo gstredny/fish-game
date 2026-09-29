@@ -3,6 +3,7 @@ import { paintOcean, portrait } from "./paint.js";
 import { CRAYONS, prepareArt } from "./art.js";
 import { loadDrawings, saveDrawing } from "./gallery.js";
 import { createSketchpad } from "./sketchpad.js";
+import { createSound } from "./sound.js";
 import { createSteering } from "./steering.js";
 import { padDirection } from "./pad.js";
 import { toWorld } from "./camera.js";
@@ -47,6 +48,7 @@ let drawings = loadDrawings(storage);
 const art = { player: null, npc: [] };
 const portraits = new Map();
 const sketchpad = createSketchpad(document.querySelector("#sketch"));
+const sound = createSound();
 
 async function decode(drawing) {
   try {
@@ -270,6 +272,7 @@ function frame(timestamp) {
   visualTime += Math.min(seconds, 0.05);
   if (!pad.hidden) placePad();
   swim(world, seconds, input, width, height);
+  sound.listen(world);
   paintOcean(context, world, width, height, visualTime, art);
   watchBehindHud();
   if (!hint.hidden && hintFrom && world.phase === "playing" &&
@@ -413,4 +416,14 @@ showPanel("intro");
 const artReady = Promise.all(drawings.map(decode)).then(setArt).catch(() => {}).finally(() => { artLoaded = true; });
 requestAnimationFrame(frame);
 
-if ("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js");
+// Phones allow sound only after a tap (when the finger lifts), click or key press.
+for (const type of ["pointerup", "touchend", "click", "keydown"]) document.addEventListener(type, () => sound.unlock(), true);
+
+// When an update takes over in the background, show it straight away unless a swim is under way.
+if ("serviceWorker" in navigator) {
+  const updating = Boolean(navigator.serviceWorker.controller);
+  navigator.serviceWorker.register("./sw.js");
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (updating && world.phase === "ready") location.reload();
+  });
+}
