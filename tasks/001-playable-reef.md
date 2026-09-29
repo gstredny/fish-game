@@ -1,6 +1,6 @@
 # Playable reef
 
-Status: Open — browser verification blocked by this session's sandbox
+Status: Open — pushed to GitHub; browser verification blocked by this session's sandbox
 
 ## Intent
 
@@ -30,6 +30,9 @@ Today a playable local game exists, but this environment cannot run its local se
 - 2026-09-29: Review verification: `npm test` passed 7/7 with 0 failed and 0 skipped; `node --check` passed for all four JavaScript runtime files; the app asset check found all 10 referenced local files. Browser play and screenshot criteria remain open.
 - 2026-09-29: Added a regression test for replacement fish entering the visible play area. Red run: `npm test` passed 7/8, failed 1/8 because replacements could spawn below the screen and never swim vertically into view.
 - 2026-09-29: Spawned replacements just beyond the left or right edge, facing inward, with their vertical position inside the play area. Green run: `npm test` passed 8/8 with 0 failed and 0 skipped; `node --check` passed for the four runtime JavaScript files.
+- 2026-09-29: Publication preflight: `npm test` passed 8/8 with 0 failed and 0 skipped; runtime JavaScript syntax checks passed. Committed the game as `118a240` after checking the 16 staged paths and passing the gitleaks hook.
+- 2026-09-29: `gh repo create gstredny/fish-game --public` failed with a connection error. Read-only GitHub API calls succeeded and confirmed the repo was absent.
+- 2026-09-29: `gh api -X POST user/repos` created the public repository; `git push -u origin master` pushed `118a240`. GitHub Pages is not configured, and live browser verification remains open.
 
 ## Evidence
 
@@ -38,3 +41,5 @@ Today a playable local game exists, but this environment cannot run its local se
 - Manifest/cache asset check → `Verified 12 manifest/cache asset paths`.
 - `sips -g pixelWidth -g pixelHeight icons/fish-192.png icons/fish-512.png` → 192×192 and 512×512.
 - `git status --short` → only the intended new project files; no other repository changes.
+- `git ls-remote origin refs/heads/master` → `118a240492a3c89da0cf23ad731d4029dd6d33f1 refs/heads/master`.
+- `gh repo view gstredny/fish-game --json name,url,visibility,defaultBranchRef` → public repository, URL `https://github.com/gstredny/fish-game`, default branch `master`.
