@@ -15,7 +15,7 @@ George: "Are you saying sound is left? … Just get the sound of the main things
   - a soft "bonk" when a big fish bumps it;
   - a fanfare on becoming the shark;
   - a gentle three-note tune on game over.
-- Sound starts after the first tap, as phones require. The iPhone's silent switch and volume buttons control it.
+- Sound starts after the first tap, as phones require. The game's speaker button (🔊/🔇) turns the sounds and the voice off together. The iPhone's silent switch and volume buttons also control the sounds.
 - From the next update on, a new version shows the first time the game is opened, as long as nobody is mid-swim.
 
 ### Smoke test (no code, just clicks)
@@ -27,9 +27,7 @@ George: "Are you saying sound is left? … Just get the sound of the main things
 
 ### Out of scope for this contract
 - Background music.
-- A separate sound on/off button. The ocean-learning branch adds a voice switch; the two should share one switch when that lands.
-- The fish-spawn "column" (the ocean-learning branch rewrites spawning).
-- The reef check's flakiness (the ocean-learning branch edits the same lines).
+- A separate sound button: the voice's speaker button now controls both.
 
 ## Done criteria
 
@@ -53,6 +51,16 @@ George: "Are you saying sound is left? … Just get the sound of the main things
   - `browser-autoplay` reaches shark.
 
 ## Attempt log
+
+- 2026-09-29: George: "everything's merged … merge everything into yours".
+  - Brought `master` into this branch after ocean learning (#2) and the start-screen change (#3). The only conflict was the offline cache name, now v12.
+  - The speaker button now mutes sounds as well as the voice; its label says "sound".
+  - Sound checks mark every animal as met, so fact cards don't interrupt.
+  - `npm test`: 72 passed.
+  - Browser checks all pass: `browser-sound`, `browser-update`, `browser-check` (drawing), `browser-learn`, `browser-sideways`, `browser-play` desktop/phone, `browser-autoplay`, and `browser-reef` 3 of 3.
+- 2026-09-29: Two follow-ups held until ocean learning landed:
+  - **New fish arrived in a column at the screen edge.** Every replacement spawned exactly 45px outside it, and big fish poked into view. They now start fully off screen (size × 1.6), plus a random 0–30% of the screen width. New test "new fish swim in from off screen at spread-out distances"; with the change removed, it fails.
+  - **`browser-reef.mjs` was flaky at leaving the shelter.** The shark from the shelter step could bump the fish on the way out, then the next bump took hearts from 2 to 1 before the check saw 2. The check now clears the water first, asserts no heart is lost leaving, then asserts exactly one heart is lost to the bump. It passed 3 of 3; it failed 1–2 of 3 before.
 
 - 2026-09-29: Sound lives in `src/sound.js` and is hooked into `main.js` with one line in the game loop and one unlock listener. This keeps the collision small with the ocean-learning branch, which rewrites much of `main.js`.
   - The unlock listens on `document`, because both app-test fixtures keep one listener per event type on `window`.

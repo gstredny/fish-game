@@ -58,3 +58,14 @@ test("a browser without Web Audio simply stays quiet", () => {
   assert.equal(sound.ready, false);
   assert.equal(sound.play("eat"), false);
 });
+
+test("the speaker button's off switch silences the sounds too", () => {
+  const sound = createSound(FakeAudio);
+  sound.unlock();
+  sound.setMuted(true);
+  const before = FakeAudio.tones;
+  assert.equal(sound.play("eat"), false);
+  assert.equal(FakeAudio.tones, before);
+  sound.setMuted(false);
+  assert.equal(sound.play("eat"), true);
+});

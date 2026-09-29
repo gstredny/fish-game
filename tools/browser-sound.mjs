@@ -9,6 +9,7 @@ import assert from "node:assert/strict";
 import { createServer } from "node:http";
 import { readFileSync, statSync } from "node:fs";
 import { extname, join, normalize } from "node:path";
+import { KINDS } from "../src/species.js";
 
 let playwright;
 try {
@@ -36,6 +37,9 @@ const server = createServer((request, response) => {
 await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
 const base = `http://127.0.0.1:${server.address().port}/`;
 
+// Every animal counts as met, so first-meeting fact cards don't pause the swim here.
+const MET_ALL = `try { localStorage.setItem("little-fish-met-v1", ${JSON.stringify(JSON.stringify(KINDS))}); } catch {}`;
+
 // Counts every note the page plays and keeps hold of its audio engine.
 const LISTEN = `(() => {
   window.__notes = 0;
@@ -52,6 +56,7 @@ try {
     const context = await browser.newContext({ ...options, serviceWorkers: "block" });
     const page = await context.newPage();
     await page.addInitScript(LISTEN);
+    await page.addInitScript(MET_ALL);
     await page.route("**/src/main.js", async route => {
       const response = await route.fetch();
       await route.fulfill({ response, body: `${await response.text()}\nwindow.littleFish = { world };\n` });
@@ -90,6 +95,14 @@ try {
       world.invulnerable = 99;
       world.creatures = [{ ...world.player, tier: 0, wobble: 0, art: null }];
     });
+    // The speaker button silences the sounds as well as the voice.
+    const press = selector => options.hasTouch ? page.tap(selector) : page.click(selector);
+    await press("#voice-button");
+    await moment("muted snack", () => {
+      const { world } = window.littleFish;
+      world.creatures = [{ ...world.player, tier: 0, wobble: 0, art: null }];
+    });
+    await press("#voice-button");
     await moment("grow", () => {
       const { world } = window.littleFish;
       world.bites = 5;
@@ -117,12 +130,13 @@ try {
 
     console.log(`${label}: notes per moment ${JSON.stringify(heard)}`);
     assert.ok(heard.snack >= 1 && heard.snack <= 3, `${label}: a snack should go "nom"`);
+    assert.equal(heard["muted snack"], 0, `${label}: the speaker button should silence the sounds`);
     assert.ok(heard.grow >= 4, `${label}: growing should chime`);
     assert.ok(heard.bump >= 1 && heard.bump <= 2, `${label}: a bump should "bonk"`);
     assert.ok(heard.shark >= 7, `${label}: becoming the shark should play the fanfare`);
     assert.ok(heard["game over"] >= 3, `${label}: game over should play its tune`);
     assert.deepEqual(errors, [], `${label}: page errors`);
-    results.push(`${label}: silent until tapped; nom, chime, bonk, fanfare and game-over tune all play`);
+    results.push(`${label}: silent until tapped; nom, chime, bonk, fanfare and game-over tune all play; the speaker button silences them`);
     await context.close();
   }
 } finally {

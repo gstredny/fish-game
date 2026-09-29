@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { canEat, CREATURES, FORMS, nextGrowth } from "../src/rules.js";
+import { canEat, CREATURES, FORMS, isDanger, isFriend, nextGrowth } from "../src/rules.js";
 import { createWorld, dangerBehind, resetWorld, swim } from "../src/world.js";
 
 const idleInput = { keys: new Set(), pointer: null };
@@ -17,7 +17,7 @@ test("growth happens at the snack goal", () => {
   assert.deepEqual(nextGrowth(4, 99), { stage: 4, bites: 99, grew: false });
 });
 
-test("eating nearby plankton grows a sprat", () => {
+test("eating nearby plankton grows a sardine", () => {
   const world = createWorld(390, 844);
   world.phase = "playing";
   world.bites = 5;
@@ -33,8 +33,8 @@ test("a larger fish costs one heart and grants a brief safe period", () => {
   world.phase = "playing";
   world.invulnerable = 0;
   world.creatures = [
-    { x: 0, y: 0, tier: 1, direction: 1, wobble: 0 },
-    { x: 0, y: 0, tier: 1, direction: 1, wobble: 0 }
+    { x: 0, y: 0, tier: 2, direction: 1, wobble: 0 },
+    { x: 0, y: 0, tier: 2, direction: 1, wobble: 0 }
   ];
   swim(world, 0.016, idleInput, 390, 844);
   assert.equal(world.hearts, 2);
@@ -46,7 +46,7 @@ test("losing all three hearts ends the swim", () => {
   world.phase = "playing";
   for (let hit = 0; hit < 3; hit++) {
     world.invulnerable = 0;
-    world.creatures = [{ x: 0, y: 0, tier: 1, direction: 1, wobble: 0 }];
+    world.creatures = [{ x: 0, y: 0, tier: 2, direction: 1, wobble: 0 }];
     swim(world, 0.016, idleInput, 390, 844);
   }
   assert.equal(world.hearts, 0);
@@ -96,14 +96,43 @@ test("growing into a shark wins while keeping the ocean explorable", () => {
 });
 
 test("every predator is clearly bigger than the fish it hurts, every snack clearly smaller", () => {
-  for (let stage = 0; stage < FORMS.length - 1; stage++) {
-    assert.ok(CREATURES[stage + 1].size >= FORMS[stage].size * 1.25,
-      `tier ${stage + 1} (${CREATURES[stage + 1].size}) should be at least 1.25x stage ${stage} (${FORMS[stage].size})`);
-  }
   for (let stage = 0; stage < FORMS.length; stage++) {
-    assert.ok(CREATURES[stage].size <= FORMS[stage].size * 0.85,
-      `tier ${stage} (${CREATURES[stage].size}) should be at most 0.85x stage ${stage} (${FORMS[stage].size})`);
+    for (let tier = 0; tier < CREATURES.length; tier++) {
+      const ratio = CREATURES[tier].size / FORMS[stage].size;
+      if (isDanger(stage, tier)) assert.ok(ratio >= 1.25, `tier ${tier} should be at least 1.25x stage ${stage}, is ${ratio.toFixed(2)}x`);
+      if (canEat(stage, tier)) assert.ok(ratio <= 0.85, `tier ${tier} should be at most 0.85x stage ${stage}, is ${ratio.toFixed(2)}x`);
+    }
   }
+});
+
+test("the ocean is one true food chain, and your own kind is your school", () => {
+  assert.deepEqual(CREATURES.map(creature => creature.kind), ["plankton", "sardine", "mackerel", "squid", "tuna", "shark"]);
+  for (let stage = 0; stage < FORMS.length; stage++) {
+    assert.equal(CREATURES[stage + 1].kind, FORMS[stage].kind, `form ${stage} is the same animal as tier ${stage + 1}`);
+    for (let tier = 0; tier < CREATURES.length; tier++) {
+      const roles = [canEat(stage, tier), isFriend(stage, tier), isDanger(stage, tier)].filter(Boolean);
+      assert.equal(roles.length, 1, `tier ${tier} has exactly one role for stage ${stage}`);
+    }
+  }
+});
+
+test("a fish of your own kind is never eaten and never hurts", () => {
+  const world = createWorld(390, 844);
+  Object.assign(world, { phase: "playing", stage: 1, invulnerable: 0 });
+  world.creatures = [{ x: 0, y: 0, tier: 2, direction: -1, wobble: 0 }];
+  swim(world, 0.016, idleInput, 390, 844);
+  assert.equal(world.hearts, 3);
+  assert.equal(world.bites, 0);
+  assert.equal(world.creatures[0].gone, undefined);
+  assert.equal(world.creatures[0].direction, world.player.direction, "a schoolmate turns to swim your way");
+});
+
+test("a bump says who hunts whom", () => {
+  const world = createWorld(390, 844);
+  Object.assign(world, { phase: "playing", stage: 2, invulnerable: 0 });
+  world.creatures = [{ x: 0, y: 0, tier: 4, direction: 1, wobble: 0 }];
+  swim(world, 0.016, idleInput, 390, 844);
+  assert.deepEqual(world.events, [{ type: "hurt", by: "tuna" }]);
 });
 
 test("a new swim starts with a safe period and no predator close by", () => {
@@ -116,7 +145,7 @@ test("a new swim starts with a safe period and no predator close by", () => {
   }
 });
 
-test("a shark's ocean holds every kind of fish", () => {
+test("a shark's ocean holds every kind of fish, but no plankton", () => {
   const world = createWorld(1440, 900);
   world.phase = "playing";
   world.stage = 4;
@@ -125,9 +154,9 @@ test("a shark's ocean holds every kind of fish", () => {
   for (let round = 0; round < 6; round++) {
     world.creatures = [];
     swim(world, 0.016, idleInput, 1440, 900);
-    for (const creature of world.creatures) { tiers.add(creature.tier); total++; if (creature.tier === 4) sharks++; }
+    for (const creature of world.creatures) { tiers.add(creature.tier); total++; if (creature.tier === 5) sharks++; }
   }
-  assert.equal(tiers.size, 5, `only tiers ${[...tiers].sort()} spawned`);
+  assert.deepEqual([...tiers].sort(), [1, 2, 3, 4, 5], "every fish, and no plankton: great whites don't eat it");
   assert.ok(sharks / total < 0.5, `${Math.round(sharks / total * 100)}% sharks`);
 });
 
@@ -144,7 +173,7 @@ test("a bigger fish only hurts on a real bump, not a brush", () => {
   const world = createWorld(390, 844);
   world.phase = "playing";
   world.invulnerable = 0;
-  world.creatures = [{ x: 25, y: 0, tier: 1, direction: 1, wobble: 0 }];
+  world.creatures = [{ x: 25, y: 0, tier: 2, direction: 1, wobble: 0 }];
   swim(world, 0.001, idleInput, 390, 844);
   assert.equal(world.hearts, 3);
 });
@@ -187,7 +216,27 @@ test("the HUD only turns see-through for fish that can hurt the player", () => {
   world.creatures = [{ ...behindHud, tier: 0 }];
   assert.equal(dangerBehind(world, box, 390, 844), false);
   world.creatures = [{ ...behindHud, tier: 1 }];
+  assert.equal(dangerBehind(world, box, 390, 844), false, "a sardine schoolmate is no danger to a sardine");
+  world.creatures = [{ ...behindHud, tier: 2 }];
   assert.equal(dangerBehind(world, box, 390, 844), true);
-  world.creatures = [{ ...behindHud, y: 300, tier: 1 }];
+  world.creatures = [{ ...behindHud, y: 300, tier: 2 }];
   assert.equal(dangerBehind(world, box, 390, 844), false);
+});
+
+test("new fish swim in from off screen at spread-out distances, not in a column", () => {
+  const world = createWorld(844, 390);
+  world.phase = "playing";
+  world.invulnerable = 99;
+  const gaps = [];
+  for (let round = 0; round < 40; round++) {
+    world.creatures = [];
+    swim(world, 0.016, idleInput, 844, 390);
+    for (const creature of world.creatures) {
+      const gap = Math.abs(creature.x - world.camera.x) - 844 / 2 - CREATURES[creature.tier].size * 1.6;
+      gaps.push(Math.round(gap));
+    }
+  }
+  assert.ok(gaps.every(gap => gap >= 0), "every new fish starts fully off screen");
+  assert.ok(new Set(gaps).size > 50, "arrivals are spread out");
+  assert.ok(Math.max(...gaps) - Math.min(...gaps) > 150, "some come from further out than others");
 });

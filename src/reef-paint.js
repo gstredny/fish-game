@@ -1,4 +1,5 @@
 import { canPlantCoral, CORAL_RADIUS, reefResidents } from "./reef.js";
+import { paintAnemoneHome, paintClownfish } from "./animal-paint.js";
 
 export function paintOwnedReef(context, world, width, height, time) {
   const cameraX = world.camera.x - width / 2;
@@ -91,33 +92,9 @@ function paintColony(context, time) {
   context.beginPath();
   context.ellipse(0, 18, 30, 38, 0, 0, Math.PI * 2);
   context.fill();
-}
-
-function paintClownfish(context) {
-  context.fillStyle = "#ffb058";
-  context.strokeStyle = "#233f50";
-  context.lineWidth = 1;
-  context.beginPath();
-  context.moveTo(-9, 0);
-  context.lineTo(-17, -7);
-  context.lineTo(-17, 7);
-  context.closePath();
-  context.fill();
-  context.stroke();
-  context.beginPath();
-  context.ellipse(0, 0, 12, 7, 0, 0, Math.PI * 2);
-  context.fill();
-  context.stroke();
-  context.strokeStyle = "#fff9df";
-  context.lineWidth = 3;
-  for (const x of [-6, 4]) {
-    context.beginPath();
-    context.moveTo(x, -5);
-    context.lineTo(x + 1, 5);
-    context.stroke();
-  }
-  context.fillStyle = "#163b4b";
-  context.beginPath();
-  context.arc(8, -2, 1.5, 0, Math.PI * 2);
-  context.fill();
+  // Clownfish live in sea anemones on the reef; theirs grows in the middle of your coral.
+  context.save();
+  context.translate(0, 32);
+  paintAnemoneHome(context, 24, time);
+  context.restore();
 }

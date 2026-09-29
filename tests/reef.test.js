@@ -80,20 +80,20 @@ test("unavailable storage leaves a playable reef and reports save failure", () =
   assert.equal(reef.corals.length, 1);
 });
 
-test("a sprat can enter saved coral, withstand a shark, then leave and take damage", () => {
+test("a sardine can enter saved coral, withstand a shark, then leave and take damage", () => {
   const world = createWorld(390, 844, { pending: 0, corals: [{ x: 420, y: -280 }] });
   world.phase = "playing";
   world.creatures = [];
   for (let tick = 0; tick < 12; tick++) swim(world, 0.05, { keys: new Set(["ArrowRight"]), pointer: null }, 390, 844);
   assert.ok(world.sheltered, "swimming into coral grants shelter");
   world.invulnerable = 0;
-  world.creatures = [{ ...world.player, tier: 4, wobble: 0 }];
+  world.creatures = [{ ...world.player, tier: 5, wobble: 0 }];
   swim(world, 0.016, idle, 390, 844);
   assert.equal(world.hearts, 3);
   assert.equal(world.invulnerable, 0, "shelter works without start grace");
   assert.equal(world.creatures[0].gone, undefined, "shelter does not consume the shark");
   world.player.x = 420 + CORAL_RADIUS + 20;
-  world.creatures = [{ ...world.player, tier: 4, wobble: 0 }];
+  world.creatures = [{ ...world.player, tier: 5, wobble: 0 }];
   swim(world, 0.016, idle, 390, 844);
   assert.equal(world.sheltered, false);
   assert.equal(world.hearts, 2, "leaving shelter restores predator danger immediately");

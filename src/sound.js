@@ -28,6 +28,7 @@ export function createSound(AudioContextClass = globalThis.AudioContext || globa
   let context = null;
   let volume = null;
   let lastPhase = null;
+  let muted = false;
 
   function tone({ from, to = from, start = 0, length = 0.12, type = "sine", gain = 0.5 }) {
     const at = context.currentTime + start;
@@ -72,7 +73,11 @@ export function createSound(AudioContextClass = globalThis.AudioContext || globa
   };
 
   return {
+    get available() { return Boolean(AudioContextClass); },
     get ready() { return context?.state === "running"; },
+    get muted() { return muted; },
+    // The game's speaker button turns these sounds and the voice off together.
+    setMuted(value) { muted = Boolean(value); },
     // Call from a tap, click or key press; phones keep sound off until then.
     unlock() {
       if (!AudioContextClass) return;
@@ -89,7 +94,7 @@ export function createSound(AudioContextClass = globalThis.AudioContext || globa
       }
     },
     play(cue) {
-      if (context?.state !== "running" || !CUES[cue]) return false;
+      if (muted || context?.state !== "running" || !CUES[cue]) return false;
       CUES[cue]();
       return true;
     },
