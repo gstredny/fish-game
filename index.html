@@ -5,11 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
   <meta name="theme-color" content="#096681">
   <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Little Fish">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="description" content="Swim, snack, and grow from a little fish into the ruler of the reef.">
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="icons/fish.svg" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="icons/fish-192.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
   <link rel="stylesheet" href="style.css">
   <title>Little Fish, Big Ocean</title>
 </head>
@@ -34,7 +36,20 @@
     </div>
   </header>
 
-  <div id="hint" class="hint" hidden></div>
+  <div id="hint" class="hint" hidden>Move the mouse where you want to swim <span>·</span> Arrow keys work too</div>
+  <div id="pad" class="pad" hidden>
+    <svg viewBox="0 0 100 100" aria-hidden="true">
+      <path class="up" d="M50 9 64 27H36Z"/>
+      <path class="right" d="M91 50 73 64V36Z"/>
+      <path class="down" d="M50 91 36 73H64Z"/>
+      <path class="left" d="M9 50 27 36V64Z"/>
+    </svg>
+  </div>
+  <div id="reef-bar" class="reef-bar" hidden>
+    <span id="reef-status" role="status" aria-live="polite"></span>
+    <button id="plant-button" class="reef-button" type="button" hidden>Plant coral</button>
+    <button id="cancel-plant-button" class="reef-button" type="button" hidden>Keep for later</button>
+  </div>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
   <main id="overlay" class="overlay">
@@ -47,7 +62,7 @@
         <button id="draw-button" class="primary-button" type="button">Draw my fish <span aria-hidden="true">✎</span></button>
         <button id="start-button" class="text-button" type="button">Just swim</button>
       </div>
-      <div class="intro-foot">A little ocean adventure for curious swimmers</div>
+      <div id="intro-foot" class="intro-foot">A little ocean adventure for curious swimmers</div>
     </section>
 
     <section id="draw" class="panel result-panel draw-panel" hidden>
@@ -71,8 +86,9 @@
       <div id="won-mark" class="result-icon" aria-hidden="true">✦</div>
       <img id="won-art" class="won-art" alt="Your fish as a shark" hidden>
       <h2>You're the shark!</h2>
-      <p>From tiny sprat to ruler of the reef. Now every fish is on the menu.</p>
-      <button id="continue-button" class="primary-button" type="button">Explore the ocean</button>
+      <p>You earned a coral colony! Plant a home for little fish. On your next swim, hide inside it to stay safe.</p>
+      <button id="win-plant-button" class="primary-button" type="button">Plant your coral</button>
+      <button id="continue-button" class="text-button" type="button">Explore the ocean</button>
       <button id="win-restart-button" class="text-button" type="button">Swim again from the start</button>
     </section>
 
@@ -83,6 +99,11 @@
       <button id="restart-button" class="primary-button" type="button">Try again</button>
     </section>
   </main>
+
+  <div class="rotate" role="status">
+    <div class="rotate-phone" aria-hidden="true"></div>
+    <p>Turn your phone sideways to play</p>
+  </div>
 
   <script type="module" src="src/main.js"></script>
 </body>

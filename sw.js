@@ -1,4 +1,4 @@
-const CACHE = "little-fish-v3";
+const CACHE = "little-fish-v8";
 const FILES = [
   "./",
   "./index.html",
@@ -7,19 +7,25 @@ const FILES = [
   "./src/world.js",
   "./src/rules.js",
   "./src/paint.js",
+  "./src/steering.js",
+  "./src/camera.js",
+  "./src/pad.js",
   "./src/art.js",
   "./src/gallery.js",
   "./src/sketchpad.js",
+  "./src/reef.js",
+  "./src/reef-save.js",
+  "./src/reef-paint.js",
+  "./art/ocean.webp",
   "./manifest.json",
   "./icons/fish.svg",
   "./icons/fish-192.png",
-  "./icons/fish-512.png"
+  "./icons/fish-512.png",
+  "./icons/apple-touch-icon.png"
 ];
 
 self.addEventListener("install", event => {
-  // "reload" skips the browser's HTTP cache, so a new version never stores old files.
-  event.waitUntil(caches.open(CACHE).then(cache =>
-    cache.addAll(FILES.map(file => new Request(file, { cache: "reload" })))));
+  event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(FILES.map(file => new Request(file, { cache: "reload" })))));
   self.skipWaiting();
 });
 

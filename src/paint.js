@@ -1,29 +1,46 @@
 import { CREATURES, FORMS } from "./rules.js";
+import { paintOwnedReef } from "./reef-paint.js";
 import { FRAME, paintFace, paintHalo, TAIL_JOINT } from "./art.js";
 
 const NO_ART = { player: null, npc: [] };
 
+// The realistic ocean is a Blender render (tools/render-ocean.py): a 360-degree strip that wraps
+// seamlessly. Until it loads, the drawn cartoon water shows.
+const backdrop = new Image();
+backdrop.src = "art/ocean.webp";
+
 export function paintOcean(context, world, width, height, time, art = NO_ART) {
-  const cameraX = world.player.x - width / 2;
-  const cameraY = world.player.y - height / 2;
+  const cameraX = world.camera.x - width / 2;
+  const cameraY = world.camera.y - height / 2;
   paintWater(context, width, height, time, cameraX);
   paintReef(context, width, height, time, cameraX);
+  paintOwnedReef(context, world, width, height, time);
 
   for (const creature of world.creatures) {
     const x = creature.x - cameraX;
     const y = creature.y - cameraY;
     if (x < -100 || x > width + 100 || y < -100 || y > height + 100) continue;
+    const role = creature.tier > world.stage ? "predator" : "prey";
     const drawing = creature.art === null || creature.art === undefined ? null : art.npc[creature.art];
     if (creature.tier === 0) paintPlankton(context, x, y, time + creature.wobble);
-    else if (drawing) paintArtFish(context, drawing, x, y, CREATURES[creature.tier].size,
-      creature.tier, creature.direction, time + creature.wobble, false);
+    else if (drawing) paintArtFish(context, drawing, x, y, CREATURES[creature.tier].size, creature.tier,
+      creature.direction, time + creature.wobble, role);
     else paintFish(context, x, y, CREATURES[creature.tier].size, creature.tier,
-      CREATURES[creature.tier].color, creature.direction, time + creature.wobble, false);
+      CREATURES[creature.tier].color, creature.direction, time + creature.wobble, role);
   }
 
   for (const particle of world.particles) {
-    context.globalAlpha = Math.max(0, particle.life / 0.55);
+    context.globalAlpha = Math.min(1, Math.max(0, particle.life / 0.55));
     context.fillStyle = particle.color;
+    if (particle.text) {
+      context.font = "bold 22px 'Trebuchet MS', sans-serif";
+      context.textAlign = "center";
+      context.strokeStyle = "rgba(4,50,74,.75)";
+      context.lineWidth = 4;
+      context.strokeText(particle.text, particle.x - cameraX, particle.y - cameraY);
+      context.fillText(particle.text, particle.x - cameraX, particle.y - cameraY);
+      continue;
+    }
     context.beginPath();
     context.arc(particle.x - cameraX, particle.y - cameraY, 3.5, 0, Math.PI * 2);
     context.fill();
@@ -32,10 +49,11 @@ export function paintOcean(context, world, width, height, time, art = NO_ART) {
 
   if (world.invulnerable <= 0 || Math.floor(time * 9) % 2 === 0) {
     const form = FORMS[world.stage];
-    if (art.player) paintArtFish(context, art.player, width / 2, height / 2, form.size,
-      world.stage, world.player.direction, time, true);
-    else paintFish(context, width / 2, height / 2, form.size, world.stage,
-      form.color, world.player.direction, time, true);
+    const size = form.size * (1 + world.gulp * 0.8);
+    if (art.player) paintArtFish(context, art.player, world.player.x - cameraX, world.player.y - cameraY, size,
+      world.stage, world.player.direction, time, "player");
+    else paintFish(context, world.player.x - cameraX, world.player.y - cameraY, size, world.stage,
+      form.color, world.player.direction, time, "player");
   }
 }
 
@@ -44,11 +62,33 @@ export function portrait(drawing, stage) {
   const canvas = document.createElement("canvas");
   canvas.width = 300;
   canvas.height = 220;
-  paintArtFish(canvas.getContext("2d"), drawing, 175, 130, 80, stage, 1, 0, false);
+  paintArtFish(canvas.getContext("2d"), drawing, 175, 130, 80, stage, 1, 0, "portrait");
   return canvas.toDataURL("image/png");
 }
 
 function paintWater(context, width, height, time, cameraX) {
+  if (backdrop.naturalWidth) paintBackdrop(context, width, height, cameraX);
+  else paintCartoonWater(context, width, height, time, cameraX);
+
+  for (let bubble = 0; bubble < 30; bubble++) {
+    const x = ((bubble * 137.3 - cameraX * 0.18) % (width + 80) + width + 80) % (width + 80) - 40;
+    const y = ((bubble * 97.7 - time * (9 + bubble % 5) * 2) % (height + 80) + height + 80) % (height + 80) - 40;
+    context.strokeStyle = `rgba(204,252,241,${0.1 + bubble % 4 * 0.035})`;
+    context.lineWidth = 1.3;
+    context.beginPath();
+    context.arc(x, y, 2 + bubble % 4, 0, Math.PI * 2);
+    context.stroke();
+  }
+}
+
+function paintBackdrop(context, width, height, cameraX) {
+  const tile = backdrop.naturalWidth * height / backdrop.naturalHeight;
+  const left = -((cameraX * 0.2 % tile) + tile) % tile;
+  context.drawImage(backdrop, left, 0, tile, height);
+  context.drawImage(backdrop, left + tile, 0, tile, height);
+}
+
+function paintCartoonWater(context, width, height, time, cameraX) {
   const water = context.createLinearGradient(0, 0, 0, height);
   water.addColorStop(0, "#137ea0");
   water.addColorStop(0.42, "#096681");
@@ -89,40 +129,11 @@ function paintWater(context, width, height, time, cameraX) {
     }
     context.stroke();
   }
-
-  for (let bubble = 0; bubble < 30; bubble++) {
-    const x = ((bubble * 137.3 - cameraX * 0.18) % (width + 80) + width + 80) % (width + 80) - 40;
-    const y = ((bubble * 97.7 - time * (9 + bubble % 5) * 2) % (height + 80) + height + 80) % (height + 80) - 40;
-    context.strokeStyle = `rgba(204,252,241,${0.1 + bubble % 4 * 0.035})`;
-    context.lineWidth = 1.3;
-    context.beginPath();
-    context.arc(x, y, 2 + bubble % 4, 0, Math.PI * 2);
-    context.stroke();
-  }
 }
 
 function paintReef(context, width, height, time, cameraX) {
   context.save();
-  context.fillStyle = "rgba(5,54,77,.46)";
-  context.beginPath();
-  context.moveTo(0, height);
-  for (let x = 0; x <= width + 20; x += 20) {
-    context.lineTo(x, height * 0.82 + Math.sin(x * 0.009 + cameraX * 0.001) * 16);
-  }
-  context.lineTo(width, height);
-  context.fill();
-
-  const sand = context.createLinearGradient(0, height * 0.87, 0, height);
-  sand.addColorStop(0, "#0e5870");
-  sand.addColorStop(1, "#0b334f");
-  context.fillStyle = sand;
-  context.beginPath();
-  context.moveTo(0, height);
-  for (let x = 0; x <= width + 20; x += 20) {
-    context.lineTo(x, height * 0.92 + Math.sin(x * 0.015 + cameraX * 0.002) * 10);
-  }
-  context.lineTo(width, height);
-  context.fill();
+  if (!backdrop.naturalWidth) paintCartoonSeabed(context, width, height, cameraX);
 
   for (let plant = -1; plant < Math.ceil(width / 100) + 1; plant++) {
     const x = plant * 100 + 25 - ((cameraX * 0.38) % 100);
@@ -164,6 +175,29 @@ function paintReef(context, width, height, time, cameraX) {
   context.restore();
 }
 
+function paintCartoonSeabed(context, width, height, cameraX) {
+  context.fillStyle = "rgba(5,54,77,.46)";
+  context.beginPath();
+  context.moveTo(0, height);
+  for (let x = 0; x <= width + 20; x += 20) {
+    context.lineTo(x, height * 0.82 + Math.sin(x * 0.009 + cameraX * 0.001) * 16);
+  }
+  context.lineTo(width, height);
+  context.fill();
+
+  const sand = context.createLinearGradient(0, height * 0.87, 0, height);
+  sand.addColorStop(0, "#0e5870");
+  sand.addColorStop(1, "#0b334f");
+  context.fillStyle = sand;
+  context.beginPath();
+  context.moveTo(0, height);
+  for (let x = 0; x <= width + 20; x += 20) {
+    context.lineTo(x, height * 0.92 + Math.sin(x * 0.015 + cameraX * 0.002) * 10);
+  }
+  context.lineTo(width, height);
+  context.fill();
+}
+
 function paintPlankton(context, x, y, time) {
   const pulse = 1 + Math.sin(time * 3) * 0.15;
   const glow = context.createRadialGradient(x, y, 0, x, y, 15 * pulse);
@@ -179,13 +213,15 @@ function paintPlankton(context, x, y, time) {
   context.fill();
 }
 
-function paintFish(context, x, y, size, tier, color, direction, time, player) {
+// role: "player", "prey" (safe to eat, soft glow) or "predator" (teeth and a frown).
+function paintFish(context, x, y, size, tier, color, direction, time, role) {
   context.save();
   context.translate(x, y + Math.sin(time * 2.5) * 2);
   context.scale(direction, 1);
   const tail = Math.sin(time * 9) * 0.17;
 
-  if (player) paintHalo(context, size);
+  if (role === "prey") paintPreyRing(context, size);
+  if (role === "player") paintHalo(context, size);
 
   context.fillStyle = color;
   context.save();
@@ -207,6 +243,11 @@ function paintFish(context, x, y, size, tier, color, direction, time, player) {
   context.beginPath();
   context.ellipse(0, 0, size, size * (tier === 4 ? 0.46 : 0.59), 0, 0, Math.PI * 2);
   context.fill();
+  if (role === "player") {
+    context.strokeStyle = "#fffbe6";
+    context.lineWidth = Math.max(2.5, size * 0.07);
+    context.stroke();
+  }
 
   context.fillStyle = "rgba(239,255,246,.42)";
   context.beginPath();
@@ -234,8 +275,9 @@ function paintFish(context, x, y, size, tier, color, direction, time, player) {
   }
 
   paintFace(context, size, false);
+  if (role === "predator") paintPredatorFace(context, size);
 
-  if (player && tier < 4) {
+  if (role === "player" && tier < 4) {
     context.fillStyle = "#fff1b8";
     context.beginPath();
     context.arc(-size * 0.08, -size * 0.18, Math.max(2, size * 0.09), 0, Math.PI * 2);
@@ -244,11 +286,42 @@ function paintFish(context, x, y, size, tier, color, direction, time, player) {
   context.restore();
 }
 
-function paintArtFish(context, drawing, x, y, size, tier, direction, time, player) {
+// A soft ring says "you can eat me".
+function paintPreyRing(context, size) {
+  context.strokeStyle = "rgba(220,255,236,.35)";
+  context.lineWidth = 3;
+  context.beginPath();
+  context.ellipse(0, 0, size * 1.28, size * 0.9, 0, 0, Math.PI * 2);
+  context.stroke();
+}
+
+// Teeth and a frown say "keep away".
+function paintPredatorFace(context, size) {
+  context.fillStyle = "#ffffff";
+  context.beginPath();
+  context.moveTo(size * 0.58, size * 0.2);
+  for (let tooth = 0; tooth < 3; tooth++) {
+    context.lineTo(size * (0.58 + 0.11 * tooth + 0.055), size * 0.34);
+    context.lineTo(size * (0.58 + 0.11 * (tooth + 1)), size * 0.2);
+  }
+  context.closePath();
+  context.fill();
+  context.strokeStyle = "#173b52";
+  context.lineWidth = Math.max(1.5, size * 0.05);
+  context.beginPath();
+  context.moveTo(size * 0.44, -size * 0.4);
+  context.lineTo(size * 0.7, -size * 0.28);
+  context.stroke();
+}
+
+// A child's drawing, swimming: the tail layer wags, the game adds the eye and mouth,
+// sharks get a fin and gills, and the same prey/predator/player cues as the built-in fish.
+function paintArtFish(context, drawing, x, y, size, tier, direction, time, role) {
   context.save();
   context.translate(x, y + Math.sin(time * 2.5) * 2);
   context.scale(direction, 1);
-  if (player) paintHalo(context, size);
+  if (role === "prey") paintPreyRing(context, size);
+  if (role === "player") paintHalo(context, size);
 
   const left = FRAME.left * size;
   const top = FRAME.top * size;
@@ -274,6 +347,13 @@ function paintArtFish(context, drawing, x, y, size, tier, direction, time, playe
     context.stroke();
   }
   context.drawImage(drawing.body, left, top, frameWidth, frameHeight);
+  if (role === "player") {
+    context.strokeStyle = "#fffbe6";
+    context.lineWidth = Math.max(2.5, size * 0.07);
+    context.beginPath();
+    context.ellipse(0, 0, size, size * 0.59, 0, 0, Math.PI * 2);
+    context.stroke();
+  }
   if (tier === 4) {
     context.strokeStyle = "rgba(23,59,82,.55)";
     context.lineWidth = Math.max(1, size * 0.035);
@@ -286,5 +366,6 @@ function paintArtFish(context, drawing, x, y, size, tier, direction, time, playe
     context.stroke();
   }
   paintFace(context, size, true);
+  if (role === "predator") paintPredatorFace(context, size);
   context.restore();
 }

@@ -1,6 +1,6 @@
 # Draw your own fish
 
-Status: in progress
+Status: Done and on `master`; not yet tried on George's own phone.
 
 ## Intent Contract
 
@@ -66,6 +66,22 @@ Sound or voice, redrawing at each growth stage, deleting saved drawings, sharing
   - Drawn fish are shrunk from full size every frame, about 0.35ms each in headless software rendering. Not measured on a real phone.
   - A full store drops the new drawing silently.
   - The drawing panel's Swim! button sits 8px off-screen on 533×320 landscape screens.
+
+- 2026-09-29: George: "Just put everything on the main master branch so that it's live on my app on my phone."
+  - Combined this branch with `master`, which had gained 13 commits: living reef, finger then arrow steering, a moving camera, realistic ocean, and predator faces.
+  - Kept `master`'s code and re-added drawing on top.
+  - Drawn fish now wear the same prey ring, predator teeth, and player halo as built-in fish.
+  - The HUD fade uses the camera.
+  - On sideways phones, the child's fish shows large in the empty ocean beside the title, and the shark portrait sits beside the win panel.
+  - Enter on the start screen still starts swimming; on the drawing page it means Swim!.
+  - Offline cache v8. The app-level test fixture gained canvas, `createElement`, and list APIs.
+- 2026-09-29: Integration checks:
+  - `npm test`: 44 passed.
+  - `tools/browser-check.mjs`: desktop and sideways phone pass (mask, two fingers, HUD fade, shark, drawn ocean); 844×390 and 844×330 fit.
+  - `browser-sideways.mjs` passes.
+  - `browser-play` desktop/phone and `browser-autoplay` (shark) pass with no errors.
+  - `browser-reef.mjs` failed 1 of 2, at the same step as on `master` before this change.
+  - Control: HUD fade computed without the camera → "the HUD only turns see-through for fish that can hurt the player" red.
 
 ## Evidence
 

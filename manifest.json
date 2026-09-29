@@ -4,7 +4,8 @@
   "description": "Grow from a tiny sprat into the ruler of the reef.",
   "start_url": "./index.html",
   "scope": "./",
-  "display": "standalone",
+  "display": "fullscreen",
+  "orientation": "landscape",
   "background_color": "#073c5e",
   "theme_color": "#096681",
   "icons": [

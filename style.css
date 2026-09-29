@@ -23,8 +23,8 @@ button:focus-visible { outline: 3px solid #ffe49b; outline-offset: 4px; }
   position: absolute;
   z-index: 2;
   top: calc(18px + env(safe-area-inset-top));
-  left: 24px;
-  right: 24px;
+  left: max(24px, env(safe-area-inset-left));
+  right: max(24px, env(safe-area-inset-right));
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -56,6 +56,7 @@ button:focus-visible { outline: 3px solid #ffe49b; outline-offset: 4px; }
 
 .stage-art { width: 44px; height: 32px; flex: none; object-fit: contain; }
 
+/* The HUD fades when a fish that can hurt the player swims behind it. */
 .hud .growth-card, .hud .hud-actions > * { transition: opacity .25s; }
 .hud.see-through .growth-card, .hud.see-through .hud-actions > * { opacity: .22; }
 
@@ -122,6 +123,58 @@ button:focus-visible { outline: 3px solid #ffe49b; outline-offset: 4px; }
 
 .hint span { padding: 0 6px; opacity: .6; }
 
+.pad {
+  position: absolute;
+  z-index: 3;
+  left: calc(18px + env(safe-area-inset-left));
+  bottom: calc(14px + env(safe-area-inset-bottom));
+  width: clamp(120px, 38vh, 160px);
+  aspect-ratio: 1;
+  border: 2px solid rgba(221, 255, 245, .3);
+  border-radius: 50%;
+  background: rgba(5, 52, 74, .45);
+  backdrop-filter: blur(6px);
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.pad svg { display: block; width: 100%; height: 100%; pointer-events: none; }
+.pad path { fill: rgba(239, 255, 246, .75); transition: fill .08s; }
+.pad[data-dir^="1,"] .right, .pad[data-dir^="-1,"] .left,
+.pad[data-dir$=",1"] .down, .pad[data-dir$=",-1"] .up { fill: #ffdd93; }
+
+.intro-foot.install-tip { color: #fff1c9; font-size: 14px; }
+.intro-foot.install-tip strong { color: #ffdd93; }
+
+.reef-bar {
+  position: absolute;
+  z-index: 2;
+  top: calc(118px + env(safe-area-inset-top));
+  left: max(24px, env(safe-area-inset-left));
+  right: max(24px, env(safe-area-inset-right));
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #d6f5e9;
+  font-size: 12px;
+  pointer-events: none;
+}
+
+.reef-bar span { max-width: 65%; }
+
+.reef-button {
+  min-height: 44px;
+  padding: 8px 13px;
+  border: 1px solid #ffd2ad;
+  border-radius: 14px;
+  background: #ffdd93;
+  color: #244c56;
+  font-weight: 800;
+  pointer-events: auto;
+}
+
 .toast {
   position: absolute;
   z-index: 3;
@@ -131,7 +184,9 @@ button:focus-visible { outline: 3px solid #ffe49b; outline-offset: 4px; }
   font-size: clamp(24px, 4vw, 42px);
   font-weight: 800;
   text-shadow: 0 3px 18px rgba(3, 45, 65, .6);
-  white-space: nowrap;
+  max-width: calc(100% - 32px);
+  white-space: normal;
+  text-align: center;
   opacity: 0;
   transform: translate(-50%, 12px) scale(.9);
   transition: opacity .24s, transform .24s;
@@ -202,14 +257,9 @@ h1 em { color: #ffdf9c; font-style: normal; }
 }
 
 .primary-button:hover { transform: translateY(-2px); box-shadow: 0 10px 0 #d58e66, 0 20px 35px rgba(3, 35, 55, .3); }
-.primary-button:disabled { opacity: .6; cursor: progress; }
 .primary-button:active { transform: translateY(5px); box-shadow: 0 3px 0 #d58e66; }
+.primary-button:disabled { opacity: .6; cursor: progress; }
 .primary-button span { margin-left: 19px; font-size: 25px; font-weight: 400; }
-
-.intro-actions { display: flex; flex-direction: column; align-items: flex-start; }
-.intro-actions .text-button { margin: 18px 0 0 -6px; }
-.intro-art { display: block; width: 150px; height: 110px; margin: 0 0 6px -12px; object-fit: contain; transform: rotate(-6deg); }
-
 
 .intro-foot { margin-top: 31px; color: rgba(225, 252, 243, .68); font-size: 12px; letter-spacing: .02em; }
 
@@ -229,7 +279,24 @@ h1 em { color: #ffdf9c; font-style: normal; }
 .result-panel .primary-button { margin-top: 24px; }
 .text-button { display: block; margin: 23px auto 0; padding: 6px; border: 0; background: none; color: #f4fff6; text-decoration: underline; text-underline-offset: 4px; }
 
+#won { max-height: 100%; overflow-y: auto; touch-action: pan-y; }
+
+.intro-actions { display: flex; flex-direction: column; align-items: flex-start; }
+.intro-actions .text-button { margin: 18px 0 0 -6px; }
+/* The child's own fish swims in the empty ocean beside the title. */
+.intro-art {
+  position: absolute;
+  top: 50%;
+  right: max(8vw, calc(env(safe-area-inset-right) + 20px));
+  width: min(32vw, 300px);
+  aspect-ratio: 300 / 220;
+  object-fit: contain;
+  transform: translateY(-50%) rotate(-6deg);
+  pointer-events: none;
+}
+
 .draw-panel { width: min(560px, 100%); padding: 22px 22px 26px; }
+#draw { max-height: 100%; overflow-y: auto; }
 .draw-panel h2 { margin-top: 0; }
 .sketch {
   display: block;
@@ -258,13 +325,14 @@ h1 em { color: #ffdf9c; font-style: normal; }
 .won-art { display: block; width: 190px; height: 140px; margin: -10px auto -6px; object-fit: contain; }
 
 @media (max-width: 600px) {
+  .reef-bar { top: calc(103px + env(safe-area-inset-top)); left: 10px; right: 10px; font-size: 11px; }
   .hud { top: calc(10px + env(safe-area-inset-top)); left: 10px; right: 10px; }
   .growth-card { min-width: 0; width: min(230px, 58vw); padding: 10px 11px 12px; }
   .stage-row strong { font-size: 13px; }
   .stage-row span:last-child { font-size: 10px; }
   .stage-dot { width: 23px; height: 23px; }
   .stage-art { width: 36px; height: 26px; }
-  .intro-art { width: 120px; height: 88px; }
+  .intro-art { position: static; display: block; width: 120px; height: 88px; margin: 0 0 6px -12px; transform: rotate(-6deg); }
   .draw-panel { padding: 16px 14px 20px; border-radius: 22px; }
   .crayon { width: 40px; height: 40px; }
   .crayons { display: grid; grid-template-columns: repeat(4, auto); justify-content: center; gap: 10px 16px; }
@@ -282,8 +350,27 @@ h1 em { color: #ffdf9c; font-style: normal; }
   .intro-foot { margin-top: 25px; }
 }
 
-@media (max-height: 500px) and (orientation: landscape) {
-  .overlay.result-mode { padding: 10px; }
+@media (max-height: 500px) {
+  .overlay { padding-left: max(6vw, calc(env(safe-area-inset-left) + 20px)); }
+  .intro-panel .tiny-fish { display: none; }
+  .intro-panel h1 { font-size: 50px; }
+  .intro-panel p { margin-top: 12px; font-size: 16px; }
+  .intro-panel .primary-button { margin-top: 16px; }
+  .intro-foot { margin-top: 14px; }
+  .overlay.result-mode { padding: 12px; }
+  .result-panel { width: min(560px, 100%); padding: 18px 28px 20px; }
+  .result-icon { display: none; }
+  .result-panel h2 { margin-top: 0; font-size: 30px; }
+  .result-panel p { margin-top: 8px; max-width: 470px; font-size: 15px; }
+  .result-panel .primary-button { min-height: 48px; margin-top: 16px; }
+  .result-panel .text-button { margin-top: 10px; }
+  /* Sideways phones: the two start buttons sit side by side to save height. */
+  .intro-actions { flex-direction: row; align-items: center; gap: 22px; }
+  .intro-actions .text-button { margin: 16px 0 0; }
+  /* The shark portrait sits beside the win panel instead of above it. */
+  #won { overflow: visible; }
+  .result-panel { position: relative; }
+  .won-art { position: absolute; top: 50%; left: -104px; width: 120px; height: 88px; margin: 0; transform: translateY(-50%) rotate(-8deg); }
   .draw-panel { padding: 10px 16px 14px; border-radius: 20px; }
   .draw-panel h2 { font-size: 22px; }
   .sketch { width: min(100%, calc((100vh - 160px) * 14 / 9)); width: min(100%, calc((100dvh - 160px) * 14 / 9)); margin-top: 6px; }
@@ -293,6 +380,40 @@ h1 em { color: #ffdf9c; font-style: normal; }
   .draw-panel .primary-button { min-height: 44px; margin-top: 8px; }
 }
 
+.rotate { display: none; }
+
+@media (orientation: portrait) and (max-width: 600px) and (pointer: coarse) {
+  .rotate {
+    position: absolute;
+    z-index: 6;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 28px;
+    padding: 30px;
+    background: #073c5e;
+    color: #fff2b7;
+    font-size: 24px;
+    font-weight: 800;
+    text-align: center;
+  }
+  .rotate-phone {
+    width: 50px;
+    height: 84px;
+    border: 5px solid #ffdd93;
+    border-radius: 12px;
+    animation: turn-sideways 2s ease-in-out infinite;
+  }
+}
+
+@keyframes turn-sideways {
+  0%, 25% { transform: rotate(0); }
+  60%, 100% { transform: rotate(-90deg); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition-duration: 0s !important; }
+  .rotate-phone { animation: none; }
 }
