@@ -35,10 +35,18 @@ Recording George's own voice; other languages; quizzes; renaming the planted cor
 
 ## Done criteria
 
-- [ ] `npm test` passes, including the new food-chain, meeting, voice, book and whole-app learning tests; each new test was seen red with the rule it guards broken.
-- [ ] `node tools/browser-learn.mjs` passes in headless Chromium: empty book, first card with a loaded photo and its spoken text, sea-bed meeting, name tag, book replay, card and book fit at 844×390/340/330; zoo screenshots inspected.
-- [ ] `browser-sideways.mjs`, `browser-reef.mjs`, `browser-play.mjs`, `browser-autoplay.mjs` still pass.
-- [ ] Every photo is free to share, credited in `CREDITS.md` and on the card.
+- [x] `npm test` → 53 passed, 0 failed, including the new food-chain, meeting, voice, book and whole-app learning tests. Each new test was seen red with the rule it guards broken.
+- [x] `node tools/browser-learn.mjs` passes in headless Chromium 141, with no page errors:
+  - the book starts empty;
+  - the first card opens with a loaded photo and its spoken text;
+  - a sea-bed animal is met by swimming low;
+  - a known animal gets a name tag;
+  - the book replays cards;
+  - all 13 photos load;
+  - the card and book fit at 844×390, 844×340, 844×330, 667×375 and 568×320.
+  Screenshots were inspected.
+- [x] Still passing, with no console errors: `browser-sideways.mjs`, `browser-reef.mjs` (desktop and phone), `browser-play.mjs desktop|phone`, and `browser-autoplay.mjs` (shark at 24.2 s, 3 hearts).
+- [x] All 13 photos are public domain, CC BY or CC BY-SA from Wikimedia Commons, each looked at before use. Credits are on each card and in `CREDITS.md`.
 - [ ] Tried on George's iPhone: the voice speaks after tapping **Dive in**.
 
 ## Attempt log
@@ -55,3 +63,4 @@ Recording George's own voice; other languages; quizzes; renaming the planted cor
   - There was no voice switch on the start screen.
   - A grow line could cut off a card's reading.
   - The card stacked into a column on small sideways phones (568×320).
+- 2026-09-29: Photos done: 13 WebP files, 9–78 KB each. Rejected along the way: tuna caught in a net, dead or market mackerel, and a shark with its mouth wide open. With the real photos: `npm test` 53/53, and every browser check above passes. Only the iPhone check is left.
