@@ -1,0 +1,14 @@
+{
+  "name": "Little Fish, Big Ocean",
+  "short_name": "Little Fish",
+  "description": "Grow from a tiny sprat into the ruler of the reef.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#073c5e",
+  "theme_color": "#096681",
+  "icons": [
+    { "src": "icons/fish-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/fish-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

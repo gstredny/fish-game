@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#096681">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="description" content="Swim, snack, and grow from a little fish into the ruler of the reef.">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/fish.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/fish-192.png">
+  <link rel="stylesheet" href="style.css">
+  <title>Little Fish, Big Ocean</title>
+</head>
+<body>
+  <canvas id="ocean" aria-label="Underwater fish game"></canvas>
+
+  <header id="hud" class="hud" hidden>
+    <div class="growth-card">
+      <div class="stage-row">
+        <span id="stage-dot" class="stage-dot"></span>
+        <div>
+          <strong id="stage-name">Little sprat</strong>
+          <span id="growth-text">Eat plankton to grow</span>
+        </div>
+      </div>
+      <div class="progress-track"><div id="progress-fill" class="progress-fill"></div></div>
+    </div>
+    <div class="hud-actions">
+      <div id="hearts" class="hearts" aria-label="Three hearts">♥ ♥ ♥</div>
+      <button id="pause-button" class="icon-button" type="button" aria-label="Pause game">Ⅱ</button>
+    </div>
+  </header>
+
+  <div id="hint" class="hint" hidden>Touch and hold to swim <span>·</span> Arrow keys work too</div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <main id="overlay" class="overlay">
+    <section id="intro" class="panel intro-panel">
+      <div class="tiny-fish" aria-hidden="true">✦</div>
+      <h1>Little Fish,<br><em>Big Ocean.</em></h1>
+      <p>Start small. Chase your snacks. Dodge the big fish. Grow until the whole reef is yours.</p>
+      <button id="start-button" class="primary-button" type="button">Dive in <span aria-hidden="true">↗</span></button>
+      <div class="intro-foot">A little ocean adventure for curious swimmers</div>
+    </section>
+
+    <section id="paused" class="panel result-panel" hidden>
+      <div class="result-icon" aria-hidden="true">◌</div>
+      <h2>Taking a breather?</h2>
+      <p>The ocean will wait for you.</p>
+      <button id="resume-button" class="primary-button" type="button">Keep swimming</button>
+    </section>
+
+    <section id="won" class="panel result-panel" hidden>
+      <div class="result-icon" aria-hidden="true">✦</div>
+      <h2>You're the shark!</h2>
+      <p>From tiny sprat to ruler of the reef. Now every fish is on the menu.</p>
+      <button id="continue-button" class="primary-button" type="button">Explore the ocean</button>
+      <button id="win-restart-button" class="text-button" type="button">Swim again from the start</button>
+    </section>
+
+    <section id="gameover" class="panel result-panel" hidden>
+      <div class="result-icon" aria-hidden="true">♡</div>
+      <h2>One more swim?</h2>
+      <p>Every great shark starts out little.</p>
+      <button id="restart-button" class="primary-button" type="button">Try again</button>
+    </section>
+  </main>
+
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>
