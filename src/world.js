@@ -37,7 +37,8 @@ export function swim(world, seconds, input, width, height) {
   world.invulnerable = Math.max(0, world.invulnerable - step);
   world.gulp = Math.max(0, world.gulp - step);
   movePlayer(world, input, step, width, height);
-  followPlayer(world.camera, world.player, width, height);
+  followPlayer(world.camera, world.player, width, height,
+    world.keepOut && { ...world.keepOut, r: world.keepOut.r + FORMS[world.stage].size * 1.4 });
   const wasSheltered = world.sheltered;
   world.sheltered = isSheltered(world);
 

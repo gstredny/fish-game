@@ -18,11 +18,12 @@ const PORTRAIT_PHONE = "(orientation: portrait) and (max-width: 600px) and (poin
 const input = { keys: new Set(), pointer: null, pad: null };
 const steering = createSteering(input);
 const pad = document.querySelector("#pad");
-const touchFirst = window.matchMedia?.("(pointer: coarse)").matches;
+let touchFirst = window.matchMedia?.("(pointer: coarse)").matches;
 const installed = window.matchMedia?.("(display-mode: standalone), (display-mode: fullscreen)").matches ||
   navigator.standalone === true;
 const iPhone = /iP(hone|od|ad)/.test(navigator.userAgent) ||
   (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+const padThumbs = new Map();
 let padOwner = null;
 let installPrompt = null;
 let width = window.innerWidth;
@@ -80,6 +81,14 @@ function rememberReef() {
 function showPad(visible) {
   pad.hidden = !touchFirst || !visible;
   if (pad.hidden) releasePad();
+  placePad();
+}
+
+// The camera keeps the fish out from under the pad.
+function placePad() {
+  if (pad.hidden) return void (world.keepOut = null);
+  const box = pad.getBoundingClientRect();
+  world.keepOut = { x: box.left + box.width / 2, y: box.top + box.height / 2, r: box.width / 2 };
 }
 
 function aimPad(event) {
@@ -89,6 +98,7 @@ function aimPad(event) {
 }
 
 function releasePad() {
+  padThumbs.clear();
   padOwner = null;
   input.pad = null;
   pad.setAttribute("data-dir", "");
@@ -97,11 +107,11 @@ function releasePad() {
 function startPlanting() {
   if (!world.reef.pending) return;
   steering.clear();
-  showPad(false);
   input.keys.clear();
   world.phase = "planting";
   world.plantSpot = { x: world.player.x + Math.min(120, width / 4), y: world.player.y + 80 };
   showPanel(null);
+  showPad(false);
   hint.hidden = true;
   updateHud();
 }
@@ -158,6 +168,7 @@ function frame(timestamp) {
   const seconds = previousFrame ? (timestamp - previousFrame) / 1000 : 0;
   previousFrame = timestamp;
   visualTime += Math.min(seconds, 0.05);
+  if (!pad.hidden) placePad();
   swim(world, seconds, input, width, height);
   paintOcean(context, world, width, height, visualTime);
 
@@ -190,16 +201,34 @@ canvas.addEventListener("pointerup", event => steering.up(event));
 canvas.addEventListener("pointercancel", event => steering.up(event));
 canvas.addEventListener("pointerleave", event => steering.leave(event));
 
+// The newest thumb on the pad steers; if it lifts, a thumb still down takes over.
 pad.addEventListener("pointerdown", event => {
-  if (padOwner !== null) return;
-  padOwner = event.pointerId;
   pad.setPointerCapture(event.pointerId);
+  padThumbs.set(event.pointerId, event);
+  padOwner = event.pointerId;
   aimPad(event);
 });
-pad.addEventListener("pointermove", event => { if (event.pointerId === padOwner) aimPad(event); });
+pad.addEventListener("pointermove", event => {
+  if (!padThumbs.has(event.pointerId)) return;
+  padThumbs.set(event.pointerId, event);
+  if (event.pointerId === padOwner) aimPad(event);
+});
 for (const type of ["pointerup", "pointercancel", "lostpointercapture"]) {
-  pad.addEventListener(type, event => { if (event.pointerId === padOwner) releasePad(); });
+  pad.addEventListener(type, event => {
+    if (!padThumbs.delete(event.pointerId) || event.pointerId !== padOwner) return;
+    const [next] = [...padThumbs.values()].slice(-1);
+    if (!next) return releasePad();
+    padOwner = next.pointerId;
+    aimPad(next);
+  });
 }
+// A touchscreen laptop reports a mouse first; the first real touch brings up the arrows.
+window.addEventListener("pointerdown", event => {
+  if (touchFirst || event.pointerType !== "touch") return;
+  touchFirst = true;
+  hint.innerHTML = "Hold an arrow to swim";
+  if (world.phase === "playing") showPad(true);
+}, true);
 
 window.addEventListener("keydown", event => {
   if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " "].includes(event.key)) event.preventDefault();
@@ -239,15 +268,19 @@ if (iPhone && !installed) {
   introFoot.innerHTML = 'Full screen: tap <strong>Share</strong>, then <strong>Add to Home Screen</strong>';
   introFoot.classList.add("install-tip");
 }
+const footText = introFoot.innerHTML;
 window.addEventListener("beforeinstallprompt", event => {
+  if (!touchFirst) return;
   event.preventDefault();
   installPrompt = event;
   introFoot.innerHTML = '<button id="install-button" class="text-button" type="button">Add to home screen</button>';
   document.querySelector("#install-button").addEventListener("click", () => {
     installPrompt?.prompt();
     installPrompt = null;
+    introFoot.innerHTML = footText;
   });
 });
+window.addEventListener("appinstalled", () => { installPrompt = null; introFoot.innerHTML = footText; });
 
 resize();
 updateHud();

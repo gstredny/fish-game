@@ -76,7 +76,7 @@ const padPoint = async (dx, dy) => {
 };
 const padVisible = () => evaluate(`(() => { const pad = document.querySelector("#pad"); return !pad.hidden && getComputedStyle(pad).display !== "none"; })()`);
 const fitsOnScreen = selector => evaluate(`(() => { const r = document.querySelector("${selector}").getBoundingClientRect();
-  return r.top >= 0 && r.bottom <= innerHeight && r.left >= 0 && r.right <= innerWidth; })()`);
+  return r.width > 0 && r.height > 0 && r.top >= 0 && r.bottom <= innerHeight && r.left >= 0 && r.right <= innerWidth; })()`);
 
 await page.send("Page.enable"); await page.send("Runtime.enable");
 await page.send("Network.setBypassServiceWorker", { bypass: true });
@@ -107,6 +107,22 @@ await touch("touchEnd");
 await sleep(150);
 assert.equal(await evaluate("__game.input.pad"), null, "lifting the thumb should stop the arrows");
 
+// Two thumbs on the pad: when the newer one lifts, the one still down keeps steering.
+const right = await padPoint(1, 0), up = await padPoint(0, -1);
+await page.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x: right.x, y: right.y, id: 1 }] });
+await page.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x: right.x, y: right.y, id: 1 }, { x: up.x, y: up.y, id: 2 }] });
+await sleep(150);
+const bothDown = await evaluate("JSON.stringify(__game.input.pad)");
+// touchEnd lists the touches that lift.
+await page.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [{ x: up.x, y: up.y, id: 2 }] });
+await sleep(150);
+const oneLeft = await evaluate("JSON.stringify(__game.input.pad)");
+await touch("touchEnd");
+console.log("2b. two thumbs, newer lifts:", bothDown, "->", oneLeft);
+assert.equal(bothDown, JSON.stringify({ x: 0, y: -1 }), "the newer thumb should steer");
+assert.equal(oneLeft, JSON.stringify({ x: 1, y: 0 }), "the thumb still down should take over");
+await sleep(150);
+
 // A finger on the water must not pull the fish under it (that hid the fish).
 const beforeFinger = await fishOnScreen();
 await touch("touchStart", beforeFinger.x + 150, beforeFinger.y + 60);
@@ -117,13 +133,33 @@ console.log("3. finger held on the water:", JSON.stringify({ beforeFinger, after
 assert.ok(Math.hypot(afterFinger.x - beforeFinger.x, afterFinger.y - beforeFinger.y) < 3, "a finger on the water should not move the fish");
 
 const left = await padPoint(-1, 0);
+const cameraBefore = (await fishOnScreen()).camera[0];
 await touch("touchStart", left.x, left.y);
-await sleep(2500);
-const edge = await fishOnScreen();
+let edge = await fishOnScreen();
+for (let wait = 0; wait < 60 && edge.camera[0] > cameraBefore - 40; wait++) { await sleep(100); edge = await fishOnScreen(); }
 await touch("touchEnd");
 console.log("3b. left arrow held (ocean should scroll):", JSON.stringify(edge));
 await shot("03-edge-scroll");
-assert.ok(edge.camera[0] < -50, "holding left should scroll the ocean");
+assert.ok(edge.camera[0] <= cameraBefore - 40, "holding left should scroll the ocean");
+
+// Opened from the iPhone home screen, the notch pushes the pad inward; swimming
+// down-left must scroll the ocean rather than tuck the fish under the pad.
+await page.send("Emulation.setSafeAreaInsetsOverride", { insets: { left: 47, right: 47, bottom: 21 } });
+await sleep(300);
+const downLeft = await padPoint(-0.7, 0.7);
+await touch("touchStart", downLeft.x, downLeft.y);
+let closest = Infinity;
+for (let sample = 0; sample < 20; sample++) {
+  await sleep(150);
+  closest = Math.min(closest, await evaluate(`(() => { const w = __game.world, pad = document.querySelector("#pad").getBoundingClientRect();
+    const x = w.player.x - w.camera.x + innerWidth / 2, y = w.player.y - w.camera.y + innerHeight / 2;
+    return Math.hypot(x - pad.left - pad.width / 2, y - pad.top - pad.height / 2) - pad.width / 2; })()`));
+}
+await shot("03c-down-left-with-notch");
+await touch("touchEnd");
+await page.send("Emulation.setSafeAreaInsetsOverride", { insets: {} });
+console.log("3c. down-left with a notch: closest gap between fish centre and pad edge:", Math.round(closest));
+assert.ok(closest >= 16, "the fish swam under the arrow pad");
 await evaluate("__game.world.invulnerable = 999");
 
 // A child steers at the nearest snack with the arrows, for up to 20 seconds.
@@ -160,6 +196,13 @@ await sleep(250);
 console.log("5. grow message:", JSON.stringify(await evaluate("document.querySelector('#toast').textContent")));
 await shot("05-grow-message");
 
+await tapButton("#pause-button");
+await sleep(300);
+assert.equal(await padVisible(), false, "arrow pad should hide while paused");
+await tapButton("#resume-button");
+await sleep(300);
+assert.equal(await padVisible(), true, "arrow pad should come back after resuming");
+
 await size(390, 844);
 await sleep(500);
 console.log("6. turned upright: phase =", await evaluate("__game.world.phase"),
@@ -183,9 +226,33 @@ for (const height of [390, 340, 330]) {
   await sleep(300);
   const wonFits = await fitsOnScreen("#won .text-button") && await fitsOnScreen("#continue-button");
   await shot(`08-won-844x${height}`);
+  assert.equal(await padVisible(), false, "arrow pad should hide on the win screen");
+  if (height === 390) {
+    await tapButton("#win-plant-button");
+    await sleep(300);
+    assert.equal(await evaluate("__game.world.phase"), "planting");
+    assert.equal(await padVisible(), false, "arrow pad should hide while planting coral");
+  }
   console.log(`8. 844x${height}: whole start screen fits: ${introFits}; win panel buttons fit: ${wonFits}`);
   assert.ok(introFits && wonFits, `844x${height}: start or win screen does not fit`);
 }
+
+// A touchscreen laptop reports a mouse as its main pointer; its first touch should bring up the arrows.
+await size(1280, 800);
+const { identifier } = await page.send("Page.addScriptToEvaluateOnNewDocument", { source:
+  "const realMatch = window.matchMedia.bind(window); window.matchMedia = q => q.includes('coarse') ? { matches: false, media: q, addEventListener() {}, removeEventListener() {} } : realMatch(q);" });
+await page.send("Page.reload", { ignoreCache: true });
+for (let wait = 0; wait < 50 && !(await evaluate("Boolean(window.__game)")); wait++) await sleep(100);
+await sleep(300);
+await evaluate("document.querySelector('#start-button').click()");
+await sleep(300);
+const padBeforeTouch = await padVisible();
+await tap(900, 300);
+await sleep(200);
+const padAfterTouch = await padVisible();
+await page.send("Page.removeScriptToEvaluateOnNewDocument", { identifier });
+console.log("9. touchscreen laptop: pad before a touch:", padBeforeTouch, "after:", padAfterTouch);
+assert.ok(!padBeforeTouch && padAfterTouch, "a touch on a mouse-first screen should bring up the arrow pad");
 
 console.log("errors:", errors.length ? errors.join("\n") : "none");
 assert.deepEqual(errors, [], "page errors");
