@@ -1,7 +1,7 @@
 # A reef that remembers
 
 Date: 2026-09-29
-Status: Gameplay committed locally on `master` (not pushed); Blender artwork and live browser verification remain open.
+Status: Gameplay committed and pushed to origin/master; Blender artwork and live browser verification remain open.
 
 ## Intent contract
 
@@ -38,10 +38,11 @@ Today each new swim resets the ocean. After this slice, reaching the shark earns
 - 2026-09-29: George requested commit and push. Confirmed `master`, origin `https://github.com/gstredny/fish-game.git`, no other active fish-game session, and an initially empty index. `npm test` → 26 passed, 0 failed, 0 skipped; syntax checks and `git diff --check` passed. Initially staged only the eight new living-reef files. Prepared baseline/final snapshots in `/private/tmp/fish-reef-commit-7w4jrpb2` to split required earlier gameplay fixes from the new feature.
 - 2026-09-29: `git restore --staged --` for the eight new files failed with `fatal: Unable to create '.../fish-game/.git/index.lock': Operation not permitted` (exit 128); the following source replacement did not run. The separate attempt to stage the dependency fixes also failed with the same filesystem error (exit 128). Its targeted game/steering check passed 13, failed 0, skipped 0. Stopped Git mutations rather than bypassing this session's permissions. No commit was created and no push occurred. Read-only comparison confirmed all five shared source/document files still match the final reef snapshots. The original eight new reef files remain staged; other changes remain unstaged.
 - 2026-09-29: Claude Code session with Git write access. No `.git/index.lock` existed; the earlier failure was the Codex sandbox only. Full tree `npm test` → 26 passed, 0 failed, 0 skipped. Applied the prepared split through the index (working tree untouched): `617c7ec` browser play scripts; `4bd7964` earlier gameplay fixes using the baseline snapshots, whose exported index snapshot passed `npm test` → 13 passed, 0 failed, 0 skipped; then the living reef on top. Not pushed.
+- 2026-09-29: George reaffirmed commit authorization and requested an unlock diagnosis. Ordinary `.git` ownership/modes are normal. Local Codex config selects `default_permissions = ":workspace"` and `approval_policy = "never"`; official OpenAI docs confirm that workspace mode protects `.git` as read-only and interactive approvals are needed for exceptions. The agent did not alter its own permissions. Observed the other session's completed reef commit `500c7c7` and a clean tree, then `git push origin master` succeeded: `a1b7724..500c7c7 master -> master`. `git ls-remote origin refs/heads/master` returned `500c7c703c3cc11ed491125e2cdeb0f255d9f2e0`, matching local HEAD. `npm test` → 26 passed, 0 failed, 0 skipped. Publishing code did not complete the artwork/browser criteria or deploy a site. The first publication-status patch had an outdated expected status line and made no changes; reread the current line before applying the update.
 
 ## Remaining verification
 
 - Blender MCP must be connected, or George must select canvas artwork. The current colony is original canvas art, not a Blender render.
 - `node tools/browser-reef.mjs` must run in a session that can bind the local game server and access isolated Chrome CDP. Inspect its actual desktop/phone screenshots, including the new win panel and planted colony. No screenshots exist from this session.
-- Work is uncommitted on local `master`; nothing was pushed or deployed. Existing earlier uncommitted fixes were retained.
-- The requested commit/push requires a session permitted to write `.git`. The index currently contains only the eight new reef files; do not commit them alone because the shared gameplay/UI/cache changes and required prior gameplay fixes must accompany the feature.
+- The feature and its required earlier gameplay fixes are committed and pushed to `origin/master` through `500c7c7`. No site deployment or live-site verification occurred.
+- For future protected Git writes, use the client's permissions control to select **Ask for approval**, or change the user-level default to `approval_policy = "on-request"`. The current session cannot change its own enforced permissions.
