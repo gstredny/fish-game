@@ -1,4 +1,4 @@
-const CACHE = "little-fish-v6";
+const CACHE = "little-fish-v7";
 const FILES = [
   "./",
   "./index.html",
@@ -9,6 +9,7 @@ const FILES = [
   "./src/paint.js",
   "./src/steering.js",
   "./src/camera.js",
+  "./src/pad.js",
   "./src/reef.js",
   "./src/reef-save.js",
   "./src/reef-paint.js",
@@ -16,7 +17,8 @@ const FILES = [
   "./manifest.json",
   "./icons/fish.svg",
   "./icons/fish-192.png",
-  "./icons/fish-512.png"
+  "./icons/fish-512.png",
+  "./icons/apple-touch-icon.png"
 ];
 
 self.addEventListener("install", event => {

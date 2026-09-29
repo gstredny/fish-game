@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createWorld, swim } from "../src/world.js";
+import { FORMS } from "../src/rules.js";
 
 const width = 844, height = 390;
 
@@ -30,4 +31,18 @@ test("near the edge the ocean scrolls so the fish can keep exploring", () => {
   assert.ok(world.camera.x > 0, "the view followed");
   assert.ok(world.player.x - world.camera.x <= width / 4 + 0.001, "the fish stays well on screen");
   assert.ok(world.player.x > width / 2, "the fish kept swimming past where the finger first pointed");
+});
+
+test("the ocean scrolls rather than let the fish swim under the arrow pad", () => {
+  const world = swimming();
+  world.keepOut = { x: 139, y: 281, r: 74 };
+  const input = { keys: new Set(), pointer: null, pad: { x: -1, y: 1 } };
+  let closest = Infinity;
+  for (let time = 0; time < 4; time += 0.05) {
+    swim(world, 0.05, input, width, height);
+    const x = world.player.x - world.camera.x + width / 2, y = world.player.y - world.camera.y + height / 2;
+    closest = Math.min(closest, Math.hypot(x - 139, y - 281));
+  }
+  assert.ok(closest >= 74 + FORMS[0].size * 1.4 - 0.001, `fish came within ${closest.toFixed(1)}px of the pad centre`);
+  assert.ok(world.camera.x < -100 && world.camera.y > 100, "the ocean scrolled down-left instead");
 });

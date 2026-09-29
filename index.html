@@ -5,11 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
   <meta name="theme-color" content="#096681">
   <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Little Fish">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="description" content="Swim, snack, and grow from a little fish into the ruler of the reef.">
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="icons/fish.svg" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="icons/fish-192.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
   <link rel="stylesheet" href="style.css">
   <title>Little Fish, Big Ocean</title>
 </head>
@@ -33,7 +35,15 @@
     </div>
   </header>
 
-  <div id="hint" class="hint" hidden>Touch and hold where you want to swim <span>·</span> Arrow keys work too</div>
+  <div id="hint" class="hint" hidden>Move the mouse where you want to swim <span>·</span> Arrow keys work too</div>
+  <div id="pad" class="pad" hidden>
+    <svg viewBox="0 0 100 100" aria-hidden="true">
+      <path class="up" d="M50 9 64 27H36Z"/>
+      <path class="right" d="M91 50 73 64V36Z"/>
+      <path class="down" d="M50 91 36 73H64Z"/>
+      <path class="left" d="M9 50 27 36V64Z"/>
+    </svg>
+  </div>
   <div id="reef-bar" class="reef-bar" hidden>
     <span id="reef-status" role="status" aria-live="polite"></span>
     <button id="plant-button" class="reef-button" type="button" hidden>Plant coral</button>
@@ -47,7 +57,7 @@
       <h1>Little Fish,<br><em>Big Ocean.</em></h1>
       <p>Start small. Chase your snacks. Dodge the big fish. Grow until the whole reef is yours.</p>
       <button id="start-button" class="primary-button" type="button">Dive in <span aria-hidden="true">↗</span></button>
-      <div class="intro-foot">A little ocean adventure for curious swimmers</div>
+      <div id="intro-foot" class="intro-foot">A little ocean adventure for curious swimmers</div>
     </section>
 
     <section id="paused" class="panel result-panel" hidden>

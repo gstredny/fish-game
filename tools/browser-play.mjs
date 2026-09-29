@@ -103,10 +103,12 @@ if (MODE === "desktop") {
   await sleep(600);
   console.log("after-tap-start", await hud());
   await shot("playing-start");
-  await touch("touchStart", [{ x: 640, y: 120 }]);
-  await sleep(1500); await shot("touch-hold");
-  await touch("touchMove", [{ x: 80, y: 330 }]);
-  await sleep(1500); await shot("touch-drag");
+  // Phones steer with the arrow pad: hold the right arrow, then slide the thumb to the up arrow.
+  const pad = await centerOf("#pad");
+  await touch("touchStart", [{ x: pad.x + 45, y: pad.y }]);
+  await sleep(1500); await shot("pad-right");
+  await touch("touchMove", [{ x: pad.x, y: pad.y - 45 }]);
+  await sleep(1500); await shot("pad-up");
   await touch("touchEnd", []);
   await sleep(400);
   console.log("after-touch", await hud());

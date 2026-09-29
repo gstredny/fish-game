@@ -117,12 +117,37 @@ button:focus-visible { outline: 3px solid #ffe49b; outline-offset: 4px; }
 
 .hint span { padding: 0 6px; opacity: .6; }
 
+.pad {
+  position: absolute;
+  z-index: 3;
+  left: calc(18px + env(safe-area-inset-left));
+  bottom: calc(14px + env(safe-area-inset-bottom));
+  width: clamp(120px, 38vh, 160px);
+  aspect-ratio: 1;
+  border: 2px solid rgba(221, 255, 245, .3);
+  border-radius: 50%;
+  background: rgba(5, 52, 74, .45);
+  backdrop-filter: blur(6px);
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.pad svg { display: block; width: 100%; height: 100%; pointer-events: none; }
+.pad path { fill: rgba(239, 255, 246, .75); transition: fill .08s; }
+.pad[data-dir^="1,"] .right, .pad[data-dir^="-1,"] .left,
+.pad[data-dir$=",1"] .down, .pad[data-dir$=",-1"] .up { fill: #ffdd93; }
+
+.intro-foot.install-tip { color: #fff1c9; font-size: 14px; }
+.intro-foot.install-tip strong { color: #ffdd93; }
+
 .reef-bar {
   position: absolute;
   z-index: 2;
   top: calc(118px + env(safe-area-inset-top));
-  left: 24px;
-  right: 24px;
+  left: max(24px, env(safe-area-inset-left));
+  right: max(24px, env(safe-area-inset-right));
   display: flex;
   align-items: center;
   gap: 10px;
@@ -271,6 +296,12 @@ h1 em { color: #ffdf9c; font-style: normal; }
 }
 
 @media (max-height: 500px) {
+  .overlay { padding-left: max(6vw, calc(env(safe-area-inset-left) + 20px)); }
+  .intro-panel .tiny-fish { display: none; }
+  .intro-panel h1 { font-size: 50px; }
+  .intro-panel p { margin-top: 12px; font-size: 16px; }
+  .intro-panel .primary-button { margin-top: 16px; }
+  .intro-foot { margin-top: 14px; }
   .overlay.result-mode { padding: 12px; }
   .result-panel { width: min(560px, 100%); padding: 18px 28px 20px; }
   .result-icon { display: none; }
