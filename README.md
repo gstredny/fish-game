@@ -20,6 +20,16 @@ Open [http://localhost:8778](http://localhost:8778). Move the mouse to swim, or 
 
 On a phone the game plays sideways; upright, it asks you to turn the phone. Touch and hold where you want your fish to swim. To add it to a phone's home screen and play offline, host this folder on an HTTPS website, visit it once, then choose **Add to Home Screen** in Safari or **Install app** in Chrome. The local Mac server is useful for testing, but a phone install needs an HTTPS address.
 
+## Ocean art
+
+The realistic ocean behind the fish is `art/ocean.webp`, a 360° underwater panorama rendered in Blender, so it wraps
+seamlessly as the fish swims. To change it, edit `tools/render-ocean.py`, then re-render (about 25 s on Apple GPUs)
+and bump the cache name in `sw.js`:
+
+```sh
+blender -b -P tools/render-ocean.py -- art/ocean.webp
+```
+
 ## Check the rules
 
 ```sh

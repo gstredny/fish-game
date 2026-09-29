@@ -32,7 +32,7 @@ async function openGame(storage) {
   const frames = [];
   const globals = { window, document: Object.assign(element(), {
     querySelector: selector => nodes.get(selector.slice(1)), getElementById: id => nodes.get(id)
-  }), localStorage: storage, navigator: {}, requestAnimationFrame: callback => frames.push(callback),
+  }), localStorage: storage, navigator: {}, Image: class {}, requestAnimationFrame: callback => frames.push(callback),
   setTimeout: () => 0, clearTimeout() {} };
   const originals = new Map(Object.keys(globals).map(key => [key, Object.getOwnPropertyDescriptor(globalThis, key)]));
   const close = () => {

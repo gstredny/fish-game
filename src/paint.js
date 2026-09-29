@@ -1,6 +1,11 @@
 import { CREATURES, FORMS } from "./rules.js";
 import { paintOwnedReef } from "./reef-paint.js";
 
+// The realistic ocean is a Blender render (tools/render-ocean.py): a 360-degree strip that wraps
+// seamlessly. Until it loads, the drawn cartoon water shows.
+const backdrop = new Image();
+backdrop.src = "art/ocean.webp";
+
 export function paintOcean(context, world, width, height, time) {
   const cameraX = world.camera.x - width / 2;
   const cameraY = world.camera.y - height / 2;
@@ -44,6 +49,28 @@ export function paintOcean(context, world, width, height, time) {
 }
 
 function paintWater(context, width, height, time, cameraX) {
+  if (backdrop.naturalWidth) paintBackdrop(context, width, height, cameraX);
+  else paintCartoonWater(context, width, height, time, cameraX);
+
+  for (let bubble = 0; bubble < 30; bubble++) {
+    const x = ((bubble * 137.3 - cameraX * 0.18) % (width + 80) + width + 80) % (width + 80) - 40;
+    const y = ((bubble * 97.7 - time * (9 + bubble % 5) * 2) % (height + 80) + height + 80) % (height + 80) - 40;
+    context.strokeStyle = `rgba(204,252,241,${0.1 + bubble % 4 * 0.035})`;
+    context.lineWidth = 1.3;
+    context.beginPath();
+    context.arc(x, y, 2 + bubble % 4, 0, Math.PI * 2);
+    context.stroke();
+  }
+}
+
+function paintBackdrop(context, width, height, cameraX) {
+  const tile = backdrop.naturalWidth * height / backdrop.naturalHeight;
+  const left = -((cameraX * 0.2 % tile) + tile) % tile;
+  context.drawImage(backdrop, left, 0, tile, height);
+  context.drawImage(backdrop, left + tile, 0, tile, height);
+}
+
+function paintCartoonWater(context, width, height, time, cameraX) {
   const water = context.createLinearGradient(0, 0, 0, height);
   water.addColorStop(0, "#137ea0");
   water.addColorStop(0.42, "#096681");
@@ -84,40 +111,11 @@ function paintWater(context, width, height, time, cameraX) {
     }
     context.stroke();
   }
-
-  for (let bubble = 0; bubble < 30; bubble++) {
-    const x = ((bubble * 137.3 - cameraX * 0.18) % (width + 80) + width + 80) % (width + 80) - 40;
-    const y = ((bubble * 97.7 - time * (9 + bubble % 5) * 2) % (height + 80) + height + 80) % (height + 80) - 40;
-    context.strokeStyle = `rgba(204,252,241,${0.1 + bubble % 4 * 0.035})`;
-    context.lineWidth = 1.3;
-    context.beginPath();
-    context.arc(x, y, 2 + bubble % 4, 0, Math.PI * 2);
-    context.stroke();
-  }
 }
 
 function paintReef(context, width, height, time, cameraX) {
   context.save();
-  context.fillStyle = "rgba(5,54,77,.46)";
-  context.beginPath();
-  context.moveTo(0, height);
-  for (let x = 0; x <= width + 20; x += 20) {
-    context.lineTo(x, height * 0.82 + Math.sin(x * 0.009 + cameraX * 0.001) * 16);
-  }
-  context.lineTo(width, height);
-  context.fill();
-
-  const sand = context.createLinearGradient(0, height * 0.87, 0, height);
-  sand.addColorStop(0, "#0e5870");
-  sand.addColorStop(1, "#0b334f");
-  context.fillStyle = sand;
-  context.beginPath();
-  context.moveTo(0, height);
-  for (let x = 0; x <= width + 20; x += 20) {
-    context.lineTo(x, height * 0.92 + Math.sin(x * 0.015 + cameraX * 0.002) * 10);
-  }
-  context.lineTo(width, height);
-  context.fill();
+  if (!backdrop.naturalWidth) paintCartoonSeabed(context, width, height, cameraX);
 
   for (let plant = -1; plant < Math.ceil(width / 100) + 1; plant++) {
     const x = plant * 100 + 25 - ((cameraX * 0.38) % 100);
@@ -157,6 +155,29 @@ function paintReef(context, width, height, time, cameraX) {
     context.stroke();
   }
   context.restore();
+}
+
+function paintCartoonSeabed(context, width, height, cameraX) {
+  context.fillStyle = "rgba(5,54,77,.46)";
+  context.beginPath();
+  context.moveTo(0, height);
+  for (let x = 0; x <= width + 20; x += 20) {
+    context.lineTo(x, height * 0.82 + Math.sin(x * 0.009 + cameraX * 0.001) * 16);
+  }
+  context.lineTo(width, height);
+  context.fill();
+
+  const sand = context.createLinearGradient(0, height * 0.87, 0, height);
+  sand.addColorStop(0, "#0e5870");
+  sand.addColorStop(1, "#0b334f");
+  context.fillStyle = sand;
+  context.beginPath();
+  context.moveTo(0, height);
+  for (let x = 0; x <= width + 20; x += 20) {
+    context.lineTo(x, height * 0.92 + Math.sin(x * 0.015 + cameraX * 0.002) * 10);
+  }
+  context.lineTo(width, height);
+  context.fill();
 }
 
 function paintPlankton(context, x, y, time) {
