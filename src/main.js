@@ -38,6 +38,7 @@ let visualTime = 0;
 let toastTimer;
 let hintFrom = null;
 let artLoaded = false;
+let startTicket = 0;
 
 // The child's drawings, newest first: the newest is their fish, older ones swim in the ocean.
 let storage = null;
@@ -201,8 +202,9 @@ function goFullScreen() {
 // Starts at once when saved drawings are ready, so the fish never switches mid-swim.
 function begin() {
   goFullScreen();
+  const ticket = ++startTicket;
   if (artLoaded) startSwim();
-  else artReady.then(startSwim);
+  else artReady.then(() => { if (ticket === startTicket) startSwim(); });
 }
 
 function startSwim() {
@@ -217,6 +219,7 @@ function startSwim() {
 }
 
 function openSketchpad() {
+  startTicket++;
   sketchpad.clear();
   showPanel("draw");
 }
@@ -407,10 +410,7 @@ resize();
 renderIntro();
 updateHud();
 showPanel("intro");
-const artReady = Promise.all(drawings.map(decode)).then(layers => {
-  setArt(layers);
-  artLoaded = true;
-});
+const artReady = Promise.all(drawings.map(decode)).then(setArt).catch(() => {}).finally(() => { artLoaded = true; });
 requestAnimationFrame(frame);
 
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js");

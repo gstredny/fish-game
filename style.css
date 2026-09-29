@@ -300,14 +300,17 @@ h1 em { color: #ffdf9c; font-style: normal; }
 .draw-panel h2 { margin-top: 0; }
 .sketch {
   display: block;
-  width: min(100%, calc((100vh - 270px) * 14 / 9));
-  width: min(100%, calc((100dvh - 270px) * 14 / 9));
+  width: min(100%, calc((100vh - 12vw - 255px) * 14 / 9));
+  width: min(100%, calc((100dvh - 12vw - 255px) * 14 / 9));
   aspect-ratio: 14 / 9;
   margin: 12px auto 0;
   border-radius: 20px;
   background: rgba(222, 255, 245, .1);
   touch-action: none;
   cursor: crosshair;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 .crayons { display: flex; flex-wrap: wrap; justify-content: center; gap: 9px; margin-top: 14px; }
 .crayon {
@@ -370,10 +373,23 @@ h1 em { color: #ffdf9c; font-style: normal; }
   /* The shark portrait sits beside the win panel instead of above it. */
   #won { overflow: visible; }
   .result-panel { position: relative; }
-  .won-art { position: absolute; top: 50%; left: -104px; width: 120px; height: 88px; margin: 0; transform: translateY(-50%) rotate(-8deg); }
+  .won-art {
+    position: absolute;
+    top: 50%;
+    /* Beside the panel, pulled in and shrunk on narrower phones so it stays on screen. */
+    left: max(-104px, calc((100% - 100vw) / 2 + 12px));
+    width: clamp(84px, calc((100vw - 100%) / 2 + 30px), 120px);
+    height: auto;
+    aspect-ratio: 300 / 220;
+    margin: 0;
+    transform: translateY(-50%) rotate(-8deg);
+  }
   .draw-panel { padding: 10px 16px 14px; border-radius: 20px; }
   .draw-panel h2 { font-size: 22px; }
-  .sketch { width: min(100%, calc((100vh - 160px) * 14 / 9)); width: min(100%, calc((100dvh - 160px) * 14 / 9)); margin-top: 6px; }
+  .sketch { width: min(100%, calc((100vh - 184px) * 14 / 9)); width: min(100%, calc((100dvh - 184px) * 14 / 9)); margin-top: 6px; }
+  .crayons { display: flex; }
+  /* Keep the child's fish beside the title even on the narrowest sideways phones. */
+  .intro-art { position: absolute; display: block; width: min(32vw, 300px); height: auto; margin: 0; transform: translateY(-50%) rotate(-6deg); }
   .crayons { margin-top: 8px; }
   .crayon { width: 36px; height: 36px; }
   .draw-actions .text-button { margin-top: 8px; }
@@ -411,6 +427,10 @@ h1 em { color: #ffdf9c; font-style: normal; }
 @keyframes turn-sideways {
   0%, 25% { transform: rotate(0); }
   60%, 100% { transform: rotate(-90deg); }
+}
+
+@media (max-height: 500px) and (max-width: 620px) {
+  .won-art { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {

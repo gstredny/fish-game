@@ -141,10 +141,7 @@ const fits = (page, selector) => page.evaluate(selector => {
 async function swimToShark(page, label) {
   const deadline = Date.now() + 240_000;
   let retries = 0;
-  let hintWhileSwimming = null;
   await page.evaluate(() => {
-    const start = { ...window.littleFish.world.player };
-    window.botStart = start;
     window.botTimer = setInterval(() => {
       const { world, input } = window.littleFish;
       if (world.phase !== "playing") return;
@@ -170,12 +167,7 @@ async function swimToShark(page, label) {
     }, 40);
   });
   while (Date.now() < deadline) {
-    const { phase, far, hint } = await page.evaluate(() => {
-      const { world } = window.littleFish;
-      return { phase: world.phase, hint: document.querySelector("#hint").hidden,
-        far: Math.hypot(world.player.x - window.botStart.x, world.player.y - window.botStart.y) > 300 };
-    });
-    if (phase === "playing" && far && hintWhileSwimming === null) hintWhileSwimming = hint;
+    const phase = await page.evaluate(() => window.littleFish.world.phase);
     if (phase === "won") break;
     if (phase === "gameover") {
       retries++;
@@ -186,7 +178,6 @@ async function swimToShark(page, label) {
   await page.evaluate(() => clearInterval(window.botTimer));
   const state = await page.evaluate(() => ({ stage: window.littleFish.world.stage, phase: window.littleFish.world.phase }));
   assert.deepEqual(state, { stage: 4, phase: "won" }, `${label}: did not reach shark form in time`);
-  assert.equal(hintWhileSwimming, true, `${label}: hint should hide once the player swims away`);
   return retries;
 }
 
@@ -257,6 +248,13 @@ try {
     assert.equal(await page.evaluate(() => document.querySelector("#hud").classList.contains("see-through")), false,
       `${label}: HUD should return once the big fish leaves`);
 
+    // Swim one way for two seconds: the hint should step aside.
+    await page.evaluate(() => { window.littleFish.world.invulnerable = 99; window.littleFish.input.pad = { x: 1, y: 0 }; });
+    await page.waitForTimeout(2000);
+    const hintAfterSwim = await page.evaluate(() => ({ phase: window.littleFish.world.phase, hidden: document.querySelector("#hint").hidden }));
+    await page.evaluate(() => { window.littleFish.world.invulnerable = 0; window.littleFish.input.pad = null; });
+    assert.deepEqual(hintAfterSwim, { phase: "playing", hidden: true }, `${label}: hint should hide once the player swims away`);
+
     const started = Date.now();
     const retries = await swimToShark(page, label);
     const seconds = Math.round((Date.now() - started) / 1000);
@@ -280,6 +278,22 @@ try {
     assert.deepEqual(await layerPixel(page, "player", [0, 0.3]), [63, 207, 122, 255], `${label}: the newest drawing should be the player`);
     assert.deepEqual(await layerPixel(page, "npc", [0.3, 0]), RED, `${label}: the older drawing should swim in the ocean`);
     assert.equal(await page.evaluate(() => window.littleFish.world.artCount), 1, `${label}: the older drawing should join the ocean`);
+    // Freeze the swim, park one big drawn fish in open water, and look for its red stripe on the ocean canvas.
+    const oceanPixel = await page.evaluate(async () => {
+      const { world } = window.littleFish;
+      world.phase = "frozen";
+      const spot = { x: innerWidth * 0.78, y: innerHeight * 0.3 };
+      world.creatures = [{ x: world.camera.x + spot.x - innerWidth / 2, y: world.camera.y + spot.y - innerHeight / 2,
+        tier: 4, direction: 1, wobble: 0, art: 0 }];
+      await new Promise(resolve => setTimeout(resolve, 150));
+      const canvas = document.querySelector("#ocean");
+      const ratio = canvas.width / innerWidth;
+      const pixel = [...canvas.getContext("2d").getImageData(Math.round((spot.x + 3) * ratio), Math.round(spot.y * ratio), 1, 1).data];
+      world.phase = "playing";
+      return pixel;
+    });
+    assert.ok(oceanPixel[0] > 200 && oceanPixel[1] < 140 && oceanPixel[2] < 140,
+      `${label}: the older drawing should be painted in the ocean (saw rgba ${oceanPixel})`);
     // Fish near the start are plankton, so refresh the ocean until new arrivals include drawn fish.
     const countDrawn = () => page.evaluate(() => window.littleFish.world.creatures.filter(creature => creature.art === 0).length);
     let drawnFish = await countDrawn();
@@ -297,31 +311,49 @@ try {
     await browserContext.close();
   }
 
-  // Sideways phones with the browser bars showing are the tightest fit.
-  for (const height of [390, 330]) {
-    const browserContext = await browser.newContext({ ...devices["iPhone 13 landscape"], viewport: { width: 844, height }, serviceWorkers: "block" });
+  // Sideways phones (with and without browser bars), small iPhones, and a short laptop window.
+  for (const [width, height, device] of [[844, 390, "iPhone 13 landscape"], [844, 330, "iPhone 13 landscape"],
+    [667, 375, "iPhone SE landscape"], [932, 430, "iPhone 14 Pro Max landscape"], [568, 320, "iPhone SE landscape"], [1280, 600, null]]) {
+    const browserContext = await browser.newContext({ ...(device ? devices[device] : {}), viewport: { width, height }, serviceWorkers: "block" });
     const { page, errors } = await openGame(browserContext);
     await page.click("#draw-button");
     const sketch = await page.locator("#sketch").boundingBox();
-    assert.ok(await fits(page, "#swim-button") && await fits(page, "#sketch"), `844x${height}: drawing panel does not fit the screen`);
-    assert.ok(sketch.width >= 240, `844x${height}: drawing space is too small (${Math.round(sketch.width)}px wide)`);
-    await page.screenshot({ path: join(shots, `sideways-${height}-draw.png`) });
+    const size = `${width}x${height}`;
+    const scrolls = await page.evaluate(() => { const draw = document.querySelector("#draw"); return draw.scrollHeight > draw.clientHeight + 1; });
+    assert.ok(await fits(page, "#swim-button") && await fits(page, "#clear-button") && await fits(page, "#sketch") && !scrolls,
+      `${size}: drawing panel does not fit the screen`);
+    assert.ok(sketch.width >= 200, `${size}: drawing space is too small (${Math.round(sketch.width)}px wide)`);
+    await page.screenshot({ path: join(shots, `fit-${size}-draw.png`) });
     await stroke(page, [[-1.2, 0], [0.8, 0]]);
     await page.click("#swim-button");
     await page.waitForFunction(() => document.querySelector("#overlay").hidden);
     await page.goto(base);
     await page.waitForFunction(() => window.littleFish && !document.querySelector("#intro-art").hidden);
     assert.ok(await fits(page, "#intro h1") && await fits(page, "#start-button") && await fits(page, "#draw-button") &&
-      await fits(page, "#intro-art"), `844x${height}: start screen with a saved fish does not fit`);
-    await page.screenshot({ path: join(shots, `sideways-${height}-intro.png`) });
+      await fits(page, "#intro-art"), `${size}: start screen with a saved fish does not fit`);
+    await page.screenshot({ path: join(shots, `fit-${size}-intro.png`) });
     await page.click("#start-button");
     await page.evaluate(() => { const { world } = window.littleFish; world.stage = 3; world.bites = 8; world.creatures = [{ ...world.player, tier: 3, wobble: 0, art: null }]; });
     await page.waitForFunction(() => !document.querySelector("#won").hidden);
-    assert.ok(await fits(page, "#won-art") && await fits(page, "#continue-button") && await fits(page, "#win-restart-button"),
-      `844x${height}: win screen with the shark portrait does not fit`);
-    await page.screenshot({ path: join(shots, `sideways-${height}-won.png`) });
-    assert.deepEqual(errors, [], `844x${height}: page errors`);
-    results.push(`sideways 844x${height}: drawing panel (${Math.round(sketch.width)}px drawing space), start screen and win screen fit`);
+    const portraitShown = await visible(page, "#won-art");
+    // The portrait may sit in the panel's side padding but never over its text or buttons.
+    const coversText = await page.evaluate(() => {
+      const art = document.querySelector("#won-art").getBoundingClientRect();
+      return [...document.querySelectorAll("#won h2, #won p, #won button")].some(node => {
+        const box = node.getBoundingClientRect();
+        const range = document.createRange();
+        range.selectNodeContents(node);
+        const text = node.tagName === "P" ? range.getBoundingClientRect() : box;
+        return art.right > text.left && art.left < text.right && art.bottom > text.top && art.top < text.bottom &&
+          [...range.getClientRects()].some(line => art.right > line.left + 2 && art.left < line.right && art.bottom > line.top && art.top < line.bottom);
+      });
+    });
+    assert.ok(width < 620 || portraitShown, `${size}: the shark portrait should show`);
+    assert.ok((!portraitShown || (await fits(page, "#won-art") && !coversText)) && await fits(page, "#continue-button") &&
+      await fits(page, "#win-restart-button"), `${size}: win screen does not fit, or the portrait covers its words`);
+    await page.screenshot({ path: join(shots, `fit-${size}-won.png`) });
+    assert.deepEqual(errors, [], `${size}: page errors`);
+    results.push(`${size}: drawing panel (${Math.round(sketch.width)}px drawing space), start screen and win screen fit${portraitShown ? " with the shark portrait" : ""}`);
     await browserContext.close();
   }
 } finally {

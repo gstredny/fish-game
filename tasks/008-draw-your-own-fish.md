@@ -83,6 +83,20 @@ Sound or voice, redrawing at each growth stage, deleting saved drawings, sharing
   - `browser-reef.mjs` failed 1 of 2, at the same step as on `master` before this change.
   - Control: HUD fade computed without the camera → "the HUD only turns see-through for fish that can hurt the player" red.
 
+- 2026-09-29: An independent read-only review of `d3c7ca2`, live on `master`, found nothing blocking and no regressions. Fixed:
+  - The drawing page was 24px too tall at every sideways size, cutting off Swim! and scrolling the panel. On a 1280×600 laptop window the buttons were below the fold. Sizing now allows for the overlay padding.
+  - A tap on Dive in, followed quickly by Draw a new fish while drawings were still loading, dropped the child out of the drawing page. Opening the drawing page now cancels the queued start.
+  - A failed drawing load could block starting for the whole visit. Starting now always works.
+  - The shark picture ran off the left edge at 667px. It now slides and shrinks to stay on screen and off the words, and hides only below 620px wide.
+  - The drawing space now blocks iOS long-press selection.
+  - At 568×320 the start screen and drawing page overflowed. Both now fit.
+- 2026-09-29: New browser checks:
+  - the drawing page fits without scrolling at 844×390, 844×330, 667×375, 932×430, 568×320 and 1280×600;
+  - the shark picture never covers the win screen's words;
+  - the hint hides after two seconds of swimming (the old bot-path check was flaky);
+  - a drawn fish's stripe is sampled on the ocean canvas.
+  - Controls: `const drawing = null` → "the older drawing should be painted in the ocean"; old 160px sizing → "844x390: drawing panel does not fit the screen".
+
 ## Evidence
 
 - `npm test` → 18 tests, 18 passed, 0 failed.
