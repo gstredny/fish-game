@@ -55,7 +55,7 @@ console.log("hooked:", await evaluate(`typeof window.__game`));
 await evaluate(`document.querySelector("#start-button").click()`);
 await sleep(300);
 // Controller: every 40 ms, steer toward the nearest edible creature and away from nearby predators,
-// written into the real pointer input (relative to screen centre, like a finger would be).
+// written into the real pointer input: a finger held 200 px ahead of the fish on screen.
 await evaluate(`(() => {
   const g = window.__game;
   window.__ctl = setInterval(() => {
@@ -68,7 +68,7 @@ await evaluate(`(() => {
     }
     if (food) { const ox = food.x - w.player.x, oy = food.y - w.player.y, d = Math.hypot(ox, oy) || 1; dx += ox / d; dy += oy / d; }
     const len = Math.hypot(dx, dy) || 1;
-    g.input.pointer = { x: ${W / 2} + dx / len * 200, y: ${H / 2} + dy / len * 200 };
+    g.input.pointer = { x: ${W / 2} + w.player.x - w.camera.x + dx / len * 200, y: ${H / 2} + w.player.y - w.camera.y + dy / len * 200 };
   }, 40);
 })()`);
 let last = await hud(); const t0 = Date.now(); const events = [];

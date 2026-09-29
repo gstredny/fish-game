@@ -1,10 +1,13 @@
 import { canEat, CREATURES, FORMS, nextGrowth } from "./rules.js";
 import { createReef, isSheltered } from "./reef.js";
+import { followPlayer, toWorld } from "./camera.js";
 
 export function createWorld(width, height, reef = createReef()) {
   const home = reef.corals[0];
+  const start = { x: home ? home.x - 100 : 0, y: home ? home.y : 0 };
   const world = {
-    player: { x: home ? home.x - 100 : 0, y: home ? home.y : 0, direction: 1 },
+    player: { ...start, direction: 1 },
+    camera: { ...start },
     reef,
     sheltered: false,
     stage: 0,
@@ -32,6 +35,7 @@ export function swim(world, seconds, input, width, height) {
   world.time += step;
   world.invulnerable = Math.max(0, world.invulnerable - step);
   movePlayer(world, input, step, width, height);
+  followPlayer(world.camera, world.player, width, height);
   const wasSheltered = world.sheltered;
   world.sheltered = isSheltered(world);
 
@@ -51,8 +55,8 @@ export function swim(world, seconds, input, width, height) {
   if (wasSheltered !== world.sheltered) world.events.push({ type: "shelter" });
 
   world.creatures = world.creatures.filter(creature =>
-    !creature.gone && Math.abs(creature.x - world.player.x) < width * 1.4 + 160 &&
-    Math.abs(creature.y - world.player.y) < height * 1.4 + 160
+    !creature.gone && Math.abs(creature.x - world.camera.x) < width * 1.4 + 160 &&
+    Math.abs(creature.y - world.camera.y) < height * 1.4 + 160
   );
   world.particles = world.particles.filter(particle => particle.life > 0);
   for (const particle of world.particles) {
@@ -68,18 +72,21 @@ function movePlayer(world, input, step, width, height) {
     Number(input.keys.has("ArrowLeft") || input.keys.has("a"));
   let vertical = Number(input.keys.has("ArrowDown") || input.keys.has("s")) -
     Number(input.keys.has("ArrowUp") || input.keys.has("w"));
+  let length = Math.hypot(horizontal, vertical);
+  let move = (235 - world.stage * 9) * step;
 
-  if (!horizontal && !vertical && input.pointer) {
-    horizontal = input.pointer.x - width / 2;
-    vertical = input.pointer.y - height / 2;
-    if (Math.hypot(horizontal, vertical) < 24) return;
+  // A held finger or mouse is a place to swim to: the fish heads there and stops on it.
+  if (!length && input.pointer) {
+    const target = toWorld(world.camera, input.pointer, width, height);
+    horizontal = target.x - world.player.x;
+    vertical = target.y - world.player.y;
+    length = Math.hypot(horizontal, vertical);
+    move = Math.min(move, length);
   }
-  const length = Math.hypot(horizontal, vertical);
   if (!length) return;
-  const speed = 235 - world.stage * 9;
-  world.player.x += horizontal / length * speed * step;
-  world.player.y += vertical / length * speed * step;
-  if (horizontal) world.player.direction = Math.sign(horizontal);
+  world.player.x += horizontal / length * move;
+  world.player.y += vertical / length * move;
+  if (Math.abs(horizontal) >= 1) world.player.direction = Math.sign(horizontal);
 }
 
 function meetCreature(world, creature) {
@@ -121,8 +128,8 @@ function makeCreature(world, width, height, initial) {
   const side = Math.random() < 0.5 ? -1 : 1;
   const horizontal = (Math.random() - 0.5) * width * 0.9;
   const vertical = (Math.random() - 0.5) * height * 0.84;
-  let x = world.player.x + (initial ? horizontal : side * (width / 2 + 45));
-  const y = world.player.y + vertical;
+  let x = world.camera.x + (initial ? horizontal : side * (width / 2 + 45));
+  const y = world.camera.y + vertical;
   if (initial && Math.abs(x - world.player.x) < 100 && Math.abs(vertical) < 100) x += 180;
   let tier = pickTier(world);
   if (initial && Math.hypot(x - world.player.x, vertical) < 260) tier = Math.min(tier, world.stage);

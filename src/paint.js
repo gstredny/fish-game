@@ -2,8 +2,8 @@ import { CREATURES, FORMS } from "./rules.js";
 import { paintOwnedReef } from "./reef-paint.js";
 
 export function paintOcean(context, world, width, height, time) {
-  const cameraX = world.player.x - width / 2;
-  const cameraY = world.player.y - height / 2;
+  const cameraX = world.camera.x - width / 2;
+  const cameraY = world.camera.y - height / 2;
   paintWater(context, width, height, time, cameraX);
   paintReef(context, width, height, time, cameraX);
   paintOwnedReef(context, world, width, height, time);
@@ -29,7 +29,7 @@ export function paintOcean(context, world, width, height, time) {
 
   if (world.invulnerable <= 0 || Math.floor(time * 9) % 2 === 0) {
     const form = FORMS[world.stage];
-    paintFish(context, width / 2, height / 2, form.size, world.stage,
+    paintFish(context, world.player.x - cameraX, world.player.y - cameraY, form.size, world.stage,
       form.color, world.player.direction, time, "player");
   }
 }

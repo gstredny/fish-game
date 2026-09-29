@@ -8,6 +8,7 @@ const FILES = [
   "./src/rules.js",
   "./src/paint.js",
   "./src/steering.js",
+  "./src/camera.js",
   "./src/reef.js",
   "./src/reef-save.js",
   "./src/reef-paint.js",

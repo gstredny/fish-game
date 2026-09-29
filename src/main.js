@@ -1,6 +1,7 @@
 import { FORMS } from "./rules.js";
 import { paintOcean } from "./paint.js";
 import { createSteering } from "./steering.js";
+import { toWorld } from "./camera.js";
 import { createWorld, resetWorld, swim } from "./world.js";
 import { plantCoral } from "./reef.js";
 import { loadReef, saveReef } from "./reef-save.js";
@@ -135,15 +136,14 @@ function frame(timestamp) {
 
 canvas.addEventListener("pointerdown", event => {
   if (world.phase === "planting") {
-    placeCoral(world.player.x + event.clientX - width / 2, world.player.y + event.clientY - height / 2);
+    const spot = toWorld(world.camera, { x: event.clientX, y: event.clientY }, width, height);
+    placeCoral(spot.x, spot.y);
     return;
   }
   if (steering.down(event)) canvas.setPointerCapture(event.pointerId);
 });
 canvas.addEventListener("pointermove", event => {
-  if (world.phase === "planting") world.plantSpot = {
-    x: world.player.x + event.clientX - width / 2, y: world.player.y + event.clientY - height / 2
-  };
+  if (world.phase === "planting") world.plantSpot = toWorld(world.camera, { x: event.clientX, y: event.clientY }, width, height);
   else steering.move(event);
 });
 canvas.addEventListener("pointerup", event => steering.up(event));

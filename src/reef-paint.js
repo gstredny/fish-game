@@ -1,8 +1,8 @@
 import { canPlantCoral, CORAL_RADIUS, reefResidents } from "./reef.js";
 
 export function paintOwnedReef(context, world, width, height, time) {
-  const cameraX = world.player.x - width / 2;
-  const cameraY = world.player.y - height / 2;
+  const cameraX = world.camera.x - width / 2;
+  const cameraY = world.camera.y - height / 2;
   for (const coral of world.reef.corals) {
     const x = coral.x - cameraX, y = coral.y - cameraY;
     if (x < -130 || x > width + 130 || y < -130 || y > height + 130) continue;
@@ -29,7 +29,7 @@ export function paintOwnedReef(context, world, width, height, time) {
     context.strokeStyle = "#b4ffde";
     context.lineWidth = 2;
     context.beginPath();
-    context.arc(width / 2, height / 2, 32, 0, Math.PI * 2);
+    context.arc(world.player.x - cameraX, world.player.y - cameraY, 32, 0, Math.PI * 2);
     context.stroke();
     context.restore();
   }
