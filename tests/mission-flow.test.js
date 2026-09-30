@@ -196,9 +196,11 @@ test("a fact card's video plays inside the game, and Back stops it and returns t
         if (!onLine) continue;
         assert.equal(synth.speaking, true, "the card is being read");
         app.click("card-video");
-        const player = app.nodes.get("video-player");
+        const frame = app.nodes.get("video-frame");
         assert.equal(app.nodes.get("video").hidden, false);
         assert.equal(app.nodes.get("card").hidden, true);
+        assert.equal(frame.children.length, 1);
+        const player = frame.children[0];
         assert.equal(player.src, "https://www.youtube-nocookie.com/embed/abcdefghijk?autoplay=1&rel=0&playsinline=1&modestbranding=1&iv_load_policy=3");
         assert.equal(app.nodes.get("video-title").textContent, "Crab");
         assert.match(app.nodes.get("video-credit").textContent, /Crabs for kids · Sea School/);
@@ -208,11 +210,12 @@ test("a fact card's video plays inside the game, and Back stops it and returns t
         app.key("Escape");
         assert.equal(app.nodes.get("video").hidden, true);
         assert.equal(app.nodes.get("card").hidden, false, "back on the card");
-        assert.equal(player.src, "about:blank", "the video stopped");
+        assert.equal(frame.children.length, 0, "the player is gone, so the video stopped");
         app.click("card-video");
+        assert.notEqual(frame.children[0], player, "a new player each time, so no browser history piles up");
         app.click("video-close");
         assert.equal(app.nodes.get("card").hidden, false);
-        assert.equal(player.src, "about:blank");
+        assert.equal(frame.children.length, 0);
       } finally { app.close(); }
     }
   } finally {

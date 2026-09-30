@@ -317,15 +317,23 @@ function openVideo() {
   videoOpen = true;
   document.querySelector("#video-title").textContent = SPECIES[cardKind].name;
   document.querySelector("#video-credit").textContent = `${video.title} · ${video.channel} on YouTube`;
-  document.querySelector("#video-player").src = videoEmbed(video.id);
+  // A new player each time: loading a video into the old one would add a page to the browser's
+  // history, and the Back button would bring that video back behind the card.
+  const player = document.createElement("iframe");
+  player.title = `Video about the ${SPECIES[cardKind].name.toLowerCase()}`;
+  player.setAttribute("allow", "autoplay; encrypted-media; picture-in-picture; fullscreen");
+  player.setAttribute("allowfullscreen", "");
+  player.setAttribute("referrerpolicy", "strict-origin-when-cross-origin");
+  player.src = videoEmbed(video.id);
+  document.querySelector("#video-frame").replaceChildren(player);
   showPanel("video");
 }
 
+// Removing the player stops the video, so nothing keeps playing behind the card.
 function closeVideo() {
   if (!videoOpen) return;
   videoOpen = false;
-  // A blank page stops the video, so nothing keeps playing behind the card.
-  document.querySelector("#video-player").src = "about:blank";
+  document.querySelector("#video-frame").replaceChildren();
   showPanel("card");
 }
 

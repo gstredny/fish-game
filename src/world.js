@@ -60,7 +60,7 @@ export function swim(world, seconds, input, width, height) {
     const danger = !world.sheltered && isDanger(world.stage, creature.tier);
     const pace = creature.tier === ORCA ? level.orcaChase : level.chase;
     if (danger && pace && gap > 1 && (creature.hunt || gap < level.reach)) {
-      // A hunter turns and chases, a little slower than you, so you can always get away.
+      // A hunter turns and chases, always slower than you (see LEVELS), so you can always get away.
       const speed = pace * swimSpeed(world.stage);
       if (Math.abs(world.player.x - creature.x) > 4) creature.direction = Math.sign(world.player.x - creature.x);
       creature.x += (world.player.x - creature.x) / gap * speed * step;

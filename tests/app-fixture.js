@@ -15,6 +15,7 @@ function element() {
   return {
     hidden: false, style: { setProperty() {} }, textContent: "", children,
     append: child => children.push(child), prepend: child => children.unshift(child),
+    replaceChildren: (...nodes) => children.splice(0, children.length, ...nodes),
     getContext: () => noopContext, getBoundingClientRect: () => ({ left: 0, top: 0, right: 0, bottom: 0, width: 0, height: 0 }),
     classList: { add: name => classes.add(name), remove: name => classes.delete(name),
       toggle: (name, on) => on ? classes.add(name) : classes.delete(name), contains: name => classes.has(name) },

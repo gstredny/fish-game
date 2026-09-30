@@ -32,6 +32,10 @@ export function createClips(base = "voice/", Player = globalThis.Audio, load = g
   let awake = false;
   let blocked = false;
   let ticket = 0;
+  // Which line the element is playing (0 while it plays the silence from a tap), and which line has
+  // already gone to Web Audio, so an "ended" or "error" only ever speaks for its own line.
+  let onElement = 0;
+  let fellBack = 0;
   const ready = load(`${base}manifest.json`).then(response => response.ok ? response.json() : {})
     .then(manifest => { clips = manifest?.clips ?? {}; }).catch(() => {}).then(() => { loaded = true; });
   const audio = new Player();
@@ -42,14 +46,22 @@ export function createClips(base = "voice/", Player = globalThis.Audio, load = g
     source = null;
     try { old?.stop(); } catch {}
   };
+  // iPhone puts Web Audio to sleep for calls and app switches: ask it to wake, but a line it can't
+  // play now ends, rather than keeping the voice busy or playing late.
+  const wake = context => context.state === "running" ? null : Promise.race([
+    Promise.resolve(context.resume?.()).catch(() => {}), new Promise(resolve => setTimeout(resolve, 400))]);
   const viaWebAudio = (text, mine) => {
+    if (fellBack === mine) return;
+    fellBack = mine;
     const context = audioContext();
     if (!context || context.state === "closed") return finish(mine);
-    if (context.state !== "running") context.resume?.()?.catch?.(() => {});
+    let buffer;
     Promise.resolve(load(base + clips[text])).then(response => response.arrayBuffer())
       .then(bytes => new Promise((resolve, reject) => context.decodeAudioData(bytes, resolve, reject)))
-      .then(buffer => {
+      .then(decoded => { buffer = decoded; return wake(context); })
+      .then(() => {
         if (mine !== ticket || !playing) return;
+        if (context.state !== "running") return finish(mine);
         const node = context.createBufferSource();
         node.buffer = buffer;
         node.connect(context.destination);
@@ -61,12 +73,14 @@ export function createClips(base = "voice/", Player = globalThis.Audio, load = g
         node.start();
       }).catch(() => finish(mine));
   };
-  audio.addEventListener?.("ended", () => { if (!source) playing = false; });
-  audio.addEventListener?.("error", () => { if (playing && !source && current) viaWebAudio(current, ticket); });
+  audio.addEventListener?.("ended", () => finish(onElement));
+  audio.addEventListener?.("error", () => { if (playing && onElement === ticket) viaWebAudio(current, ticket); });
   return {
     has: text => Object.prototype.hasOwnProperty.call(clips, text),
     // False until the list of recordings has arrived (or failed to).
     get loaded() { return loaded; },
+    // True once the list has arrived empty (or failed to load): every line needs the device's voice.
+    get empty() { return loaded && Object.keys(clips).length === 0; },
     ready,
     get busy() { return playing; },
     play(text) {
@@ -75,6 +89,7 @@ export function createClips(base = "voice/", Player = globalThis.Audio, load = g
       playing = true;
       current = text;
       if (blocked) return viaWebAudio(text, mine);
+      onElement = mine;
       audio.src = base + clips[text];
       Promise.resolve(audio.play?.()).then(() => { if (mine === ticket) awake = true; }).catch(error => {
         // A line cut off by the next one (or by stop) just ends.
@@ -95,6 +110,7 @@ export function createClips(base = "voice/", Player = globalThis.Audio, load = g
     // already playing a line is already awake; swapping in silence would cut its line off.
     unlock() {
       if ((awake && !blocked) || playing) return;
+      onElement = 0;
       audio.src = SILENCE;
       Promise.resolve(audio.play?.()).then(() => { awake = true; blocked = false; }).catch(() => {});
     }
@@ -110,7 +126,8 @@ export function createVoice(storage = globalThis.localStorage, synth = globalThi
   findVoice();
   synth?.addEventListener?.("voiceschanged", findVoice);
   const speaks = Boolean(synth && Utterance);
-  const busy = () => Boolean(synth?.speaking || synth?.pending || clips?.busy);
+  let waiting = null;
+  const busy = () => Boolean(waiting || synth?.speaking || synth?.pending || clips?.busy);
   const speak = text => {
     if (!speaks) return;
     const line = new Utterance(text);
@@ -120,7 +137,6 @@ export function createVoice(storage = globalThis.localStorage, synth = globalThi
     line.pitch = 1.1;
     synth.speak(line);
   };
-  let waiting = null;
   let unlocked = false;
   return {
     available: speaks || Boolean(clips),
@@ -153,7 +169,7 @@ export function createVoice(storage = globalThis.localStorage, synth = globalThi
     // recordings: with recordings, it stays out of the way of the audio element.
     unlock() {
       clips?.unlock();
-      if (unlocked || clips || !speaks) return;
+      if (unlocked || !speaks || (clips && !clips.empty)) return;
       unlocked = true;
       const line = new Utterance(" ");
       line.volume = 0;

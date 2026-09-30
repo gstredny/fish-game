@@ -193,7 +193,7 @@ export const SPECIES = {
     eats: "Fish, squid and krill",
     eatenBy: "Seals, orcas and sharks",
     say: "Penguins dive down to catch fish, squid and krill. Seals and orcas eat penguins.",
-    lines: ["Penguins are birds that swim!", "Penguins fly underwater with their wings."]
+    lines: ["Penguins are birds that swim!", "Penguins swim with their wings!"]
   },
   otter: {
     name: "Sea otter", plural: "sea otters", hello: "This is a sea otter!",

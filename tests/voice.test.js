@@ -212,6 +212,93 @@ test("with no Web Audio either, a refused recording is simply not heard", async 
   FakeAudio.next = null;
 });
 
+test("the silence a tap plays never cuts off the line that tap is loading through Web Audio", async () => {
+  FakeAudio.next = null;
+  const context = fakeContext();
+  let deliver;
+  const slow = url => url.endsWith("manifest.json") ? load(url) :
+    new Promise(resolve => { deliver = () => resolve({ ok: true, arrayBuffer: async () => ({ file: url }) }); });
+  const clips = createClips("voice/", FakeAudio, slow, () => context);
+  const audio = FakeAudio.last;
+  await settle();
+  FakeAudio.next = notAllowed();
+  clips.play("Hi!");
+  await settle();
+  deliver();
+  await settle();
+  context.playing.onended();
+  // The next tap wakes the element with silence and asks for a line, which is still refused-mode.
+  FakeAudio.next = new Promise(() => {});
+  clips.unlock();
+  clips.play("Bye!");
+  audio.listeners.ended();
+  assert.equal(clips.busy, true, "the silence ending doesn't end the line");
+  deliver();
+  await settle();
+  assert.deepEqual(context.started, ["voice/a1.mp3", "voice/b2.mp3"], "and the line is heard");
+  FakeAudio.next = null;
+});
+
+test("a clip that both errors and is refused plays once, and stop silences it", async () => {
+  FakeAudio.next = null;
+  const context = fakeContext();
+  const clips = createClips("voice/", FakeAudio, load, () => context);
+  const audio = FakeAudio.last;
+  await settle();
+  FakeAudio.next = Promise.reject(Object.assign(new Error("bad range"), { name: "NotSupportedError" }));
+  clips.play("Hi!");
+  audio.listeners.error();
+  await settle();
+  assert.deepEqual(context.started, ["voice/a1.mp3"], "one Web Audio copy, not an echo");
+  clips.stop();
+  assert.equal(context.stopped, 1);
+  FakeAudio.next = null;
+});
+
+test("a sleeping Web Audio that won't wake ends the line instead of keeping the voice busy", async () => {
+  FakeAudio.next = null;
+  const context = Object.assign(fakeContext("interrupted"), { resume: () => new Promise(() => {}) });
+  const clips = createClips("voice/", FakeAudio, load, () => context);
+  const voice = createVoice(memoryStorage(), undefined, undefined, clips);
+  await settle();
+  FakeAudio.next = notAllowed();
+  voice.say("Hi!");
+  await new Promise(resolve => setTimeout(resolve, 450));
+  await settle();
+  assert.deepEqual(context.started, [], "not started on a sleeping engine, to play late");
+  assert.equal(clips.busy, false);
+  FakeAudio.next = null;
+  assert.equal(voice.say("Bye!", { polite: true }), true, "so polite lines are said again");
+});
+
+test("a polite line doesn't replace one waiting for the recordings list", async () => {
+  let arrive;
+  const clips = createClips("voice/", FakeAudio, url => url.endsWith("manifest.json") ?
+    new Promise(resolve => { arrive = () => resolve({ ok: true, json: async () => manifest }); }) : load(url));
+  const voice = createVoice(memoryStorage(), undefined, undefined, clips);
+  FakeAudio.next = null;
+  voice.say("Hi!");
+  assert.equal(voice.say("Bye!", { polite: true }), false);
+  arrive();
+  await settle();
+  assert.equal(FakeAudio.last.src, "voice/a1.mp3");
+});
+
+test("if the recordings list can't load, a tap wakes the device's voice so lines are still heard", async () => {
+  const { synth, Utterance } = fakeSpeech();
+  const woken = [];
+  synth.speak = line => woken.push(line);
+  const clips = createClips("voice/", FakeAudio, async () => ({ ok: false }));
+  const voice = createVoice(memoryStorage(), synth, Utterance, clips);
+  voice.unlock();
+  assert.equal(woken.length, 0, "not while the list may still come");
+  await settle();
+  voice.unlock();
+  voice.unlock();
+  assert.equal(woken.length, 1, "once it has failed, one silent line");
+  assert.equal(woken[0].volume, 0);
+});
+
 test("a missing manifest leaves every line to the device voice", async () => {
   const clips = createClips("voice/", FakeAudio, async () => ({ ok: false }));
   await settle();
