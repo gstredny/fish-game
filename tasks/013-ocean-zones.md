@@ -1,7 +1,7 @@
 # Ocean zones: six places to swim, each with its own animals
 
 Date: 2026-09-30
-Status: slice 1 (coral reef + zone plumbing) done and pushed; slices 2–5 open
+Status: slices 1 (coral reef + plumbing) and 2 (the deep) done and pushed; slices 3–5 open
 Branch: `master`
 
 ## Intent Contract
@@ -114,8 +114,19 @@ Slice 1 (zones + coral reef, plus George's three asks):
       844×390 and 1280×600 (the fish switch and the zone row needed tighter mid-height styles).
 - [ ] Pushed to `origin/master` and live on GitHub Pages (sw cache `little-fish-v16`).
 
-Later slices (the deep, the bottom, kelp forest, icy sea):
-- [ ] Same checks per zone; the dark zones' screenshots show the glow and the lights.
+Slice 2 (The deep):
+- [x] `npm test` → 112 passed, 0 failed. New `tests/paint.test.js` seen red with the dark layer skipped and
+      with every friend glowing.
+- [x] Eleven animals: cards (facts sourced from memory by the helper; flags below), drawings (looked at on
+      black), pictures (each looked at; the vampire squid is a 1911 drawing, credited as such), voice, CREDITS.
+- [x] `browser-zones` deep section: the welcome line, "Little deep-sea shrimp" in the HUD, no floor animals,
+      no flee mission, the canvas corners near black (rgb sums 59 and 19), the sperm whale mission card.
+      All ten browser scripts pass again. Screenshots inspected: the deep on desktop and phone, the zoo of
+      deep drawings, the start screen with three places.
+- [x] Pushed to `origin/master` (sw cache `little-fish-v17`).
+
+Later slices (the bottom, kelp forest, icy sea):
+- [ ] Same checks per zone; the bottom's screenshots show the glow, the mud floor and the hot vent.
 
 ## Attempt log
 
@@ -144,3 +155,20 @@ Later slices (the deep, the bottom, kelp forest, icy sea):
   (sharks documented, not reef-shark-specific), "wider than a door" for a giant clam over a metre.
 - 2026-09-30: Commits on `master`: `4c34fc6` zones + coral reef, `fa74b85` voice, `950a5a2` Home / real
   fish / calmer greetings, then this write-up. Pushed to `origin/master` after this entry.
+- 2026-09-30 (slice 2, in progress): The deep. Darkness in `paint.js` (`paintDark`: a radial dark layer with a
+  hole around the player, sized by `zone.light`, then a soft light for every animal whose card has
+  `glow: true`, colour from the paint module's `GLOWS`); `tests/paint.test.js` counts the calls. Tier 0 is no
+  longer assumed to be plankton (marine snow has its own drawing). Blender palette `deep`: no floor (the sand
+  is hidden and the water box extends 200 units down so looking down is dark), faint light from above; two
+  renders were wrong first (pure black; light from below) before the third read right. Zone wired (`deep`
+  after `open`; anglerfish moves to the deep; five new friend traits; sw cache v17; README). Voice: 67 new
+  clips, 266 total. Waiting on the two helpers: `paint-deep-animals.js` and the 11 photos.
+- 2026-09-30 (slice 2 done): Photos: 10 of 11 found free (NOAA public domain mostly; the giant squid is a
+  Smithsonian specimen, the oarfish an aquarium specimen, the barreleye a hand-held trawl catch with the dome
+  deflated, the lanternfish two caught fish on deck). No free photo of a live vampire squid exists (the only
+  stills are credited NOAA/MBARI, and MBARI images are not free), so its card shows Carl Chun's 1911 plate;
+  `PHOTOS` credits may start "Drawing:" and the card's alt text follows. Fact flags from the helper, kept:
+  "among the most common fish" (lanternfish), "some of the biggest eyes" (giant squid), giant squid eats
+  viperfish and sperm whale eats viperfish (simplifications of "deep fish and squid"), vampire squid's hunters
+  ("big fish and whales of the deep", least sure). Commits `The deep: a dark zone...` and `Record the voice
+  for the deep`, then this write-up; pushed after it.
