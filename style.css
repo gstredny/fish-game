@@ -54,7 +54,6 @@ button:focus-visible { outline: 3px solid #ffe49b; outline-offset: 4px; }
   box-shadow: inset -5px -4px 0 rgba(9, 57, 78, .17), 0 0 16px rgba(255, 228, 155, .45);
 }
 
-.stage-art { width: 44px; height: 32px; flex: none; object-fit: contain; }
 
 /* The HUD fades when a fish that can hurt the player swims behind it. */
 .hud .growth-card, .hud .hud-actions > * { transition: opacity .25s; }
@@ -285,50 +284,6 @@ h1 em { color: #ffdf9c; font-style: normal; }
 
 .intro-actions { display: flex; flex-direction: column; align-items: flex-start; }
 .intro-actions .text-button { margin: 18px 0 0 -6px; }
-/* The child's own fish swims in the empty ocean beside the title. */
-.intro-art {
-  position: absolute;
-  top: 50%;
-  right: max(8vw, calc(env(safe-area-inset-right) + 20px));
-  width: min(32vw, 300px);
-  aspect-ratio: 300 / 220;
-  object-fit: contain;
-  transform: translateY(-50%) rotate(-6deg);
-  pointer-events: none;
-}
-
-.draw-panel { width: min(560px, 100%); padding: 22px 22px 26px; }
-#draw { max-height: 100%; overflow-y: auto; }
-.draw-panel h2 { margin-top: 0; }
-.sketch {
-  display: block;
-  width: min(100%, calc((100vh - 12vw - 255px) * 14 / 9));
-  width: min(100%, calc((100dvh - 12vw - 255px) * 14 / 9));
-  aspect-ratio: 14 / 9;
-  margin: 12px auto 0;
-  border-radius: 20px;
-  background: rgba(222, 255, 245, .1);
-  touch-action: none;
-  cursor: crosshair;
-  user-select: none;
-  -webkit-user-select: none;
-  -webkit-touch-callout: none;
-}
-.crayons { display: flex; flex-wrap: wrap; justify-content: center; gap: 9px; margin-top: 14px; }
-.crayon {
-  width: 44px;
-  height: 44px;
-  border: 3px solid rgba(255, 255, 255, .35);
-  border-radius: 50%;
-  background: var(--crayon);
-  transition: transform .12s;
-}
-.crayon[aria-pressed="true"] { border-color: #fff; transform: scale(1.15); box-shadow: 0 0 0 3px rgba(255, 223, 156, .7); }
-.draw-actions { display: flex; align-items: center; justify-content: center; gap: 22px; margin-top: 6px; }
-.draw-actions .text-button { margin: 18px 0 0; }
-.draw-panel .primary-button { margin-top: 18px; }
-.won-art { display: block; width: 190px; height: 140px; margin: -10px auto -6px; object-fit: contain; }
-
 @media (max-width: 600px) {
   .reef-bar { top: calc(103px + env(safe-area-inset-top)); left: 10px; right: 10px; font-size: 11px; }
   .hud { top: calc(10px + env(safe-area-inset-top)); left: 10px; right: 10px; }
@@ -336,11 +291,6 @@ h1 em { color: #ffdf9c; font-style: normal; }
   .stage-row strong { font-size: 13px; }
   .stage-row span:last-child { font-size: 10px; }
   .stage-dot { width: 23px; height: 23px; }
-  .stage-art { width: 36px; height: 26px; }
-  .intro-art { position: static; display: block; width: 120px; height: 88px; margin: 0 0 6px -12px; transform: rotate(-6deg); }
-  .draw-panel { padding: 16px 14px 20px; border-radius: 22px; }
-  .crayon { width: 40px; height: 40px; }
-  .crayons { display: grid; grid-template-columns: repeat(4, auto); justify-content: center; gap: 10px 16px; }
   .hearts { min-width: 0; padding: 8px; font-size: 14px; letter-spacing: 0; }
   .icon-button { width: 37px; height: 37px; border-radius: 12px; font-size: 17px; }
   .hud-actions { gap: 5px; }
@@ -369,38 +319,14 @@ h1 em { color: #ffdf9c; font-style: normal; }
   .result-panel p { margin-top: 8px; max-width: 470px; font-size: 15px; }
   .result-panel .primary-button { min-height: 48px; margin-top: 16px; }
   .result-panel .text-button { margin-top: 10px; }
-  /* Sideways phones: the two start buttons sit side by side to save height. */
+  /* Sideways phones: keep the start action compact. */
   .intro-actions { flex-direction: row; align-items: center; gap: 22px; }
   .intro-actions .text-button { margin: 16px 0 0; }
-  /* The shark portrait sits beside the win panel instead of above it, clear of its words. */
-  #won { overflow: visible; }
-  #won p { max-width: 400px; }
-  .result-panel { position: relative; }
-  .won-art {
-    position: absolute;
-    top: 50%;
-    /* Beside the panel, pulled in and shrunk on narrower phones so it stays on screen. */
-    left: max(-104px, calc((100% - 100vw) / 2 + 12px));
-    width: clamp(84px, calc((100vw - 100%) / 2 + 30px), 120px);
-    height: auto;
-    aspect-ratio: 300 / 220;
-    margin: 0;
-    transform: translateY(-50%) rotate(-8deg);
-  }
-  .draw-panel { padding: 10px 16px 14px; border-radius: 20px; }
-  .draw-panel h2 { font-size: 22px; }
-  .sketch { width: min(100%, calc((100vh - 184px) * 14 / 9)); width: min(100%, calc((100dvh - 184px) * 14 / 9)); margin-top: 6px; }
-  .crayons { display: flex; }
-  /* Keep the child's fish beside the title even on the narrowest sideways phones. */
-  .intro-art { position: absolute; display: block; width: min(32vw, 300px); height: auto; margin: 0; transform: translateY(-50%) rotate(-6deg); }
-  .crayons { margin-top: 8px; }
-  .crayon { width: 36px; height: 36px; }
-  .draw-actions .text-button { margin-top: 8px; }
-  .draw-panel .primary-button { min-height: 44px; margin-top: 8px; }
+
 }
 
 /* Learning: fact cards, the Ocean book, and the voice button. On the start screen the book and
-   voice sit in the empty top-right corner, clear of the start buttons and the child's drawing. */
+   voice sit in the empty top-right corner, clear of the start buttons. */
 .intro-extras {
   position: absolute;
   right: max(18px, calc(env(safe-area-inset-right) + 12px));
@@ -409,20 +335,6 @@ h1 em { color: #ffdf9c; font-style: normal; }
   gap: 10px;
 }
 .intro-extras .book-button { background: rgba(5, 52, 74, .9); }
-
-/* Drawing is the smaller start button, beside the big Dive in. */
-.secondary-button {
-  min-height: 48px;
-  padding: 0 18px;
-  border: 2px solid rgba(255, 221, 147, .75);
-  border-radius: 14px;
-  background: rgba(5, 52, 74, .5);
-  color: #ffdd93;
-  font-size: 16px;
-  font-weight: 800;
-}
-.secondary-button span { margin-left: 8px; }
-.intro-actions .secondary-button { margin-top: 18px; }
 
 /* The arrow's middle sits under the browser's Share button: about 209px from the right edge in
    Chrome on iPhone, about 150px in Safari. The pictures below it are the three steps. */
@@ -570,7 +482,6 @@ h1 em { color: #ffdf9c; font-style: normal; }
 }
 
 @media (max-height: 500px) {
-  .intro-actions .secondary-button { margin-top: 16px; }
   .level-pick { margin-top: 8px; }
   .level-button { min-height: 32px; font-size: 13px; }
 }
@@ -616,7 +527,7 @@ h1 em { color: #ffdf9c; font-style: normal; }
 @media (max-height: 340px) {
   .intro-panel h1 { font-size: 42px; }
   .intro-panel p { margin-top: 8px; }
-  .intro-panel .primary-button, .intro-actions .secondary-button { margin-top: 12px; }
+  .intro-panel .primary-button { margin-top: 12px; }
   .intro-foot { margin-top: 8px; }
 }
 
@@ -649,10 +560,6 @@ h1 em { color: #ffdf9c; font-style: normal; }
 @keyframes turn-sideways {
   0%, 25% { transform: rotate(0); }
   60%, 100% { transform: rotate(-90deg); }
-}
-
-@media (max-height: 500px) and (max-width: 620px) {
-  .won-art { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -697,9 +604,6 @@ h1 em { color: #ffdf9c; font-style: normal; }
   box-shadow: 0 2px 6px rgba(3, 35, 55, .35);
 }
 
-/* With a drawing saved, a small switch under the buttons swims as a real fish instead. */
-.intro-actions .plain-button { margin-top: 12px; font-size: 14px; }
-
 /* Home and the Ocean book sit side by side under the big button on the pause and end screens. */
 .result-links { display: flex; justify-content: center; gap: 22px; }
 .result-links .text-button { margin: 18px 0 0; }
@@ -718,8 +622,6 @@ h1 em { color: #ffdf9c; font-style: normal; }
   .zone-name { font-size: 13px; }
   .zone-blurb { font-size: 10px; }
   .intro-panel .primary-button { margin-top: 14px; }
-  .intro-actions .secondary-button { margin-top: 14px; }
-  .intro-actions .plain-button { margin-top: 6px; font-size: 13px; }
   .intro-foot { margin-top: 10px; }
   .result-links .text-button { margin-top: 12px; }
   .book-zone { margin-top: 8px; padding-top: 6px; }
@@ -738,20 +640,11 @@ h1 em { color: #ffdf9c; font-style: normal; }
   .intro-panel .zone-ask { margin-top: 6px; }
 }
 
-/* Short laptop windows: a smaller title and tighter gaps, so the places, the fish switch and the
-   buttons all stay on screen. */
+/* Short laptop windows: a smaller title and tighter gaps keep the places and buttons on screen. */
 @media (max-height: 680px) and (min-height: 501px) {
   .intro-panel h1 { font-size: clamp(44px, 5vw, 60px); }
   .intro-panel p { margin-top: 14px; font-size: 17px; }
   .intro-panel .zone-ask { margin-top: 10px; }
   .intro-panel .primary-button { margin-top: 18px; }
-  .intro-actions .secondary-button { margin-top: 12px; }
-  .intro-actions .plain-button { margin-top: 8px; }
   .intro-foot { margin-top: 12px; }
-}
-
-/* Sideways phones: the fish switch sits at the end of the button row, small and on one line. */
-@media (max-height: 500px) {
-  .intro-actions { gap: 14px; }
-  .intro-actions .plain-button { flex: none; margin: 16px 0 0; font-size: 13px; white-space: nowrap; }
 }

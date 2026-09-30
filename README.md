@@ -93,9 +93,7 @@ python3 -m http.server 8778
 
 Open [http://localhost:8778](http://localhost:8778). Move the mouse to swim, or use the arrow or WASD keys. Press `P` or `Esc` to pause. No packages or build step are needed.
 
-## Draw your own fish
-
-Choose **Draw my fish** to colour a fish-shaped page with eight crayons. Paint outside the lines is trimmed away, so any scribble becomes a tidy fish. That drawing is the fish you play: it grows through every stage and gets a shark fin at the end. Earlier drawings swim around the ocean as other fish, so a family's drawings fill the reef over time. Up to 30 drawings are kept in the browser on this device; nothing is uploaded. **Swim as a real fish** on the start screen plays the built-in animals instead, and your drawing joins the other fish; the device remembers.
+All swimmers use the built-in animal artwork. As you grow, your fish changes to the species named by the game.
 
 ## Sound
 
@@ -139,7 +137,7 @@ node tools/browser-sideways.mjs       # sideways phone: arrow pad steers, finger
 node tools/browser-autoplay.mjs       # seek-food controller plays to the shark and an eat-tuna mission (LEVEL=big for Big swimmer)
 node tools/browser-reef.mjs           # earn, plant, reload, shelter; desktop + phone
 node tools/browser-learn.mjs          # fact cards, voice, Ocean book, mission card, sea-bed friends, fits; "zoo" screenshots
-node tools/browser-zones.mjs          # picking a place, the reef swim and mission, Home, the book by place, swim as a real fish, fits
+node tools/browser-zones.mjs          # picking a place, the reef swim and mission, Home, the book by place, built-in species, fits
 ```
 
-`tools/browser-sound.mjs` checks that sound stays off until a tap and that each main moment plays its sound. `tools/browser-update.mjs` checks that an update shows on the first open. `tools/browser-check.mjs` checks drawing: it draws a fish, checks the saved drawing stays inside the fish shape, swims to shark form on a computer and a sideways phone, and checks the drawing screens fit. It uses [Playwright](https://playwright.dev) instead of the Chrome above: `npm i --no-save playwright && npx playwright install chromium`, then `node tools/browser-check.mjs screenshots` (or point `PLAYWRIGHT_MODULE` at an installed copy).
+`tools/browser-sound.mjs` checks that sound stays off until a tap and that each main moment plays its sound. `tools/browser-update.mjs` checks that an update shows on the first open. `tools/browser-check.mjs` checks that old saved drawings never replace species artwork, that growing changes the swimming animal, and that the start screen fits on a computer and sideways phones. Run `node tools/browser-check.mjs screenshots` with Playwright installed (or set `PLAYWRIGHT_MODULE` to an installed copy). Its browser is muted.

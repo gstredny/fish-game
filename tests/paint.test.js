@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { ZONES } from "../src/zones.js";
 import { SPECIES } from "../src/species.js";
+import { FORMS } from "../src/rules.js";
 
 // paint.js makes an Image for each zone's backdrop; none loads here, so the drawn water shows.
 globalThis.Image = class { constructor() { this.naturalWidth = 0; } };
@@ -62,4 +63,20 @@ test("a bare sea bed (mud at the bottom of the sea) has no plants or coral stick
   const bare = paintIn({ ...ZONES.open, id: "bare", plants: false }, []);
   assert.ok(bare.stroke < planted.stroke, "the seaweed strokes are gone");
   assert.equal(bare.save, planted.save, "the sea bed itself is still painted");
+});
+
+test("retired custom artwork never replaces the player or other species at any growth stage", () => {
+  const drawing = { tail: {}, body: {} };
+  for (const zone of Object.values(ZONES)) {
+    const world = createWorld(844, 390, { zone });
+    Object.assign(world, { phase: "playing", friends: [], invulnerable: 0 });
+    for (let stage = 0; stage < FORMS.length; stage++) {
+      world.stage = stage;
+      world.creatures = [{ x: 100, y: 0, tier: stage + 1, direction: 1, wobble: 0, art: 0 }];
+      const { context, calls } = countingContext();
+      paintOcean(context, world, 844, 390, 1.5, { player: drawing, npc: [drawing] });
+      assert.equal(calls.drawImage ?? 0, 0, `${zone.id} stage ${stage}: no saved bitmap is drawn`);
+      assert.ok(calls.fill > 0, "built-in animals are painted");
+    }
+  }
 });

@@ -4,7 +4,6 @@ import { growLine, SPECIES } from "../src/species.js";
 import { createMission, missionLine } from "../src/missions.js";
 import { ZONES } from "../src/zones.js";
 import { MET_KEY } from "../src/ocean-book.js";
-import { DRAWINGS_KEY } from "../src/gallery.js";
 import { openGame } from "./app-fixture.js";
 
 function memoryStorage(saved = {}) {
@@ -118,36 +117,6 @@ test("Home goes back to the start screen from the pause, win and game-over scree
     pickZone(app, "reef");
     app.click("start-button");
     assert.equal(app.world.zone.id, "reef", "and another place can be picked");
-  } finally { app.close(); }
-});
-
-test("with a drawing saved, you can still swim as a real fish, and the choice is kept", async () => {
-  const storage = memoryStorage({ [DRAWINGS_KEY]: '["data:image/png;base64,AAAA"]' });
-  class Image { constructor() { this.width = 300; this.height = 220; } async decode() {} }
-  let app = await openGame(storage, { Image });
-  const settle = async () => { for (let tick = 0; tick < 8; tick++) await Promise.resolve(); };
-  try {
-    await settle();
-    assert.equal(app.nodes.get("plain-button").hidden, false, "the switch shows once a drawing is saved");
-    assert.equal(app.nodes.get("plain-button").textContent, "Swim as a real fish");
-    assert.equal(app.nodes.get("intro-art").hidden, false);
-    app.click("plain-button");
-    assert.equal(storage.getItem("little-fish-plain-v1"), "on");
-    assert.equal(app.nodes.get("plain-button").textContent, "Swim as my drawing");
-    assert.equal(app.nodes.get("intro-art").hidden, true, "the start screen shows the built-in fish");
-    assert.equal(app.nodes.get("intro-mark").hidden, false);
-    app.click("start-button");
-    assert.equal(app.nodes.get("stage-art").hidden, true, "and so does the HUD");
-    app.close();
-    app = await openGame(storage, { Image });
-    await settle();
-    assert.equal(app.nodes.get("plain-button").textContent, "Swim as my drawing", "remembered");
-    app.click("plain-button");
-    assert.equal(app.nodes.get("intro-art").hidden, false, "back to the drawing");
-    app.close();
-    app = await openGame(memoryStorage(), { Image });
-    await settle();
-    assert.equal(app.nodes.get("plain-button").hidden, true, "no switch without a drawing");
   } finally { app.close(); }
 });
 

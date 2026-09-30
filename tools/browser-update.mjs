@@ -63,37 +63,8 @@ try {
   assert.ok(updated, "the first open after an update should show the new version");
   await context.close();
 
-  // An update arriving while the child is drawing must not reload the page and wipe the drawing.
-  root = current;
-  const drawing = await browser.newContext({ viewport: { width: 1280, height: 800 } });
-  const drawPage = await drawing.newPage();
-  await drawPage.addInitScript(() => {
-    navigator.serviceWorker?.addEventListener("controllerchange", () => { window.__updateArrived = true; });
-  });
-  await drawPage.goto(base);
-  await drawPage.waitForFunction(() => navigator.serviceWorker.controller, null, { timeout: 15000 });
-  await drawPage.reload();
-  await drawPage.waitForFunction(() => navigator.serviceWorker.controller);
-  await drawPage.click("#draw-button");
-  const box = await drawPage.locator("#sketch").boundingBox();
-  await drawPage.mouse.move(box.x + box.width * 0.3, box.y + box.height / 2);
-  await drawPage.mouse.down();
-  await drawPage.mouse.move(box.x + box.width * 0.7, box.y + box.height / 2, { steps: 8 });
-  await drawPage.mouse.up();
-  root = next;
-  await drawPage.evaluate(() => navigator.serviceWorker.getRegistration().then(registration => registration.update()));
-  const arrived = await drawPage.waitForFunction(() => window.__updateArrived, null, { timeout: 20000 }).then(() => true, () => false);
-  assert.ok(arrived, "the update should arrive while drawing (test setup)");
-  await drawPage.waitForTimeout(1500);
-  const state = await drawPage.evaluate(() => ({
-    drawing: !document.querySelector("#draw").hidden,
-    title: document.title,
-    painted: [...document.querySelector("#sketch").getContext("2d").getImageData(
-      Math.round(document.querySelector("#sketch").width / 2), Math.round(document.querySelector("#sketch").height / 2), 1, 1).data]
-  }));
-  assert.ok(state.drawing && !state.title.startsWith("NEXT"), "an update must not reload the page while the child is drawing");
-  assert.deepEqual(state.painted, [255, 90, 95, 255], "the drawing in progress should still be there");
-  console.log("browser-update passed: the first open after an update shows the new version, and an update never interrupts drawing.");
+  console.log("browser-update passed: the first open after an update shows the new version.");
+
 } finally {
   await browser.close();
   server.close();

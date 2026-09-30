@@ -1,14 +1,14 @@
 // Zones check on a sideways phone (844x390 touch): the start screen asks where to swim and every
 // place fits, picking the reef is remembered and fills the swim with reef animals and the reef's
 // water, the HUD and mission card name the reef's forms, Home leads back to the start screen, the
-// Ocean book is grouped by place, and a saved drawing can be swapped for a real fish. Also checks
+// Ocean book is grouped by place, and saved drawings never override species artwork. Also checks
 // the start screen and book fit the shortest phones. Same server/Chrome setup as browser-play.mjs.
 import assert from "node:assert/strict";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { growLine } from "../src/species.js";
 import { KINDS, ZONE_IDS, ZONES, zoneKinds } from "../src/zones.js";
 import { missionIds } from "../src/missions.js";
-import { DRAWINGS_KEY } from "../src/gallery.js";
+const DRAWINGS_KEY = "little-fish-drawings";
 const CLIP_TEXT = Object.fromEntries(Object.entries(JSON.parse(readFileSync(new URL("../voice/manifest.json", import.meta.url))).clips)
   .map(([text, file]) => [file, text]));
 
@@ -183,30 +183,19 @@ await shot("07-book-by-zone");
 await tapButton("#book-close");
 await sleep(200);
 
-// 6. With a drawing saved, "Swim as a real fish" swaps the drawing out, and back.
-await evaluate(`localStorage.setItem(${JSON.stringify(DRAWINGS_KEY)}, JSON.stringify([${JSON.stringify(PIXEL)}]))`);
+// 6. Saved artwork and the old drawing-mode preference are ignored.
+await evaluate(`localStorage.setItem(${JSON.stringify(DRAWINGS_KEY)}, JSON.stringify([${JSON.stringify(PIXEL)}])); localStorage.setItem("little-fish-plain-v1", "off")`);
 await reload();
-await waitFor("!document.querySelector('#plain-button').hidden", "the fish switch shows");
-assert.ok(await fitsOnScreen("#plain-button"), "the fish switch fits");
-assert.ok(await visible("#intro-art"));
-await shot("08-drawing-saved");
-await tapButton("#plain-button");
-await sleep(200);
-assert.equal(await text("#plain-button"), "Swim as my drawing");
-assert.ok(!await visible("#intro-art") && await visible("#intro-mark"), "the start screen shows the built-in fish");
-assert.equal(await evaluate("localStorage.getItem('little-fish-plain-v1')"), "on");
-await shot("09-real-fish");
+assert.equal(await evaluate("document.querySelector('#draw-button, #plain-button, #intro-art, #draw') === null"), true);
+await shot("08-built-in-fish-only");
 await tapButton("#start-button");
 await sleep(300);
-assert.ok(!await visible("#stage-art"), "the HUD shows the built-in fish too");
+assert.equal(await evaluate("document.querySelector('#stage-art') === null"), true);
+assert.equal(await evaluate("__game.world.creatures.every(c => c.art == null)"), true);
 await tapButton("#pause-button");
 await sleep(200);
 await tapButton("#paused-home-button");
 await sleep(200);
-await tapButton("#plain-button");
-await sleep(200);
-assert.ok(await visible("#intro-art"), "and back to the drawing");
-await evaluate(`localStorage.removeItem(${JSON.stringify(DRAWINGS_KEY)})`);
 
 // 7. The deep: nearly dark, no floor, lights in the dark, no one to swim away from.
 await tapButton('.zone-button[data-zone="deep"]');
@@ -290,7 +279,7 @@ for (const [width, height] of [[844, 340], [667, 375], [568, 320]]) {
   await size(width, height);
   await reload();
   for (const id of ZONE_IDS) assert.ok(await fitsOnScreen(`.zone-button[data-zone="${id}"]`), `${width}x${height}: the ${id} button fits`);
-  assert.ok(await fitsOnScreen("#start-button") && await fitsOnScreen("#draw-button") && await fitsOnScreen("#level-big") &&
+  assert.ok(await fitsOnScreen("#start-button") && await fitsOnScreen("#level-big") &&
     await fitsOnScreen("#intro-book-button") && await fitsOnScreen("#intro-voice-button"), `${width}x${height}: start buttons fit`);
   await shot(`10-start-${width}x${height}`);
   await tapButton("#intro-book-button");

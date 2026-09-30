@@ -1,10 +1,8 @@
 import { canEat, CREATURES, FLOOR, FORMS, isFriend } from "./rules.js";
 import { paintOwnedReef } from "./reef-paint.js";
 import { glowColor, paintAnimal, swatch } from "./animal-paint.js";
-import { FRAME, paintFace, paintHalo, TAIL_JOINT } from "./art.js";
 import { SPECIES } from "./species.js";
 
-const NO_ART = { player: null, npc: [] };
 const kindAt = (world, tier) => world.zone.chain[tier];
 
 // Each zone's realistic ocean is a Blender render (tools/render-ocean.py): a 360-degree strip that
@@ -19,7 +17,7 @@ function backdropFor(zone) {
   return backdrops.get(zone.backdrop);
 }
 
-export function paintOcean(context, world, width, height, time, art = NO_ART) {
+export function paintOcean(context, world, width, height, time) {
   const cameraX = world.camera.x - width / 2;
   const cameraY = world.camera.y - height / 2;
   const backdrop = backdropFor(world.zone);
@@ -44,9 +42,7 @@ export function paintOcean(context, world, width, height, time, art = NO_ART) {
     const margin = size * 1.4 + 40;
     if (x < -margin || x > width + margin || y < -margin || y > height + margin) continue;
     const role = canEat(world.stage, creature.tier) ? "prey" : isFriend(world.stage, creature.tier) ? "friend" : "predator";
-    const drawing = creature.art === null || creature.art === undefined ? null : art.npc[creature.art];
     if (kind === "plankton") paintPlankton(context, x, y, time + creature.wobble);
-    else if (drawing) paintArtFish(context, drawing, x, y, size, isShark(kind), creature.direction, time + creature.wobble, role);
     else paintAnimal(context, kind, x, y, size, creature.direction, time + creature.wobble, role);
   }
 
@@ -71,9 +67,7 @@ export function paintOcean(context, world, width, height, time, art = NO_ART) {
   if (world.invulnerable <= 0 || Math.floor(time * 9) % 2 === 0) {
     const size = FORMS[world.stage].size * (1 + world.gulp * 0.8);
     const kind = kindAt(world, world.stage + 1);
-    if (art.player) paintArtFish(context, art.player, world.player.x - cameraX, world.player.y - cameraY, size,
-      isShark(kind), world.player.direction, time, "player");
-    else paintAnimal(context, kind, world.player.x - cameraX, world.player.y - cameraY, size,
+    paintAnimal(context, kind, world.player.x - cameraX, world.player.y - cameraY, size,
       world.player.direction, time, "player");
   }
   if (world.zone.light < 1) paintDark(context, world, width, height, time, cameraX, cameraY);
@@ -126,11 +120,6 @@ function toRgba(hex, alpha) {
   return `rgba(${value >> 16 & 255},${value >> 8 & 255},${value & 255},${alpha})`;
 }
 
-// A child's drawing gets a fin and gills when it plays a shark.
-function isShark(kind) {
-  return kind.endsWith("shark");
-}
-
 // An arrow at the edge of the screen points to the mission's blue whale or orca while it is out of sight.
 function paintPointer(context, world, width, height, cameraX, cameraY, time) {
   const target = world.mission?.target;
@@ -178,15 +167,6 @@ function paintLabels(context, world, width, height, cameraX, cameraY) {
   }
   context.globalAlpha = 1;
   context.textBaseline = "alphabetic";
-}
-
-// A child's drawing as a still picture, sized for menus and the HUD.
-export function portrait(drawing, kind) {
-  const canvas = document.createElement("canvas");
-  canvas.width = 300;
-  canvas.height = 220;
-  paintArtFish(canvas.getContext("2d"), drawing, 175, 130, 80, isShark(kind), 1, 0, "portrait");
-  return canvas.toDataURL("image/png");
 }
 
 function paintWater(context, zone, backdrop, width, height, time, cameraX) {
@@ -336,88 +316,4 @@ function paintPlankton(context, x, y, time) {
   context.beginPath();
   context.arc(x, y, 3.2 * pulse, 0, Math.PI * 2);
   context.fill();
-}
-
-// A soft ring says "you can eat me".
-function paintPreyRing(context, size) {
-  context.strokeStyle = "rgba(220,255,236,.35)";
-  context.lineWidth = 3;
-  context.beginPath();
-  context.ellipse(0, 0, size * 1.28, size * 0.9, 0, 0, Math.PI * 2);
-  context.stroke();
-}
-
-// Teeth and a frown say "keep away".
-function paintPredatorFace(context, size) {
-  context.fillStyle = "#ffffff";
-  context.beginPath();
-  context.moveTo(size * 0.58, size * 0.2);
-  for (let tooth = 0; tooth < 3; tooth++) {
-    context.lineTo(size * (0.58 + 0.11 * tooth + 0.055), size * 0.34);
-    context.lineTo(size * (0.58 + 0.11 * (tooth + 1)), size * 0.2);
-  }
-  context.closePath();
-  context.fill();
-  context.strokeStyle = "#173b52";
-  context.lineWidth = Math.max(1.5, size * 0.05);
-  context.beginPath();
-  context.moveTo(size * 0.44, -size * 0.4);
-  context.lineTo(size * 0.7, -size * 0.28);
-  context.stroke();
-}
-
-// A child's drawing, swimming: the tail layer wags, the game adds the eye and mouth,
-// sharks get a fin and gills, and the same prey/predator/player cues as the built-in fish.
-function paintArtFish(context, drawing, x, y, size, shark, direction, time, role) {
-  context.save();
-  context.translate(x, y + Math.sin(time * 2.5) * 2);
-  context.scale(direction, 1);
-  if (role === "prey") paintPreyRing(context, size);
-  if (role === "player") paintHalo(context, size);
-
-  const left = FRAME.left * size;
-  const top = FRAME.top * size;
-  const frameWidth = FRAME.width * size;
-  const frameHeight = FRAME.height * size;
-  context.save();
-  context.translate(TAIL_JOINT * size, 0);
-  context.rotate(Math.sin(time * 9) * 0.17);
-  context.translate(-TAIL_JOINT * size, 0);
-  context.drawImage(drawing.tail, left, top, frameWidth, frameHeight);
-  context.restore();
-
-  if (shark) {
-    context.fillStyle = "#8eaec2";
-    context.strokeStyle = "rgba(23,59,82,.6)";
-    context.lineWidth = Math.max(1, size * 0.03);
-    context.beginPath();
-    context.moveTo(-size * 0.42, -size * 0.4);
-    context.quadraticCurveTo(-size * 0.1, -size * 0.72, -size * 0.04, -size * 1.24);
-    context.quadraticCurveTo(size * 0.12, -size * 0.72, size * 0.38, -size * 0.42);
-    context.closePath();
-    context.fill();
-    context.stroke();
-  }
-  context.drawImage(drawing.body, left, top, frameWidth, frameHeight);
-  if (role === "player") {
-    context.strokeStyle = "#fffbe6";
-    context.lineWidth = Math.max(2.5, size * 0.07);
-    context.beginPath();
-    context.ellipse(0, 0, size, size * 0.59, 0, 0, Math.PI * 2);
-    context.stroke();
-  }
-  if (shark) {
-    context.strokeStyle = "rgba(23,59,82,.55)";
-    context.lineWidth = Math.max(1, size * 0.035);
-    context.beginPath();
-    for (let gill = 0; gill < 3; gill++) {
-      const gillX = size * (0.24 + gill * 0.09);
-      context.moveTo(gillX, -size * 0.14);
-      context.quadraticCurveTo(gillX - size * 0.06, size * 0.02, gillX, size * 0.18);
-    }
-    context.stroke();
-  }
-  paintFace(context, size, true);
-  if (role === "predator") paintPredatorFace(context, size);
-  context.restore();
 }

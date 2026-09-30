@@ -251,34 +251,13 @@ test("a bigger fish only hurts on a real bump, not a brush", () => {
   assert.equal(world.hearts, 3);
 });
 
-test("drawn fish replace about half the ocean's fish, never plankton", () => {
-  const world = createWorld(390, 844, { artCount: 3 });
-  world.phase = "playing";
-  world.stage = 1;
-  world.invulnerable = 99;
-  const made = [];
-  for (let round = 0; round < 120; round++) {
-    world.creatures = [];
-    swim(world, 0.016, idleInput, 390, 844);
-    made.push(...world.creatures);
-  }
-  const fish = made.filter(creature => creature.tier > 0);
-  const drawn = fish.filter(creature => creature.art !== null);
-  const plankton = made.filter(creature => creature.tier === 0);
-  assert.ok(fish.length > 1000 && plankton.length > 200);
-  assert.ok(drawn.length / fish.length > 0.4 && drawn.length / fish.length < 0.6);
-  assert.ok(drawn.every(creature => Number.isInteger(creature.art) && creature.art >= 0 && creature.art < 3));
-  assert.ok(plankton.every(creature => creature.art === null));
-});
-
-test("without saved drawings every fish is a built-in fish", () => {
+test("every fish uses its species artwork on a new swim or restart", () => {
   const world = createWorld(390, 844);
   assert.ok(world.creatures.length > 0);
-  assert.ok(world.creatures.every(creature => creature.art === null));
-  resetWorld(world, 390, 844, { artCount: 2 });
-  assert.equal(world.artCount, 2);
+  assert.ok(world.creatures.every(creature => creature.art == null));
   resetWorld(world, 390, 844);
-  assert.equal(world.artCount, 2, "a restart keeps the drawings");
+  assert.ok(world.creatures.length > 0);
+  assert.ok(world.creatures.every(creature => creature.art == null));
 });
 
 test("the HUD only turns see-through for fish that can hurt the player", () => {

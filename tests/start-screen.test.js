@@ -1,6 +1,5 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { DRAWINGS_KEY } from "../src/gallery.js";
 import { openGame } from "./app-fixture.js";
 
 function memoryStorage(saved = {}) {
@@ -11,18 +10,6 @@ function memoryStorage(saved = {}) {
 const CHROME_IPHONE = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/141.0 Mobile/15E148 Safari/604.1";
 const SAFARI_26 = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Mobile/15E148 Safari/604.1";
 const SAFARI_18 = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.6 Mobile/15E148 Safari/604.1";
-
-test("Dive in is always the big button; drawing is the smaller one", async () => {
-  for (const [saved, drawText] of [[{}, "Draw my fish"], [{ [DRAWINGS_KEY]: '["data:image/png;base64,AAAA"]' }, "Draw a new fish"]]) {
-    const app = await openGame(memoryStorage(saved));
-    try {
-      assert.equal(app.nodes.get("start-button").className, "primary-button");
-      assert.match(app.nodes.get("start-button").innerHTML, /^Dive in/);
-      assert.equal(app.nodes.get("draw-button").className, "secondary-button");
-      assert.match(app.nodes.get("draw-button").innerHTML, new RegExp(`^${drawText}`));
-    } finally { app.close(); }
-  }
-});
 
 test("an iPhone browser gets an arrow at Share and the steps as pictures", async () => {
   const cases = [

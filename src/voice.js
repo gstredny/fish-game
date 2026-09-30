@@ -101,7 +101,7 @@ export function createVoice(storage = globalThis.localStorage, synth = globalThi
       clips?.stop();
       if (synth?.speaking || synth?.pending) synth.cancel();
     },
-    // A silent line from the first tap, so lines said later (after a drawing is saved, say) are heard.
+    // A silent line from the first tap, so lines said later (after a swim starts, say) are heard.
     unlock() {
       if (unlocked) return;
       unlocked = true;

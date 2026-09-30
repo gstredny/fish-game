@@ -8,7 +8,7 @@ import { DEFAULT_ZONE, hasTopHunter, topTier, ZONES } from "./zones.js";
 // `zone` is where this swim happens (zones.js): its food chain fills the tiers and its list of sea
 // friends fills the water and the sea bed. `met` is the device's Ocean book: sea friends it has
 // never met come first (see makeFriend).
-export function createWorld(width, height, { reef = createReef(), artCount = 0, level = "little", zone = DEFAULT_ZONE,
+export function createWorld(width, height, { reef = createReef(), level = "little", zone = DEFAULT_ZONE,
   mission, met = new Set() } = {}) {
   const place = typeof zone === "string" ? ZONES[zone] : zone;
   const home = reef.corals[0];
@@ -30,7 +30,6 @@ export function createWorld(width, height, { reef = createReef(), artCount = 0, 
     friends: [],
     particles: [],
     events: [],
-    artCount,
     level,
     // Chosen at the start; it begins when you reach the biggest form, and finishing it ends the swim.
     mission: createMission(mission ?? pickMission(null, place), level, place),
@@ -46,13 +45,13 @@ export function createWorld(width, height, { reef = createReef(), artCount = 0, 
   return world;
 }
 
-// A new swim in the same place (or another): the reef, drawings, level and Ocean book carry over,
+// A new swim in the same place (or another): the reef, level and Ocean book carry over,
 // and the mission differs from the last one.
 export function resetWorld(world, width, height, options = {}) {
   const zone = options.zone ?? world.zone;
   const place = typeof zone === "string" ? ZONES[zone] : zone;
   const mission = options.mission ?? pickMission(place === world.zone ? world.mission.id : null, place);
-  Object.assign(world, createWorld(width, height, { reef: world.reef, artCount: world.artCount, level: world.level,
+  Object.assign(world, createWorld(width, height, { reef: world.reef, level: world.level,
     met: world.met, ...options, zone: place, mission }));
 }
 
@@ -333,9 +332,7 @@ function makeCreature(world, width, height, initial) {
     y,
     tier,
     direction: initial ? (Math.random() < 0.5 ? -1 : 1) : -side,
-    wobble: Math.random() * Math.PI * 2,
-    // About half the fish (never the tier-0 snack) wear one of the child's older drawings.
-    art: tier > 0 && world.artCount > 0 && Math.random() < 0.5 ? Math.floor(Math.random() * world.artCount) : null
+    wobble: Math.random() * Math.PI * 2
   };
 }
 

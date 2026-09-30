@@ -1,4 +1,31 @@
-# Active handoff — ocean zones
+# Active handoff — remove fish drawing
+
+Date: 2026-09-30
+Branch: `master`
+Active task: `tasks/015-remove-fish-drawing.md`
+
+George asked to remove fish drawing because the colored drawing stays the same while the game
+calls it different species. Removed the drawing screen, buttons, mode toggle, player/NPC bitmap
+overrides, portraits and orphan drawing modules. Old saved drawings and the old mode preference
+are ignored. Each swimmer uses its built-in species; player growth changes the painted animal.
+Offline cache is prepared as `little-fish-v19`; documentation and checks reflect the removal.
+
+Verification: `npm test` 108 passed, 0 failed, 0 cancelled, 0 skipped. Focused flow/renderer checks:
+5 passed, 0 failed, 0 skipped. The flow covers both old preferences, all four zones, five stages,
+Home and reload. Renderer check executes paint code for all 20 forms with retired artwork supplied.
+`git diff --check` and syntax checks for the three edited browser scripts pass.
+
+Browser verification remains open: no connected browser; the local HTTP server was denied
+(`listen EPERM`), then the port-free smoke runner's Chromium launch was denied the macOS Mach port
+(`Permission denied (1100)`). No screenshots or browser passes claimed. The replacement muted
+runner is `node tools/browser-check.mjs screenshots/remove-drawing`; run it when a browser-capable
+environment is available, inspect screenshots, then finish the task criterion.
+
+Ship state: George has authorized committing and pushing the tested removal so he can test on
+his phone. Commit/push and Pages verification are underway. The remote preflight matches local
+HEAD bb7662576239f2c0ca00557730592bea759f7b67; Pages builds master from /. Last known release evidence below.
+
+## Previous release — ocean zones
 
 Date: 2026-09-30
 Branch: `master`
