@@ -68,6 +68,7 @@
       <div id="intro-actions" class="intro-actions">
         <button id="start-button" class="primary-button" type="button">Dive in <span aria-hidden="true">↗</span></button>
         <button id="draw-button" class="secondary-button" type="button">Draw my fish <span aria-hidden="true">✎</span></button>
+        <button id="plain-button" class="text-button plain-button" type="button" hidden>Swim as a real fish</button>
       </div>
       <div class="intro-extras">
         <button id="intro-book-button" class="book-button" type="button">Ocean book</button>
@@ -105,7 +106,10 @@
       <h2>Taking a breather?</h2>
       <p>The ocean will wait for you.</p>
       <button id="resume-button" class="primary-button" type="button">Keep swimming</button>
-      <button id="paused-book-button" class="text-button" type="button">Ocean book</button>
+      <div class="result-links">
+        <button id="paused-book-button" class="text-button" type="button">Ocean book</button>
+        <button id="paused-home-button" class="text-button" type="button">Home</button>
+      </div>
     </section>
 
     <section id="card" class="panel card-panel" hidden aria-labelledby="card-name">
@@ -156,7 +160,10 @@
       <h2>Mission complete!</h2>
       <p id="won-text"></p>
       <button id="win-plant-button" class="primary-button" type="button">Plant your coral</button>
-      <button id="win-restart-button" class="text-button" type="button">Swim again</button>
+      <div class="result-links">
+        <button id="win-restart-button" class="text-button" type="button">Swim again</button>
+        <button id="won-home-button" class="text-button" type="button">Home</button>
+      </div>
     </section>
 
     <section id="gameover" class="panel result-panel" hidden>
@@ -164,6 +171,9 @@
       <h2>One more swim?</h2>
       <p>Every big fish starts out little.</p>
       <button id="restart-button" class="primary-button" type="button">Try again</button>
+      <div class="result-links">
+        <button id="gameover-home-button" class="text-button" type="button">Home</button>
+      </div>
     </section>
   </main>
 

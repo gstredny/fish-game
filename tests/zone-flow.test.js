@@ -1,8 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { growLine } from "../src/species.js";
+import { growLine, SPECIES } from "../src/species.js";
 import { createMission, missionLine } from "../src/missions.js";
 import { ZONES } from "../src/zones.js";
+import { MET_KEY } from "../src/ocean-book.js";
+import { DRAWINGS_KEY } from "../src/gallery.js";
 import { openGame } from "./app-fixture.js";
 
 function memoryStorage(saved = {}) {
@@ -74,5 +76,96 @@ test("finding the reef's giant, the whale shark, shows its card and ends the swi
     assert.equal(app.nodes.get("card-name").textContent, "Whale shark");
     app.click("card-close");
     assert.match(app.nodes.get("won-text").textContent, /^You found the whale shark! Whale sharks are the biggest fish!/);
+  } finally { app.close(); }
+});
+
+test("Home goes back to the start screen from the pause, win and game-over screens", async () => {
+  const app = await openGame(memoryStorage());
+  try {
+    app.click("start-button");
+    app.key("ArrowRight");
+    app.click("pause-button");
+    assert.equal(app.nodes.get("paused").hidden, false);
+    app.click("paused-home-button");
+    assert.equal(app.nodes.get("intro").hidden, false);
+    assert.equal(app.nodes.get("paused").hidden, true);
+    assert.equal(app.world.phase, "ready");
+    assert.equal(app.nodes.get("hud").hidden, true);
+    assert.equal(app.input.keys.size, 0, "a key held when leaving does not steer the next swim");
+
+    app.click("start-button");
+    Object.assign(app.world, { hearts: 1, invulnerable: 0, friends: [], creatures: [{ ...app.world.player, tier: 3, wobble: 0 }] });
+    app.frame(16);
+    assert.equal(app.world.phase, "gameover");
+    app.frame(32);
+    assert.equal(app.nodes.get("gameover").hidden, false);
+    app.click("gameover-home-button");
+    assert.equal(app.nodes.get("intro").hidden, false);
+    assert.equal(app.world.phase, "ready");
+    assert.equal(app.world.hearts, 3, "the next swim starts fresh");
+
+    app.click("start-button");
+    Object.assign(app.world, { stage: 3, bites: 99, friends: [], creatures: [{ ...app.world.player, tier: 3, wobble: 0 }] });
+    app.world.mission = createMission("hunt", "little", app.world.zone);
+    app.frame(48);
+    app.click("mission-go");
+    app.world.creatures = [0, 1].map(() => ({ ...app.world.player, tier: 4, wobble: 0 }));
+    app.frame(64);
+    assert.equal(app.world.phase, "won");
+    app.click("won-home-button");
+    assert.equal(app.nodes.get("intro").hidden, false);
+    assert.equal(app.world.reef.pending, 1, "the coral earned is kept for later");
+    pickZone(app, "reef");
+    app.click("start-button");
+    assert.equal(app.world.zone.id, "reef", "and another place can be picked");
+  } finally { app.close(); }
+});
+
+test("with a drawing saved, you can still swim as a real fish, and the choice is kept", async () => {
+  const storage = memoryStorage({ [DRAWINGS_KEY]: '["data:image/png;base64,AAAA"]' });
+  class Image { constructor() { this.width = 300; this.height = 220; } async decode() {} }
+  let app = await openGame(storage, { Image });
+  const settle = async () => { for (let tick = 0; tick < 8; tick++) await Promise.resolve(); };
+  try {
+    await settle();
+    assert.equal(app.nodes.get("plain-button").hidden, false, "the switch shows once a drawing is saved");
+    assert.equal(app.nodes.get("plain-button").textContent, "Swim as a real fish");
+    assert.equal(app.nodes.get("intro-art").hidden, false);
+    app.click("plain-button");
+    assert.equal(storage.getItem("little-fish-plain-v1"), "on");
+    assert.equal(app.nodes.get("plain-button").textContent, "Swim as my drawing");
+    assert.equal(app.nodes.get("intro-art").hidden, true, "the start screen shows the built-in fish");
+    assert.equal(app.nodes.get("intro-mark").hidden, false);
+    app.click("start-button");
+    assert.equal(app.nodes.get("stage-art").hidden, true, "and so does the HUD");
+    app.close();
+    app = await openGame(storage, { Image });
+    await settle();
+    assert.equal(app.nodes.get("plain-button").textContent, "Swim as my drawing", "remembered");
+    app.click("plain-button");
+    assert.equal(app.nodes.get("intro-art").hidden, false, "back to the drawing");
+    app.close();
+    app = await openGame(memoryStorage(), { Image });
+    await settle();
+    assert.equal(app.nodes.get("plain-button").hidden, true, "no switch without a drawing");
+  } finally { app.close(); }
+});
+
+test("animals met before are greeted one at a time, with a breath between", async () => {
+  const speech = fakeSpeech();
+  const app = await openGame(memoryStorage({ [MET_KEY]: '["plankton","sardine","mackerel"]' }), speech.globals);
+  try {
+    app.click("start-button");
+    const near = (tier, dx) => ({ x: app.world.player.x + dx, y: app.world.player.y, tier, direction: 1, wobble: 0 });
+    Object.assign(app.world, { time: 5, friends: [], creatures: [near(0, 40), near(2, 70)] });
+    app.frame(16);
+    assert.deepEqual(app.world.labels.map(label => label.text), ["Plankton"], "the nearest one first, alone");
+    app.frame(32);
+    assert.equal(app.world.labels.length, 1, "the mackerel waits its turn");
+    app.world.time += 6;
+    app.frame(48);
+    assert.deepEqual(app.world.labels.map(label => label.text).sort(), ["Mackerel", "Plankton"].sort(), "then it is greeted too");
+    assert.deepEqual(speech.spoken.filter(line => /^(Plankton|Mackerel)! /.test(line)).length, 2);
+    assert.ok(Object.keys(SPECIES).length > 0);
   } finally { app.close(); }
 });

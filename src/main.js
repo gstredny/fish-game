@@ -28,6 +28,7 @@ const toast = document.querySelector("#toast");
 const panels = ["intro", "draw", "paused", "won", "gameover", "card", "book", "mission"];
 const LEVEL_KEY = "little-fish-level-v1";
 const ZONE_KEY = "little-fish-zone-v1";
+const PLAIN_FISH_KEY = "little-fish-plain-v1";
 const PORTRAIT_PHONE = "(orientation: portrait) and (max-width: 600px) and (pointer: coarse)";
 const input = { keys: new Set(), pointer: null, pad: null };
 const steering = createSteering(input);
@@ -47,8 +48,10 @@ let previousFrame = 0;
 let visualTime = 0;
 let toastTimer;
 // Learning: a fact card opens the first time this device meets each animal, at most one every
-// CARD_GAP seconds of swimming. The Ocean book shows every card met so far.
+// CARD_GAP seconds of swimming. An animal met before gets a name tag and a line, at most one every
+// GREET_GAP seconds, so a busy ocean does not rattle off names. The Ocean book shows every card met.
 const CARD_GAP = 20;
+const GREET_GAP = 6;
 const voice = createVoice();
 const met = loadMet();
 const voiceButtons = [document.querySelector("#voice-button"), document.querySelector("#intro-voice-button")];
@@ -63,12 +66,15 @@ let startTicket = 0;
 let storage = null;
 try { storage = window.localStorage; } catch { /* private mode: drawings last for this visit */ }
 let drawings = loadDrawings(storage);
-// Little swimmer or Big swimmer, and where to swim, both remembered on this device.
+// Little swimmer or Big swimmer, where to swim, and whether to swim as a drawing or a real fish:
+// all remembered on this device.
 let level = "little";
 let zone = DEFAULT_ZONE;
+let plainFish = false;
 try {
   if (storage?.getItem(LEVEL_KEY) === "big") level = "big";
   if (ZONE_IDS.includes(storage?.getItem(ZONE_KEY))) zone = storage.getItem(ZONE_KEY);
+  plainFish = storage?.getItem(PLAIN_FISH_KEY) === "on";
 } catch {}
 let world = createWorld(width, height, { reef: loadReef(), zone });
 const art = { player: null, npc: [] };
@@ -98,6 +104,11 @@ function setArt(layers) {
   updateHud();
 }
 
+// The drawing you swim as, unless you chose to swim as a real fish; then it swims with the others.
+function playerArt() {
+  return plainFish && art.player ? { player: null, npc: [art.player, ...art.npc] } : art;
+}
+
 function portraitAt(stage) {
   const kind = formKind(world.zone, stage);
   if (!portraits.has(kind)) portraits.set(kind, portrait(art.player, kind));
@@ -105,22 +116,34 @@ function portraitAt(stage) {
 }
 
 function showArt(image, mark, stage) {
-  image.hidden = !art.player;
-  mark.hidden = Boolean(art.player);
-  if (art.player) image.src = portraitAt(stage);
+  const drawn = Boolean(playerArt().player);
+  image.hidden = !drawn;
+  mark.hidden = drawn;
+  if (drawn) image.src = portraitAt(stage);
 }
 
 function renderIntro() {
   const saved = drawings.length > 0;
   const draw = document.querySelector("#draw-button");
   const start = document.querySelector("#start-button");
+  const plain = document.querySelector("#plain-button");
   // Playing is always the big button; drawing is the smaller one beside it.
   start.className = "primary-button";
   draw.className = "secondary-button";
   start.innerHTML = 'Dive in <span aria-hidden="true">↗</span>';
   draw.innerHTML = `${saved ? "Draw a new fish" : "Draw my fish"} <span aria-hidden="true">✎</span>`;
+  // With a drawing saved, you can still choose to swim as a real fish.
+  plain.hidden = !art.player;
+  plain.textContent = plainFish ? "Swim as my drawing" : "Swim as a real fish";
   showArt(document.querySelector("#intro-art"), document.querySelector("#intro-mark"), 0);
   renderZones();
+}
+
+function togglePlainFish() {
+  plainFish = !plainFish;
+  try { storage?.setItem(PLAIN_FISH_KEY, plainFish ? "on" : "off"); } catch {}
+  renderIntro();
+  updateHud();
 }
 
 // Where to swim: one button per zone, with how many of its animals this device has yet to meet.
@@ -298,7 +321,8 @@ function toggleVoice() {
   showVoice();
 }
 
-// A new animal pauses the swim for its card; one met before gets a name tag and a short line.
+// A new animal pauses the swim for its card; one met before gets a name tag and a short line,
+// one at a time, with a breath between them.
 function meetAnimals() {
   if (world.phase !== "playing") return;
   for (const { kind, target, lift } of nearbyAnimals(world, width, height)) {
@@ -313,6 +337,8 @@ function meetAnimals() {
       openCard(kind, "meet");
       return;
     }
+    if (world.time < world.nextGreetAt) continue;
+    world.nextGreetAt = world.time + GREET_GAP;
     world.greeted.add(kind);
     world.labels.push({ target, text: SPECIES[kind].name, life: 3.5, lift });
     voice.say(meetLine(kind), { polite: true });
@@ -423,6 +449,18 @@ function startSwim() {
   if (document.hidden) pause();
 }
 
+// Back to the start screen, to pick another place, level or fish. The swim is over.
+function goHome() {
+  startTicket++;
+  cardFrom = bookFrom = null;
+  voice.stop();
+  steering.clear();
+  input.keys.clear();
+  resetWorld(world, width, height, { zone });
+  updateHud();
+  showPanel("intro");
+}
+
 function openSketchpad() {
   startTicket++;
   sketchpad.clear();
@@ -525,7 +563,7 @@ function frame(timestamp) {
   swim(world, seconds, input, width, height);
   sound.listen(world);
   if (world.stage === SHARK && world.phase === "playing") showProgress();
-  paintOcean(context, world, width, height, visualTime, art);
+  paintOcean(context, world, width, height, visualTime, playerArt());
   watchBehindHud();
   if (!hint.hidden && hintFrom && world.phase === "playing" &&
     (world.time > 8 || Math.hypot(world.player.x - hintFrom.x, world.player.y - hintFrom.y) > 250)) hint.hidden = true;
@@ -667,6 +705,10 @@ document.querySelector("#mission-go").addEventListener("click", closeMission);
 document.querySelector("#level-little").addEventListener("click", () => chooseLevel("little"));
 document.querySelector("#level-big").addEventListener("click", () => chooseLevel("big"));
 document.querySelector("#zone-pick").addEventListener("click", event => chooseZone(event.target?.closest?.("[data-zone]")?.dataset.zone));
+document.querySelector("#plain-button").addEventListener("click", togglePlainFish);
+for (const id of ["paused-home-button", "won-home-button", "gameover-home-button"]) {
+  document.querySelector(`#${id}`).addEventListener("click", goHome);
+}
 document.querySelector("#card-close").addEventListener("click", closeCard);
 document.querySelector("#card-hear").addEventListener("click", () => voice.say(cardSpeech(cardKind), { force: true }));
 document.querySelector("#intro-book-button").addEventListener("click", () => openBook("intro"));

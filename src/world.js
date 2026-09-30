@@ -34,11 +34,13 @@ export function createWorld(width, height, { reef = createReef(), artCount = 0, 
     level,
     // Chosen at the start; it begins when you reach the biggest form, and finishing it ends the swim.
     mission: createMission(mission ?? pickMission(null, place), level, place),
-    // Learning: kinds already met this swim, floating name tags, and when the next fact card may open.
+    // Learning: kinds already met this swim, floating name tags, when the next fact card may open, and
+    // when the next known animal may be greeted (main.js paces both).
     greeted: new Set(),
     met,
     labels: [],
-    nextCardAt: 5
+    nextCardAt: 5,
+    nextGreetAt: 0
   };
   fillOcean(world, width, height, true);
   return world;

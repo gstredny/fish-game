@@ -1,17 +1,20 @@
 // Zones check on a sideways phone (844x390 touch): the start screen asks where to swim and every
 // place fits, picking the reef is remembered and fills the swim with reef animals and the reef's
-// water, the HUD and mission card name the reef's forms, and the Ocean book is grouped by place.
-// Also checks the start screen and book fit the shortest phones. Same server/Chrome setup as browser-play.mjs.
+// water, the HUD and mission card name the reef's forms, Home leads back to the start screen, the
+// Ocean book is grouped by place, and a saved drawing can be swapped for a real fish. Also checks
+// the start screen and book fit the shortest phones. Same server/Chrome setup as browser-play.mjs.
 import assert from "node:assert/strict";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { growLine } from "../src/species.js";
 import { KINDS, ZONE_IDS, ZONES, zoneKinds } from "../src/zones.js";
+import { DRAWINGS_KEY } from "../src/gallery.js";
 const CLIP_TEXT = Object.fromEntries(Object.entries(JSON.parse(readFileSync(new URL("../voice/manifest.json", import.meta.url))).clips)
   .map(([text, file]) => [file, text]));
 
 const GAME = process.env.GAME || "http://127.0.0.1:8778/";
 const CDP = process.env.CDP || "http://127.0.0.1:9444";
 const OUT = process.env.OUT || "screenshots/zones";
+const PIXEL = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 mkdirSync(OUT, { recursive: true });
 
@@ -155,12 +158,16 @@ await tapButton("#mission-go");
 await sleep(200);
 assert.equal(await text("#stage-name"), "Tiger shark");
 
-// 4. Back to the start screen for the book.
+// 4. Home from the pause screen goes back to the start screen.
 await tapButton("#pause-button");
 await sleep(300);
-await evaluate("location.reload()");
-await waitFor("Boolean(window.__game) && !document.querySelector('#intro').hidden", "game loaded");
-await sleep(200);
+assert.ok(await fitsOnScreen("#paused-home-button") && await fitsOnScreen("#paused-book-button"), "Home and the book fit on the pause screen");
+await shot("06-pause-home");
+await tapButton("#paused-home-button");
+await sleep(300);
+assert.ok(await visible("#intro"), "Home shows the start screen");
+assert.equal(await evaluate("__game.world.phase"), "ready");
+assert.ok(!await visible("#hud"));
 
 // 5. The Ocean book is grouped by place.
 await tapButton("#intro-book-button");
@@ -175,7 +182,32 @@ await shot("07-book-by-zone");
 await tapButton("#book-close");
 await sleep(200);
 
-// 6. The start screen and the book fit the shortest sideways phones.
+// 6. With a drawing saved, "Swim as a real fish" swaps the drawing out, and back.
+await evaluate(`localStorage.setItem(${JSON.stringify(DRAWINGS_KEY)}, JSON.stringify([${JSON.stringify(PIXEL)}]))`);
+await reload();
+await waitFor("!document.querySelector('#plain-button').hidden", "the fish switch shows");
+assert.ok(await fitsOnScreen("#plain-button"), "the fish switch fits");
+assert.ok(await visible("#intro-art"));
+await shot("08-drawing-saved");
+await tapButton("#plain-button");
+await sleep(200);
+assert.equal(await text("#plain-button"), "Swim as my drawing");
+assert.ok(!await visible("#intro-art") && await visible("#intro-mark"), "the start screen shows the built-in fish");
+assert.equal(await evaluate("localStorage.getItem('little-fish-plain-v1')"), "on");
+await shot("09-real-fish");
+await tapButton("#start-button");
+await sleep(300);
+assert.ok(!await visible("#stage-art"), "the HUD shows the built-in fish too");
+await tapButton("#pause-button");
+await sleep(200);
+await tapButton("#paused-home-button");
+await sleep(200);
+await tapButton("#plain-button");
+await sleep(200);
+assert.ok(await visible("#intro-art"), "and back to the drawing");
+await evaluate(`localStorage.removeItem(${JSON.stringify(DRAWINGS_KEY)})`);
+
+// 7. The start screen and the book fit the shortest sideways phones.
 for (const [width, height] of [[844, 340], [667, 375], [568, 320]]) {
   await size(width, height);
   await reload();

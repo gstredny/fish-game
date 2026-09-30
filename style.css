@@ -697,6 +697,13 @@ h1 em { color: #ffdf9c; font-style: normal; }
   box-shadow: 0 2px 6px rgba(3, 35, 55, .35);
 }
 
+/* With a drawing saved, a small switch under the buttons swims as a real fish instead. */
+.intro-actions .plain-button { margin-top: 12px; font-size: 14px; }
+
+/* Home and the Ocean book sit side by side under the big button on the pause and end screens. */
+.result-links { display: flex; justify-content: center; gap: 22px; }
+.result-links .text-button { margin: 18px 0 0; }
+
 /* The Ocean book, by place. */
 .book-zone { margin-top: 14px; padding-top: 10px; border-top: 1px solid rgba(233, 255, 239, .16); }
 .book-zone:first-child { margin-top: 4px; border-top: 0; }
@@ -712,7 +719,9 @@ h1 em { color: #ffdf9c; font-style: normal; }
   .zone-blurb { font-size: 10px; }
   .intro-panel .primary-button { margin-top: 14px; }
   .intro-actions .secondary-button { margin-top: 14px; }
+  .intro-actions .plain-button { margin-top: 6px; font-size: 13px; }
   .intro-foot { margin-top: 10px; }
+  .result-links .text-button { margin-top: 12px; }
   .book-zone { margin-top: 8px; padding-top: 6px; }
   .book-panel .book-zone h3 { font-size: 13px; }
   .book-row-title { margin: 4px 0 4px; font-size: 10px; }
@@ -729,13 +738,20 @@ h1 em { color: #ffdf9c; font-style: normal; }
   .intro-panel .zone-ask { margin-top: 6px; }
 }
 
-/* Short laptop windows: a smaller title and tighter gaps, so the places and the buttons all stay on
-   screen. */
+/* Short laptop windows: a smaller title and tighter gaps, so the places, the fish switch and the
+   buttons all stay on screen. */
 @media (max-height: 680px) and (min-height: 501px) {
   .intro-panel h1 { font-size: clamp(44px, 5vw, 60px); }
   .intro-panel p { margin-top: 14px; font-size: 17px; }
   .intro-panel .zone-ask { margin-top: 10px; }
   .intro-panel .primary-button { margin-top: 18px; }
   .intro-actions .secondary-button { margin-top: 12px; }
+  .intro-actions .plain-button { margin-top: 8px; }
   .intro-foot { margin-top: 12px; }
+}
+
+/* Sideways phones: the fish switch sits at the end of the button row, small and on one line. */
+@media (max-height: 500px) {
+  .intro-actions { gap: 14px; }
+  .intro-actions .plain-button { flex: none; margin: 16px 0 0; font-size: 13px; white-space: nowrap; }
 }
