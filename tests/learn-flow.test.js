@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { cardSpeech, growLine, hurtLine } from "../src/species.js";
+import { cardSpeech, growLine, hurtLine, SEA_FRIEND_KINDS } from "../src/species.js";
 import { MET_KEY } from "../src/ocean-book.js";
 import { VOICE_KEY } from "../src/voice.js";
 import { openGame } from "./app-fixture.js";
@@ -116,6 +116,17 @@ test("a bump and a growth say the food chain out loud", async () => {
   } finally { app.close(); }
 });
 
+test("a swim sees the Ocean book, so a sea friend never met on this device comes first", async () => {
+  const known = SEA_FRIEND_KINDS.filter(kind => kind !== "moray");
+  const app = await openGame(memoryStorage({ [MET_KEY]: JSON.stringify(known) }), fakeSpeech().globals);
+  try {
+    app.click("start-button");
+    assert.deepEqual([...app.world.met].sort(), [...known].sort());
+    // This narrow screen has room for one sea-bed animal, so it must be the one not met yet.
+    assert.deepEqual(app.world.friends.filter(friend => friend.floor).map(friend => friend.kind), ["moray"]);
+  } finally { app.close(); }
+});
+
 test("the Ocean book shows who you have met and replays their cards", async () => {
   const speech = fakeSpeech();
   const app = await openGame(memoryStorage({ [MET_KEY]: '["plankton","crab"]' }), speech.globals);
@@ -124,7 +135,7 @@ test("the Ocean book shows who you have met and replays their cards", async () =
     assert.equal(app.nodes.get("book").hidden, false);
     assert.equal(app.nodes.get("intro").hidden, true);
     assert.equal(app.nodes.get("hud").hidden, true, "no swim is running yet");
-    assert.equal(app.nodes.get("book-count").textContent, "You've met 2 of 21 ocean animals");
+    assert.equal(app.nodes.get("book-count").textContent, "You've met 2 of 33 ocean animals");
     const chain = app.nodes.get("book-chain").innerHTML;
     assert.match(chain, /class="book-tile" type="button" data-kind="plankton"/);
     assert.match(chain, /class="book-tile locked" type="button" data-kind="sardine"/);

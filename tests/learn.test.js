@@ -2,7 +2,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { CREATURES, FLOOR, FORMS, hunters, SEA_FRIENDS } from "../src/rules.js";
 import { cardSpeech, FOOD_CHAIN, growLine, hurtLine, KINDS, meetLine, SEA_FRIEND_KINDS, SPECIES } from "../src/species.js";
-import { createWorld, nearbyAnimals, swim } from "../src/world.js";
+import { createWorld, nearbyAnimals, resetWorld, swim } from "../src/world.js";
+import { paintAnimal } from "../src/animal-paint.js";
 import { createVoice, VOICE_KEY } from "../src/voice.js";
 import { loadMet, MET_KEY, saveMet } from "../src/ocean-book.js";
 import { PHOTOS } from "../src/photos.js";
@@ -113,6 +114,36 @@ test("each swim has sea friends on the sea bed and in the water, new ones first"
     world.phase = "playing";
     swim(world, 0.016, { keys: new Set(), pointer: null }, 844, 390);
     assert.ok(world.friends.some(friend => friend.floor && friend.kind === "crab"), "the floor animal not met yet comes first");
+  }
+});
+
+test("sea friends this device has never met come before ones it met on earlier swims", () => {
+  const met = new Set(SEA_FRIEND_KINDS.filter(kind => kind !== "moray" && kind !== "narwhal"));
+  for (let trial = 0; trial < 20; trial++) {
+    const world = createWorld(844, 390, undefined, 0, "little", "tuna", met);
+    assert.equal(world.met, met, "the swim sees the Ocean book itself, so animals met mid-swim count at once");
+    assert.ok(world.friends.some(friend => friend.floor && friend.kind === "moray"), "the unmet floor animal comes first");
+    assert.ok(world.friends.some(friend => !friend.floor && friend.kind === "narwhal"), "the unmet swimmer comes first");
+    resetWorld(world, 844, 390);
+    assert.equal(world.met, met, "a new swim keeps the same book");
+  }
+  // Once every animal is met, the ocean still fills with sea friends.
+  const world = createWorld(844, 390, undefined, 0, "little", "tuna", new Set(SEA_FRIEND_KINDS));
+  assert.ok(world.friends.some(friend => friend.floor) && world.friends.some(friend => !friend.floor));
+});
+
+test("every sea friend has its own drawing, on the sea bed or swimming", () => {
+  let marks = 0;
+  const context = new Proxy({}, { get: (target, key) => target[key] ?? (String(key).startsWith("create") ?
+    () => ({ addColorStop() {} }) : key === "fill" || key === "stroke" ? () => { marks++; } : () => {}),
+  set: (target, key, value) => { target[key] = value; return true; } });
+  for (const friend of SEA_FRIENDS) {
+    marks = 0;
+    for (const time of [0, 0.7, 2.3]) {
+      assert.doesNotThrow(() => paintAnimal(context, friend.kind, 100, 100, friend.size, -1, time,
+        friend.floor ? "floor" : "friend", { puff: 0.5 }), `${friend.kind} has no drawing`);
+    }
+    assert.ok(marks >= 3, `${friend.kind}'s drawing paints something`);
   }
 });
 
