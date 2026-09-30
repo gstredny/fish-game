@@ -438,7 +438,7 @@ function begin() {
 
 // Each swim's mission differs from the last one.
 function startSwim() {
-  resetWorld(world, width, height, { artCount: Math.max(0, drawings.length - 1), level, zone, met });
+  resetWorld(world, width, height, { artCount: playerArt().npc.length, level, zone, met });
   world.phase = "playing";
   hintFrom = { ...world.player };
   steering.clear();
