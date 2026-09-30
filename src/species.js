@@ -147,7 +147,7 @@ export const SPECIES = {
       "Being big and spiky makes it very hard to eat."],
     eats: "Crabs, clams, snails and sea urchins",
     eatenBy: "Hardly anything! Only a few sharks try",
-    say: "Pufferfish crunch crabs and clams with their strong teeth. Swim close, and watch it puff up!",
+    say: "Pufferfish crunch crabs and clams with their strong teeth. Look, but don't touch!",
     lines: ["Pufferfish puff up when they're scared!", "Pufferfish crunch crabs with strong teeth."]
   },
   bluewhale: {
@@ -170,7 +170,7 @@ export const SPECIES = {
   },
   lobster: {
     name: "Lobster", plural: "lobsters", hello: "This is a lobster!",
-    facts: ["A lobster has a hard shell, ten legs and two big claws.",
+    facts: ["A lobster has a hard shell and ten legs. The front two are big claws.",
       "Lobsters can zoom backwards by flapping their tails!"],
     eats: "Crabs, clams, snails and sea urchins",
     eatenBy: "Big fish, octopuses and seals",

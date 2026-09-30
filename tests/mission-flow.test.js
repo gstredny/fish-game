@@ -118,6 +118,48 @@ test("finding the blue whale for the first time shows its card before the win sc
   }
 });
 
+test("the sea friend that finishes the mission gets its card and a place in the Ocean book", async () => {
+  const speech = fakeSpeech();
+  const storage = memoryStorage({ [MET_KEY]: '["dolphin"]' });
+  const app = await openGame(storage, speech.globals);
+  try {
+    app.click("start-button");
+    becomeShark(app, "friends");
+    app.click("mission-go");
+    const close = kind => ({ kind, size: 40, speed: 0, floor: false, x: app.world.player.x + 60, y: app.world.player.y, direction: 1, wobble: 0 });
+    Object.assign(app.world, { creatures: [], friends: [close("dolphin")] });
+    app.frame(32);
+    assert.equal(app.world.mission.have, 1);
+    Object.assign(app.world, { creatures: [], friends: [close("manta")] });
+    app.frame(48);
+    assert.equal(app.world.phase, "won");
+    assert.equal(app.nodes.get("card-name").textContent, "Manta ray");
+    assert.ok(JSON.parse(storage.getItem(MET_KEY)).includes("manta"));
+    app.click("card-close");
+    assert.equal(app.nodes.get("won").hidden, false);
+    assert.equal(speech.spoken.at(-1), missionDoneLine(app.world.mission));
+  } finally { app.close(); }
+});
+
+test("leaving the planting after the mission goes back to the win screen, not to more swimming", async () => {
+  const app = await openGame(memoryStorage());
+  try {
+    app.click("start-button");
+    becomeShark(app, "tuna");
+    app.click("mission-go");
+    app.world.creatures = [0, 1].map(() => ({ ...app.world.player, tier: 4, wobble: 0 }));
+    app.frame(32);
+    for (const leave of [() => app.key("Escape"), () => app.click("cancel-plant-button")]) {
+      app.click("win-plant-button");
+      assert.equal(app.world.phase, "planting");
+      leave();
+      assert.equal(app.world.phase, "won");
+      assert.equal(app.nodes.get("won").hidden, false);
+      assert.equal(app.world.reef.pending, 1, "the coral is kept for later");
+    }
+  } finally { app.close(); }
+});
+
 test("a fact card links to a kid-safe web search, when there is a connection", async () => {
   for (const onLine of [true, false]) {
     const app = await openGame(memoryStorage({ [MET_KEY]: '["crab"]' }), { navigator: { onLine } });

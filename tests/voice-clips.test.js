@@ -24,6 +24,7 @@ test("every line the game can say has a recording, and every recording is still 
 async function worker(saved) {
   const listeners = {};
   const cache = { addAll: async requests => { cache.added.push(...requests.map(request => request.url)); }, added: [],
+    add: async request => { if (request.url.includes("broken")) throw new Error("offline"); cache.added.push(request.url); },
     match: async url => saved[String(url).replace(/^\.\//, "")]?.() };
   const context = { self: { addEventListener: (type, listener) => { listeners[type] = listener; }, skipWaiting() {},
     location: { origin: "https://fish.example" } },
@@ -33,8 +34,8 @@ async function worker(saved) {
   return { listeners, cache };
 }
 
-test("installing the offline game saves every recording in the manifest", async () => {
-  const manifest = () => new Response(JSON.stringify({ clips: { "Hi!": "a1.mp3", "Bye!": "b2.mp3" } }));
+test("installing the offline game saves every recording in the manifest, even if one fails", async () => {
+  const manifest = () => new Response(JSON.stringify({ clips: { "Hi!": "a1.mp3", "Oops": "broken.mp3", "Bye!": "b2.mp3" } }));
   const { listeners, cache } = await worker({ "voice/manifest.json": manifest });
   let done;
   listeners.install({ waitUntil: promise => { done = promise; } });
@@ -62,6 +63,11 @@ test("a saved recording is served in pieces when Safari asks for a range", async
   assert.equal((await rest.arrayBuffer()).byteLength, 90);
   const tail = await ask("bytes=-5");
   assert.deepEqual([...new Uint8Array(await tail.arrayBuffer())], [95, 96, 97, 98, 99]);
+  for (const bad of ["bytes=200-", "bytes=5-2", "bytes=-"]) {
+    const reply = await ask(bad);
+    assert.equal(reply.status, 416, bad);
+    assert.equal(reply.headers.get("Content-Range"), "bytes */100");
+  }
   let reply;
   listeners.fetch({ request: { method: "GET", url: "https://fish.example/voice/a1.mp3", headers: new Headers() },
     respondWith: promise => { reply = promise; } });

@@ -1,4 +1,4 @@
-const CACHE = "little-fish-v12";
+const CACHE = "little-fish-v13";
 const FILES = [
   "./",
   "./index.html",
@@ -53,12 +53,13 @@ const FILES = [
   "./icons/apple-touch-icon.png"
 ];
 
-// The recorded voice clips are listed in voice/manifest.json, so they are cached from there.
+// The recorded voice clips are listed in voice/manifest.json, so they are cached from there, one by
+// one: a clip that fails to download is spoken by the device's voice instead of stopping the update.
 async function install() {
   const cache = await caches.open(CACHE);
   await cache.addAll(FILES.map(file => new Request(file, { cache: "reload" })));
   const manifest = await (await cache.match("./voice/manifest.json")).json();
-  await cache.addAll(Object.values(manifest.clips).map(file => new Request(`./voice/${file}`, { cache: "reload" })));
+  await Promise.allSettled(Object.values(manifest.clips).map(file => cache.add(new Request(`./voice/${file}`, { cache: "reload" }))));
 }
 
 self.addEventListener("install", event => {
@@ -87,6 +88,9 @@ async function respond(request) {
   const last = body.byteLength - 1;
   const from = range[1] ? Number(range[1]) : Math.max(0, last + 1 - Number(range[2]));
   const to = range[1] && range[2] ? Math.min(Number(range[2]), last) : last;
+  if (!(range[1] || range[2]) || from > to) {
+    return new Response(null, { status: 416, headers: { "Content-Range": `bytes */${body.byteLength}` } });
+  }
   return new Response(body.slice(from, to + 1), { status: 206, headers: {
     "Content-Type": cached.headers.get("Content-Type") ?? "audio/mpeg",
     "Content-Range": `bytes ${from}-${to}/${body.byteLength}`,

@@ -249,6 +249,7 @@ function followMission(world, step, width, height) {
     for (const { kind } of nearbyAnimals(world, width, height, mission.seen)) {
       if (!SEA_FRIEND_KINDS.includes(kind) || world.phase !== "playing") continue;
       mission.seen.add(kind);
+      mission.last = kind;
       advanceMission(world, 1);
     }
   }

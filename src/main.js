@@ -424,12 +424,14 @@ function closeMission() {
   resume();
 }
 
-// A blue whale found for the first time gets its card before the win screen.
+// An animal that finished the mission (the blue whale, the last sea friend) and is new to the
+// Ocean book gets its card before the win screen.
 function finishSwim(first = false) {
-  if (first && world.mission.id === "whale" && !met.has("bluewhale")) {
-    met.add("bluewhale");
+  const kind = { whale: "bluewhale", friends: world.mission.last }[world.mission.id];
+  if (first && kind && !met.has(kind)) {
+    met.add(kind);
     saveMet(met);
-    return openCard("bluewhale", "won");
+    return openCard(kind, "won");
   }
   showWon();
   voice.say(missionDoneLine(world.mission));

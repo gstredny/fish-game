@@ -72,6 +72,14 @@ test("the orca chases the shark; staying away long enough finishes the mission, 
   assert.equal(world.hearts, 2);
   assert.ok(world.mission.have < 0.1, "caught: stay away again from the start");
   assert.deepEqual(world.events.filter(event => event.type === "hurt"), [{ type: "hurt", by: "orca" }]);
+  swim(world, 0.05, idle, 844, 390);
+  assert.equal(world.creatures.some(creature => creature.hunt), false, "a short break after the bump");
+  for (let tick = 0; tick < 45; tick++) swim(world, 0.05, idle, 844, 390);
+  assert.equal(world.creatures.some(creature => creature.hunt && !creature.gone), true, "then another orca comes");
+  world.creatures = world.creatures.filter(creature => !creature.hunt);
+  world.mission.wait = 0;
+  swim(world, 0.05, idle, 844, 390);
+  assert.equal(world.creatures.some(creature => creature.hunt), true, "one that swam off screen comes back too");
 
   world.invulnerable = 999;
   for (let tick = 0; tick < 240 && world.phase === "playing"; tick++) swim(world, 0.05, idle, 844, 390);

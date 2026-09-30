@@ -38,7 +38,7 @@ export function createClips(base = "voice/", Player = globalThis.Audio, load = g
   audio.addEventListener?.("ended", () => { playing = false; failed = null; });
   audio.addEventListener?.("error", () => { if (playing) fail(); });
   return {
-    has: text => Object.hasOwn(clips, text),
+    has: text => Object.prototype.hasOwnProperty.call(clips, text),
     get busy() { return playing; },
     // `fallback` runs if the clip can't play (missing file, blocked sound).
     play(text, fallback) {
@@ -55,7 +55,9 @@ export function createClips(base = "voice/", Player = globalThis.Audio, load = g
       playing = false;
       audio.pause?.();
     },
+    // An element already playing is already unlocked; swapping in silence would cut its line off.
     unlock() {
+      if (playing) return;
       audio.src = SILENCE;
       Promise.resolve(audio.play?.()).catch(() => {});
     }

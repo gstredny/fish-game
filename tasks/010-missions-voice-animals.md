@@ -1,7 +1,7 @@
 # Missions, levels, a natural voice, and more animals
 
 Date: 2026-09-30
-Status: in review
+Status: done on branch; waiting for George's iPhone check
 Branch: `claude/peaceful-ride-dled9q`
 
 ## What George asked for
@@ -39,7 +39,37 @@ George's choices, 2026-09-29:
 
 ## Verification
 
-See the session report. It covers `npm test`, the controls, the browser scripts and the screenshots.
+- `npm test`: 91 passed, 0 failed. 15 runs of the whole suite in a row had no flaky failures.
+- Controls: each new test was checked by breaking the rule it guards and reverting afterwards. All 19 went red. The rules broken were:
+  - mission repeats;
+  - coral farming after a win;
+  - Big swimmer chase;
+  - the double shark line;
+  - the clip ticket, novelty-voice filter, iPhone `hasOwn` and unlock-while-playing;
+  - the SW range, all-or-nothing clip install and 416;
+  - the orca reset and respawn;
+  - the offline link;
+  - sea-friend counting;
+  - the whale card and last-friend card;
+  - Escape and cancel while planting after a win;
+  - a deleted clip.
+- Browser, headless Chromium 141, no page errors:
+  - `browser-check` (desktop, phone and six screen sizes, including 568×320);
+  - `browser-learn` (21 photos load; book, card, mission card and "Find out more" fit at five sizes; zoo);
+  - `browser-sideways`;
+  - `browser-reef` (desktop and phone);
+  - `browser-play` (desktop and phone);
+  - `browser-voice` (the clip plays after a tap, online and offline, and the device voice stays quiet).
+- Autoplay bot, time to reach the shark: Little about 20 s; Big 27 to 44 s in good runs, and over 150 s in a run with a bad start.
+- An independent read-only review found 2 should-fix bugs, 3 nits and 2 wording issues, and all are fixed:
+  - `Object.hasOwn` froze the game on iOS below 15.4.
+  - The last sea friend of a mission got no card.
+  - A click could cut off a clip.
+  - The service worker install failed outright if one clip failed.
+  - Bad byte ranges got a malformed reply.
+  - The lobster had "ten legs and two claws".
+  - The pufferfish card said "swim close and watch it puff".
+- Not tested: real Safari or WebKit (only Chromium ran here). The 206 range path is unit-tested for Safari's `bytes=0-1`.
 
 ## Open
 

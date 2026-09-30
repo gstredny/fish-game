@@ -20,14 +20,31 @@ function fakeClips(texts) {
     stop() { this.busy = false; }, unlock() { this.played.push("(unlock)"); } };
 }
 
+// Like a browser: a new src interrupts the line still loading, whose play() then fails.
 class FakeAudio {
   constructor() { FakeAudio.last = this; this.listeners = {}; this.plays = 0; }
+  set src(value) { this.interrupt?.(new Error("AbortError")); this.interrupt = null; this.source = value; }
+  get src() { return this.source; }
   addEventListener(type, callback) { this.listeners[type] = callback; }
-  play() { this.plays++; return FakeAudio.next ?? Promise.resolve(); }
+  play() {
+    this.plays++;
+    return FakeAudio.next ?? new Promise((resolve, reject) => { this.interrupt = reject; setImmediate(resolve); });
+  }
   pause() { this.paused = true; }
 }
 
 const settle = () => new Promise(resolve => setImmediate(resolve));
+
+test("the recordings are looked up without Object.hasOwn, which older iPhones lack", async () => {
+  const hasOwn = Object.hasOwn;
+  delete Object.hasOwn;
+  try {
+    const clips = createClips("voice/", FakeAudio, async () => ({ ok: true, json: async () => ({ clips: { "Hi!": "a1.mp3" } }) }));
+    await settle();
+    assert.equal(clips.has("Hi!"), true);
+    assert.equal(clips.has("toString"), false);
+  } finally { Object.hasOwn = hasOwn; }
+});
 
 test("recorded lines play the recording; other lines use the device voice", () => {
   const { synth, spoken, Utterance } = fakeSpeech();
@@ -104,6 +121,14 @@ test("clips come from the manifest and play one at a time through one audio elem
 
   clips.unlock();
   assert.match(audio.src, /^data:audio\/wav;base64,/);
+
+  // A click after sound is already allowed (a swim started with Enter) must not cut off a line.
+  FakeAudio.next = null;
+  clips.play("Hi!", () => fallbacks++);
+  clips.unlock();
+  await settle();
+  assert.equal(audio.src, "voice/a1.mp3", "the line keeps playing");
+  assert.equal(fallbacks, 2, "and the robot voice does not read it again");
   assert.equal(createClips("voice/", undefined, load), null, "no audio, no clips");
 });
 
