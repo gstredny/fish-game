@@ -4,6 +4,7 @@ import { cardSpeech, growLine, hurtLine } from "../src/species.js";
 import { KINDS, ZONES } from "../src/zones.js";
 import { MET_KEY } from "../src/ocean-book.js";
 import { VOICE_KEY } from "../src/voice.js";
+import { WHAT_ANIMAL } from "../src/lines.js";
 import { openGame } from "./app-fixture.js";
 
 function memoryStorage(saved = {}) {
@@ -39,7 +40,8 @@ test("the first meeting pauses the swim for a spoken photo card; the next new an
     assert.equal(app.world.phase, "meeting");
     assert.equal(app.nodes.get("card").hidden, false);
     assert.equal(app.nodes.get("pad").hidden, true);
-    assert.equal(app.nodes.get("card-name").textContent, "Plankton");
+    app.click("card-close");
+    assert.equal(app.nodes.get("card-name").textContent, "Plankton", "Tell me! names it");
     assert.equal(app.nodes.get("card-kicker").textContent, "You met a new animal!");
     assert.equal(app.nodes.get("card-photo").src, "art/animals/plankton.webp");
     assert.equal(app.nodes.get("card-eats").textContent.length > 0, true);
@@ -66,9 +68,47 @@ test("the first meeting pauses the swim for a spoken photo card; the next new an
     app.world.time = app.world.nextCardAt;
     app.frame(80);
     assert.equal(app.world.phase, "meeting");
-    assert.equal(app.nodes.get("card-name").textContent, "Mackerel");
+    app.key("Enter");
+    assert.equal(app.nodes.get("card-name").textContent, "Mackerel", "Enter names it");
     app.key("Enter");
     assert.equal(app.world.phase, "playing", "Enter closes the card too");
+  } finally { app.close(); }
+});
+
+test("a new animal's card first asks who it is, waits for an answer, then names it and reads it", async () => {
+  const speech = fakeSpeech();
+  const timers = [];
+  const app = await openGame(memoryStorage(), { ...speech.globals, setTimeout: (callback, wait) => timers.push({ callback, wait }) });
+  try {
+    app.click("start-button");
+    Object.assign(app.world, { creatures: [plankton(app.world)], friends: [], time: 5.1 });
+    app.frame(16);
+    assert.equal(app.world.phase, "meeting");
+    assert.equal(app.nodes.get("card-photo").src, "art/animals/plankton.webp", "the photo shows straight away");
+    assert.equal(app.nodes.get("card-kicker").textContent, WHAT_ANIMAL);
+    assert.equal(app.nodes.get("card-name").textContent, "?");
+    assert.ok(app.nodes.get("card").classList.contains("guessing"), "the facts wait too");
+    assert.equal(app.nodes.get("card-close").textContent, "Tell me!");
+    assert.equal(speech.spoken.at(-1), WHAT_ANIMAL);
+    const { callback, wait } = timers.at(-1);
+    assert.ok(wait >= 4000, "a few seconds to answer");
+    callback();
+    assert.equal(app.nodes.get("card-name").textContent, "Plankton");
+    assert.equal(app.nodes.get("card-kicker").textContent, "You met a new animal!");
+    assert.equal(app.nodes.get("card").classList.contains("guessing"), false);
+    assert.equal(app.nodes.get("card-close").textContent, "Keep swimming");
+    assert.equal(speech.spoken.at(-1), cardSpeech("plankton"));
+    app.click("card-close");
+    assert.equal(app.world.phase, "playing");
+
+    // "Tell me!" names it without the wait.
+    Object.assign(app.world, { time: app.world.nextCardAt, creatures: [{ ...plankton(app.world), tier: 2 }] });
+    app.frame(32);
+    assert.equal(app.nodes.get("card-name").textContent, "?");
+    app.click("card-close");
+    assert.equal(app.world.phase, "meeting", "the card stays open to be read");
+    assert.equal(app.nodes.get("card-name").textContent, "Mackerel");
+    assert.equal(speech.spoken.at(-1), cardSpeech("mackerel"));
   } finally { app.close(); }
 });
 
@@ -230,6 +270,6 @@ test("a card that opens in the same moment as growing is read out, not cut off",
     app.frame(16);
     assert.equal(app.world.stage, 1);
     assert.equal(app.world.phase, "meeting");
-    assert.equal(speech.spoken.at(-1), cardSpeech("squid"));
+    assert.equal(speech.spoken.at(-1), WHAT_ANIMAL);
   } finally { app.close(); }
 });

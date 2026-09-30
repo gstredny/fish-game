@@ -185,6 +185,7 @@ test("everything the game says is a line with a recording", async () => {
     Object.assign(app.world, { time: 30, friends: [], creatures: [{ x: app.world.player.x + 60, y: app.world.player.y, tier: 0, direction: 1, wobble: 0 }] });
     app.frame(32);
     assert.equal(app.world.phase, "meeting");
+    app.click("card-close");
     app.click("card-hear");
     app.click("card-close");
     app.click("voice-button");

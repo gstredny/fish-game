@@ -449,6 +449,8 @@ h1 em { color: #ffdf9c; font-style: normal; }
 .card-chain dd { margin: 0; font-size: 14px; line-height: 1.35; }
 .card-actions { display: flex; align-items: center; gap: 12px; margin-top: 16px; }
 .card-actions .primary-button { margin-top: 0; }
+/* While the child guesses, only the photo and the question show; the card keeps its size. */
+.guessing .card-facts, .guessing .card-chain, .guessing #card-hear, .guessing .card-more { visibility: hidden; }
 
 .book-panel { text-align: center; }
 .book-panel h2 { font-size: clamp(26px, 4vw, 36px); letter-spacing: -.03em; }

@@ -5,11 +5,13 @@ import { createMission, missionDoneLine, missionIds, missionLine } from "./missi
 
 export const VOICE_ON = "Voice on!";
 export const FIND_THAT_ONE = "Keep swimming to find that one!";
+// Asked when a new animal's card opens, before it is named. "Animal" fits all of them; a whale is no fish.
+export const WHAT_ANIMAL = "What animal is this?";
 
 // Every line the game can say, in every zone. tools/make-voice.py records each one (see README),
 // and tests/voice-clips.test.js fails if one has no recording.
 export function allLines() {
-  const lines = [VOICE_ON, FIND_THAT_ONE];
+  const lines = [VOICE_ON, FIND_THAT_ONE, WHAT_ANIMAL];
   for (const kind of KINDS) {
     lines.push(cardSpeech(kind), ...SPECIES[kind].lines.map(line => `${SPECIES[kind].name}! ${line}`));
   }
