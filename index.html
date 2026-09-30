@@ -8,7 +8,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Little Fish">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="description" content="Swim, snack, and grow from a little fish into the ruler of the reef.">
+  <meta name="description" content="Swim, snack, and grow up a real ocean food chain, from a little sardine to a great white shark.">
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="icons/fish.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
@@ -58,7 +58,11 @@
       <div id="intro-mark" class="tiny-fish" aria-hidden="true">✦</div>
       <img id="intro-art" class="intro-art" alt="Your fish" hidden>
       <h1>Little Fish,<br><em>Big Ocean.</em></h1>
-      <p>Start small. Chase your snacks. Dodge the big fish. Grow until the whole reef is yours.</p>
+      <p>Chase snacks. Dodge big fish. Grow into a shark, then finish your mission!</p>
+      <div class="level-pick" role="group" aria-label="How hard">
+        <button id="level-little" class="level-button" type="button" aria-pressed="true">Little swimmer</button>
+        <button id="level-big" class="level-button" type="button" aria-pressed="false">Big swimmer</button>
+      </div>
       <div id="intro-actions" class="intro-actions">
         <button id="start-button" class="primary-button" type="button">Dive in <span aria-hidden="true">↗</span></button>
         <button id="draw-button" class="secondary-button" type="button">Draw my fish <span aria-hidden="true">✎</span></button>
@@ -118,6 +122,21 @@
         <div class="card-actions">
           <button id="card-hear" class="icon-button" type="button" aria-label="Hear it again">🔊</button>
           <button id="card-close" class="primary-button" type="button">Keep swimming</button>
+          <a id="card-more" class="card-more" target="_blank" rel="noopener">Find out more <span aria-hidden="true">🔍</span></a>
+        </div>
+      </div>
+    </section>
+
+    <section id="mission" class="panel card-panel mission-panel" hidden aria-labelledby="mission-title">
+      <figure class="card-photo">
+        <img id="mission-photo" alt="">
+      </figure>
+      <div class="card-text">
+        <p class="card-kicker">You're a great white shark!</p>
+        <h2 id="mission-title">Your mission</h2>
+        <p id="mission-goal" class="mission-goal"></p>
+        <div class="card-actions">
+          <button id="mission-go" class="primary-button" type="button">Let's go! <span aria-hidden="true">↗</span></button>
         </div>
       </div>
     </section>
@@ -135,11 +154,10 @@
     <section id="won" class="panel result-panel" hidden>
       <div id="won-mark" class="result-icon" aria-hidden="true">✦</div>
       <img id="won-art" class="won-art" alt="Your fish as a shark" hidden>
-      <h2>You're the shark!</h2>
-      <p>You earned a coral colony! Plant a home for little fish. On your next swim, hide inside it to stay safe.</p>
+      <h2>Mission complete!</h2>
+      <p id="won-text"></p>
       <button id="win-plant-button" class="primary-button" type="button">Plant your coral</button>
-      <button id="continue-button" class="text-button" type="button">Explore the ocean</button>
-      <button id="win-restart-button" class="text-button" type="button">Swim again from the start</button>
+      <button id="win-restart-button" class="text-button" type="button">Swim again</button>
     </section>
 
     <section id="gameover" class="panel result-panel" hidden>

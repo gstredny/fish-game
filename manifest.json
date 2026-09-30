@@ -1,7 +1,7 @@
 {
   "name": "Little Fish, Big Ocean",
   "short_name": "Little Fish",
-  "description": "Grow from a tiny sprat into the ruler of the reef.",
+  "description": "Grow up a real ocean food chain, from a little sardine to a great white shark.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "fullscreen",

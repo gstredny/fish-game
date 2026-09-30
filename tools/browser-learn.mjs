@@ -3,10 +3,13 @@
 // gets a name tag, every photo loads, and the card and book fit short screens. Also saves a
 // "zoo" screenshot of every animal drawing. Same server/Chrome setup as browser-play.mjs.
 import assert from "node:assert/strict";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { cardSpeech, growLine, KINDS, SPECIES } from "../src/species.js";
 import { PHOTOS } from "../src/photos.js";
-import { SEA_FRIENDS } from "../src/rules.js";
+import { CREATURES, SEA_FRIENDS } from "../src/rules.js";
+// Recorded lines are heard as clips; the checks below turn each clip back into its words.
+const CLIP_TEXT = Object.fromEntries(Object.entries(JSON.parse(readFileSync(new URL("../voice/manifest.json", import.meta.url))).clips)
+  .map(([text, file]) => [file, text]));
 
 const GAME = process.env.GAME || "http://127.0.0.1:8778/";
 const CDP = process.env.CDP || "http://127.0.0.1:9444";
@@ -80,7 +83,8 @@ const tapButton = async selector => {
 const fitsOnScreen = selector => evaluate(`(() => { const r = document.querySelector(${JSON.stringify(selector)}).getBoundingClientRect();
   return r.width > 0 && r.height > 0 && r.top >= 0 && r.bottom <= innerHeight && r.left >= 0 && r.right <= innerWidth; })()`);
 const visible = selector => evaluate(`!document.querySelector(${JSON.stringify(selector)}).hidden`);
-const spoken = () => evaluate("window.__spoken.filter(line => line.trim())"); // minus the silent wake-up line
+const spoken = async () => (await evaluate("window.__spoken.filter(line => line.trim())")) // minus the silent wake-up line
+  .map(line => CLIP_TEXT[line] ?? line);
 const reload = async () => {
   await page.send("Page.reload", { ignoreCache: true });
   await waitFor("Boolean(window.__game) && !document.querySelector('#intro').hidden", "game loaded");
@@ -93,7 +97,15 @@ await page.send("Fetch.enable", { patterns: [{ urlPattern: "*/src/main.js", requ
 await page.send("Emulation.setTouchEmulationEnabled", { enabled: true, maxTouchPoints: 5 });
 // Record every line the game speaks.
 await page.send("Page.addScriptToEvaluateOnNewDocument", { source:
-  "window.__spoken = []; if (window.speechSynthesis) speechSynthesis.speak = line => window.__spoken.push(line.text);" });
+  `window.__spoken = []; if (window.speechSynthesis) speechSynthesis.speak = line => window.__spoken.push(line.text);
+  // A clip "plays" for a moment and ends, so the next polite line gets its turn.
+  HTMLMediaElement.prototype.play = function () {
+    if (!this.src.startsWith("data:")) {
+      window.__spoken.push(this.src.split("/voice/").pop());
+      setTimeout(() => this.dispatchEvent(new Event("ended")), 60);
+    }
+    return Promise.resolve();
+  };` });
 await size(844, 390);
 await page.send("Page.navigate", { url: GAME });
 await waitFor("Boolean(window.__game)", "game loaded");
@@ -187,7 +199,8 @@ for (const [width, height] of [[844, 390], [844, 340], [844, 330], [667, 375], [
   await shot(`06-book-${width}x${height}`);
   await tapButton(`.book-tile[data-kind="${WORDIEST}"]`);
   await sleep(400);
-  const cardFits = await fitsOnScreen("#card-close") && await fitsOnScreen("#card-hear") && await fitsOnScreen("#card-name");
+  const cardFits = await fitsOnScreen("#card-close") && await fitsOnScreen("#card-hear") && await fitsOnScreen("#card-name") &&
+    await fitsOnScreen("#card-more");
   await shot(`07-card-${width}x${height}`);
   console.log(`7. ${width}x${height}: book fits: ${bookFits}; card fits: ${cardFits}`);
   assert.ok(bookFits && cardFits, `${width}x${height}: the book or card does not fit`);
@@ -196,7 +209,19 @@ for (const [width, height] of [[844, 390], [844, 340], [844, 330], [667, 375], [
   await tapButton("#book-close");
   await sleep(200);
   assert.ok(await fitsOnScreen("#start-button") && await fitsOnScreen("#intro-book-button") &&
-    await fitsOnScreen("#intro-voice-button"), `${width}x${height}: start buttons fit`);
+    await fitsOnScreen("#intro-voice-button") && await fitsOnScreen("#level-big"), `${width}x${height}: start buttons fit`);
+  // The mission card, for the longest mission.
+  await tapButton("#start-button");
+  await sleep(200);
+  await evaluate(`(() => { const w = __game.world; w.mission.id = "friends"; w.mission.need = 4; w.invulnerable = 999;
+    w.stage = 3; w.bites = 99; w.creatures = [{ ...w.player, tier: 3, direction: 1, wobble: 0 }]; })()`);
+  await waitFor("__game.world.phase === 'mission'", "the mission card opens");
+  await sleep(400);
+  const missionFits = await fitsOnScreen("#mission-go") && await fitsOnScreen("#mission-goal") && await fitsOnScreen("#mission-photo");
+  await shot(`07b-mission-${width}x${height}`);
+  assert.ok(missionFits, `${width}x${height}: the mission card does not fit`);
+  await tapButton("#mission-go");
+  await sleep(200);
 }
 
 // 8. The zoo: every animal drawing, as a squid (so snacks, schoolmates and hunters all show).
@@ -209,12 +234,12 @@ for (const [label, width, height, mobile] of [["desktop", 1280, 800, false], ["p
   await sleep(200);
   await evaluate(`(() => { const w = __game.world; w.stage = 2; w.invulnerable = 999; w.player.direction = 1;
     const x = w.player.x, y = w.player.y, s = innerWidth / 1280;
-    w.creatures = [0, 1, 2, 3, 4, 5].map((tier, i) => ({ x: x + (-470 + i * 190) * s, y: y - 150 * s + (i % 2) * 60 * s, tier, direction: 1, wobble: i }));
+    w.creatures = ${JSON.stringify(CREATURES.map((_, tier) => tier))}.map((tier, i) => ({ x: x + (-520 + i * 175) * s, y: y - 190 * s + (i % 2) * 70 * s, tier, direction: 1, wobble: i }));
+    const swimmers = ${JSON.stringify(SEA_FRIENDS.filter(friend => !friend.floor && !friend.rare))};
     w.friends = [
-      { kind: "turtle", size: 34, speed: 0, floor: false, x: x - 380 * s, y: y + 110 * s, direction: 1, wobble: 0 },
-      { kind: "parrotfish", size: 24, speed: 0, floor: false, x: x + 330 * s, y: y + 110 * s, direction: -1, wobble: 1 },
+      ...swimmers.map((friend, i) => ({ ...friend, speed: 0, x: x + (-500 + i * 200) * s, y: y + 90 * s + (i % 2) * 50 * s, direction: i % 2 ? -1 : 1, wobble: i })),
       ...${JSON.stringify(SEA_FRIENDS.filter(friend => friend.floor))}.map((friend, i) =>
-        ({ ...friend, speed: 0, x: x + (-440 + i * 220) * s, y: 0, direction: 1, wobble: i }))]; })()`);
+        ({ ...friend, speed: 0, x: x + (-560 + i * 170) * s, y: 0, direction: 1, wobble: i }))]; })()`);
   await evaluate("__game.world.phase = 'paused'");
   await sleep(300);
   await evaluate("document.querySelector('#overlay').hidden = true");

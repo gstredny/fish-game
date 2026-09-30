@@ -6,7 +6,7 @@ export const SPECIES = {
     facts: ["Plankton are tiny living things that drift in the sea. Most are too small to see!",
       "Plant plankton make lots of the air we breathe."],
     eats: "Sunlight! Plant plankton make food from it, like trees do",
-    eatenBy: "Sardines, mackerel, and even giant whales",
+    eatenBy: "Sardines, mackerel, manta rays, and even giant blue whales",
     say: "Plant plankton make their food from sunlight, like trees. Lots of animals eat plankton, even giant whales!",
     lines: ["Little fish eat plankton.", "Tiny food for little fish."]
   },
@@ -39,8 +39,8 @@ export const SPECIES = {
     name: "Tuna", plural: "tuna", hello: "This is a tuna!",
     facts: ["Tuna are big fish and super-fast swimmers.", "A tuna has to keep swimming to breathe."],
     eats: "Fish, like mackerel, and squid",
-    eatenBy: "Big sharks and killer whales",
-    say: "Tuna eat fish, like mackerel, and squid. Big sharks eat tuna.",
+    eatenBy: "Big sharks and orcas",
+    say: "Tuna eat fish, like mackerel, and squid. Big sharks and orcas eat tuna.",
     lines: ["Tuna are super fast!", "Tuna eat squid and fish."]
   },
   shark: {
@@ -48,9 +48,18 @@ export const SPECIES = {
     facts: ["Great white sharks are the biggest hunting fish in the sea.",
       "They have about 300 teeth, and they grow new ones all the time!"],
     eats: "Big fish like tuna, seals, and even other sharks",
-    eatenBy: "Almost nothing! Only killer whales hunt them",
-    say: "Great whites eat big fish, like tuna, and seals. Only killer whales hunt great white sharks.",
-    lines: ["Great whites have about 300 teeth!", "Sharks are at the top of the food chain."]
+    eatenBy: "Almost nothing! Only orcas hunt them",
+    say: "Great whites eat big fish, like tuna, and seals. Only orcas hunt great white sharks.",
+    lines: ["Great whites have about 300 teeth!", "Only orcas hunt great white sharks."]
+  },
+  orca: {
+    name: "Orca", plural: "orcas", hello: "This is an orca! Some people call it a killer whale.",
+    facts: ["Orcas are black and white. They are the biggest dolphins in the world!",
+      "Orcas live and hunt together in families called pods."],
+    eats: "Fish, seals, and even great white sharks",
+    eatenBy: "Nothing! Orcas are at the top of the food chain",
+    say: "Orcas eat fish, seals, and even great white sharks. Nothing hunts orcas!",
+    lines: ["Orcas are the biggest dolphins!", "Orcas live in families called pods.", "Nothing hunts orcas!"]
   },
   seahorse: {
     name: "Seahorse", plural: "seahorses", hello: "This is a seahorse!",
@@ -113,11 +122,75 @@ export const SPECIES = {
     eatenBy: "Bigger fish, if they leave home",
     say: "Clownfish eat plankton and leftovers from their anemone home.",
     lines: ["Clownfish live in anemones.", "Anemones don't sting clownfish!"]
+  },
+  dolphin: {
+    name: "Dolphin", plural: "dolphins", hello: "This is a dolphin!",
+    facts: ["A dolphin is not a fish. It breathes air through a blowhole on top of its head.",
+      "Dolphins talk to each other with clicks and whistles."],
+    eats: "Fish, like sardines and mackerel, and squid",
+    eatenBy: "Big sharks and orcas",
+    say: "Dolphins eat fish and squid. They swim up to the top to breathe air!",
+    lines: ["Dolphins breathe through a blowhole!", "Dolphins talk with clicks and whistles."]
+  },
+  jellyfish: {
+    name: "Jellyfish", plural: "jellyfish", hello: "This is a jellyfish!",
+    facts: ["A jellyfish is not a fish! It has no brain, no heart and no bones.",
+      "Its long tentacles can sting, so look, but don't touch!"],
+    eats: "Plankton, fish eggs and tiny fish",
+    eatenBy: "Sea turtles and some fish",
+    say: "Jellyfish catch tiny plankton with their stinging tentacles. Sea turtles love to eat jellyfish!",
+    lines: ["Jellyfish have no brain!", "Look, but don't touch! Jellyfish sting.", "Sea turtles eat jellyfish."]
+  },
+  pufferfish: {
+    name: "Pufferfish", plural: "pufferfish", hello: "This is a pufferfish!",
+    facts: ["When a pufferfish is scared, it gulps water and puffs up into a big spiky ball!",
+      "Being big and spiky makes it very hard to eat."],
+    eats: "Crabs, clams, snails and sea urchins",
+    eatenBy: "Hardly anything! Only a few sharks try",
+    say: "Pufferfish crunch crabs and clams with their strong teeth. Swim close, and watch it puff up!",
+    lines: ["Pufferfish puff up when they're scared!", "Pufferfish crunch crabs with strong teeth."]
+  },
+  bluewhale: {
+    name: "Blue whale", plural: "blue whales", hello: "This is a blue whale!",
+    facts: ["The blue whale is the biggest animal that has ever lived, even bigger than the dinosaurs!",
+      "A blue whale is as long as two school buses."],
+    eats: "Krill: tiny, shrimp-like plankton. Millions every day!",
+    eatenBy: "Almost nothing! Only orcas, once in a while",
+    say: "The biggest animal in the world eats some of the tiniest! Blue whales gulp up tiny krill.",
+    lines: ["Blue whales are the biggest animals ever!", "Blue whales eat tiny krill."]
+  },
+  manta: {
+    name: "Manta ray", plural: "manta rays", hello: "This is a manta ray!",
+    facts: ["Manta rays flap their wide fins like wings. They look like they're flying underwater!",
+      "A big manta ray is wider than a car."],
+    eats: "Plankton! It swims with its mouth wide open to scoop it up",
+    eatenBy: "Big sharks and orcas",
+    say: "Manta rays swim with their mouths wide open to scoop up tiny plankton.",
+    lines: ["Manta rays fly through the water!", "Manta rays eat plankton."]
+  },
+  lobster: {
+    name: "Lobster", plural: "lobsters", hello: "This is a lobster!",
+    facts: ["A lobster has a hard shell, ten legs and two big claws.",
+      "Lobsters can zoom backwards by flapping their tails!"],
+    eats: "Crabs, clams, snails and sea urchins",
+    eatenBy: "Big fish, octopuses and seals",
+    say: "Lobsters walk along the sea floor and eat crabs, clams and sea urchins.",
+    lines: ["Lobsters swim backwards!", "A lobster has ten legs."]
+  },
+  urchin: {
+    name: "Sea urchin", plural: "sea urchins", hello: "This is a sea urchin!",
+    facts: ["A sea urchin is a spiky ball. Its spikes keep it safe.",
+      "It walks very slowly on hundreds of tiny tube feet."],
+    eats: "Seaweed, like kelp",
+    eatenBy: "Sea otters, lobsters, crabs and pufferfish",
+    say: "Sea urchins munch on seaweed. Sea otters, lobsters and pufferfish eat sea urchins.",
+    lines: ["Sea urchins are spiky!", "Sea urchins eat seaweed."]
   }
 };
 
-export const FOOD_CHAIN = ["plankton", "sardine", "mackerel", "squid", "tuna", "shark"];
-export const SEA_FRIEND_KINDS = ["seahorse", "turtle", "octopus", "starfish", "crab", "parrotfish", "clownfish"];
+export const FOOD_CHAIN = ["plankton", "sardine", "mackerel", "squid", "tuna", "shark", "orca"];
+export const SEA_FRIEND_KINDS = ["turtle", "dolphin", "jellyfish", "pufferfish", "manta", "bluewhale", "parrotfish",
+  "seahorse", "octopus", "starfish", "crab", "lobster", "urchin", "clownfish"];
 export const KINDS = [...FOOD_CHAIN, ...SEA_FRIEND_KINDS];
 
 // Spoken when a card opens: its name, first fact, and who eats whom.
@@ -137,7 +210,6 @@ export function growLine(stage) {
   const food = FOOD_CHAIN[stage];
   const hunter = FOOD_CHAIN[stage + 2];
   const name = SPECIES[you].name.toLowerCase();
-  if (!hunter) return `You're a ${name}! Sharks are at the top of the food chain!`;
   return `You're a${stage ? "" : " little"} ${name}${stage ? " now" : ""}! ${capital(SPECIES[you].plural)} eat ${SPECIES[food].plural}. Watch out for ${SPECIES[hunter].plural}!`;
 }
 
@@ -147,4 +219,9 @@ export function hurtLine(hunterKind, stage) {
 
 function capital(text) {
   return text[0].toUpperCase() + text.slice(1);
+}
+
+// "Find out more" on a card: a web search for kids' facts, with Google's SafeSearch switched on.
+export function searchLink(kind) {
+  return `https://www.google.com/search?safe=active&q=${encodeURIComponent(`${SPECIES[kind].name} facts for kids`)}`;
 }

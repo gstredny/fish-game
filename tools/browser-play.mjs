@@ -51,7 +51,7 @@ const hud = () => evaluate(`JSON.stringify({
   growth: document.querySelector("#growth-text").textContent,
   hearts: document.querySelector("#hearts").textContent,
   toast: document.querySelector("#toast").classList.contains("visible") ? document.querySelector("#toast").textContent : "",
-  overlay: document.querySelector("#overlay").hidden ? "" : ["intro","paused","won","gameover"].find(p => !document.getElementById(p).hidden),
+  overlay: document.querySelector("#overlay").hidden ? "" : ["intro","paused","won","gameover","mission"].find(p => !document.getElementById(p).hidden),
   size: innerWidth + "x" + innerHeight
 })`);
 
@@ -90,7 +90,7 @@ if (MODE === "desktop") {
         else if (b.toast && b.toast !== a.toast) events.push(`${secs}s toast "${b.toast}"`);
         if (b.overlay) { events.push(`${secs}s overlay ${b.overlay}`); await shot("overlay-" + b.overlay); }
         last = now;
-        if (b.overlay === "gameover" || b.overlay === "won") break;
+        if (b.overlay === "gameover" || b.overlay === "won" || b.overlay === "mission") break;
       }
     }
     await keyUp(key);

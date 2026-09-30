@@ -96,7 +96,13 @@ async function checkReef(browser, mode) {
     await page.send("Page.navigate", { url: GAME });
     await waitFor("Boolean(window.__reefGame)");
     await clickButton("#start-button");
-    await evaluate(`(() => { const w = __reefGame.world; w.stage = 3; w.bites = 8; w.creatures = [{ ...w.player, tier: 3, wobble: 0 }]; __reefGame.input.pointer = null; })()`);
+    // Grow into a shark, then finish an "eat one tuna" mission.
+    await evaluate(`(() => { const w = __reefGame.world; Object.assign(w.mission, { id: "tuna", need: 1 }); w.stage = 3; w.bites = 99; w.creatures = [{ ...w.player, tier: 3, wobble: 0 }]; __reefGame.input.pointer = null; })()`);
+    await waitFor("!document.querySelector('#mission').hidden");
+    assert.equal(await evaluate("JSON.parse(localStorage.getItem('little-fish-reef-v1') ?? '{\"pending\":0}').pending"), 0, "no coral until the mission is done");
+    await shot("mission");
+    await clickButton("#mission-go");
+    await evaluate(`(() => { const w = __reefGame.world; w.creatures = [{ ...w.player, tier: 4, wobble: 0 }]; __reefGame.input.pointer = null; })()`);
     await waitFor("!document.querySelector('#won').hidden");
     assert.equal(await evaluate("JSON.parse(localStorage.getItem('little-fish-reef-v1')).pending"), 1);
     await shot("earned");
@@ -107,6 +113,7 @@ async function checkReef(browser, mode) {
     await waitFor("__reefGame.world.reef.corals.length === 1");
     const saved = await evaluate("JSON.parse(localStorage.getItem('little-fish-reef-v1'))");
     assert.equal(saved.pending, 0);
+    await waitFor("!document.querySelector('#won').hidden && __reefGame.world.phase === 'won'");
     await shot("planted");
     await page.send("Page.reload", { ignoreCache: true });
     await waitFor("Boolean(window.__reefGame) && !document.querySelector('#intro').hidden");
@@ -128,14 +135,16 @@ async function checkReef(browser, mode) {
     await page.send("Input.dispatchKeyEvent", { type: "keyDown", key: "ArrowRight", code: "ArrowRight", windowsVirtualKeyCode: 39 });
     await waitFor("!__reefGame.world.sheltered");
     await page.send("Input.dispatchKeyEvent", { type: "keyUp", key: "ArrowRight", code: "ArrowRight", windowsVirtualKeyCode: 39 });
+    // A random fish may already have bumped the sardine on its way out, so count from here.
+    const before = await evaluate("__reefGame.world.hearts");
     await evaluate(meetShark);
-    await waitFor("__reefGame.world.hearts === 2");
+    await waitFor(`__reefGame.world.hearts === ${before - 1}`);
     await shot("outside-shelter");
     await clickButton("#pause-button");
     await page.send("Emulation.setDeviceMetricsOverride", { width: height, height: width, deviceScaleFactor: 1, mobile: mode === "phone" });
     await shot("turned");
     assert.deepEqual(errors, []);
-    console.log(`${mode}: earn → plant → reload → sardine → shelter → leave: PASS; console errors: 0; screenshots: 7`);
+    console.log(`${mode}: mission → earn → plant → reload → sardine → shelter → leave: PASS; console errors: 0; screenshots: 8`);
   } finally {
     page?.close();
     await browser.send("Target.disposeBrowserContext", { browserContextId });

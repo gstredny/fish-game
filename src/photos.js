@@ -13,4 +13,12 @@ export const PHOTOS = {
   crab: { file: "art/animals/crab.webp", credit: "Photo: NOAA, public domain", source: "https://commons.wikimedia.org/wiki/File:Grapsus_grapsus_Galapagos_Islands.jpg" },
   parrotfish: { file: "art/animals/parrotfish.webp", credit: "Photo: Diego Delso, CC BY-SA 4.0", source: "https://commons.wikimedia.org/wiki/File:Pez_loro_tricolor_(Scarus_tricolor),_Nosy_Iranja,_Madagascar,_2025-09-17,_DD_61.jpg" },
   clownfish: { file: "art/animals/clownfish.webp", credit: "Photo: Janderk, public domain", source: "https://commons.wikimedia.org/wiki/File:Common_clownfish.jpg" },
+  orca: { file: "art/animals/orca.webp", credit: "Photo: Robert Pittman (NOAA), public domain", source: "https://commons.wikimedia.org/wiki/File:Killerwhales_jumping.jpg" },
+  dolphin: { file: "art/animals/dolphin.webp", credit: "Photo: NASA, public domain", source: "https://commons.wikimedia.org/wiki/File:Tursiops_truncatus_01.jpg" },
+  jellyfish: { file: "art/animals/jellyfish.webp", credit: "Photo: Ed Bierman, CC BY 2.0", source: "https://commons.wikimedia.org/wiki/File:Sea_nettle_(Chrysaora_fuscescens)_2.jpg" },
+  pufferfish: { file: "art/animals/pufferfish.webp", credit: "Photo: Richard Ling, CC BY-SA 2.0", source: "https://commons.wikimedia.org/wiki/File:Arothron_nigropunctatus.jpg" },
+  bluewhale: { file: "art/animals/bluewhale.webp", credit: "Photo: NOAA, public domain", source: "https://commons.wikimedia.org/wiki/File:Anim1754_-_Flickr_-_NOAA_Photo_Library.jpg" },
+  manta: { file: "art/animals/manta.webp", credit: "Photo: Rickard Zerpe, CC BY 2.0", source: "https://commons.wikimedia.org/wiki/File:Reef_manta_ray_(Manta_alfredi)_-_49877611423.jpg" },
+  lobster: { file: "art/animals/lobster.webp", credit: "Photo: Bart Braun, public domain", source: "https://commons.wikimedia.org/wiki/File:KreeftbijDenOsse.jpg" },
+  urchin: { file: "art/animals/urchin.webp", credit: "Photo: Dwayne Meadows (NOAA), public domain", source: "https://commons.wikimedia.org/wiki/File:Fish4641_-_Flickr_-_NOAA_Photo_Library.jpg" },
 };

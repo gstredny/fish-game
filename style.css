@@ -372,8 +372,9 @@ h1 em { color: #ffdf9c; font-style: normal; }
   /* Sideways phones: the two start buttons sit side by side to save height. */
   .intro-actions { flex-direction: row; align-items: center; gap: 22px; }
   .intro-actions .text-button { margin: 16px 0 0; }
-  /* The shark portrait sits beside the win panel instead of above it. */
+  /* The shark portrait sits beside the win panel instead of above it, clear of its words. */
   #won { overflow: visible; }
+  #won p { max-width: 400px; }
   .result-panel { position: relative; }
   .won-art {
     position: absolute;
@@ -471,6 +472,25 @@ h1 em { color: #ffdf9c; font-style: normal; }
 
 .voice-toggle { width: 48px; padding: 0; font-size: 20px; }
 
+/* Little swimmer / Big swimmer: two pills under the words; the chosen one is filled in. */
+.level-pick { display: flex; gap: 8px; margin-top: 18px; }
+.level-button {
+  min-height: 40px;
+  padding: 0 15px;
+  border: 2px solid rgba(255, 221, 147, .6);
+  border-radius: 999px;
+  background: rgba(5, 52, 74, .45);
+  color: #ffdd93;
+  font-size: 14px;
+  font-weight: 800;
+}
+.level-button[aria-pressed="true"] { border-color: #ffdd93; background: #ffdd93; color: #244c56; }
+
+/* The mission card shows what to do in big letters; "Find out more" opens a web search. */
+.mission-goal { margin-top: 10px; color: #fff2b7; font-size: clamp(24px, 3.4vw, 32px); font-weight: 800; line-height: 1.15; }
+.card-more { color: #f4fff6; font-size: 15px; font-weight: 700; text-decoration: underline; text-underline-offset: 4px; white-space: nowrap; }
+.card-more[hidden] { display: none; }
+
 .card-panel, .book-panel {
   width: min(760px, 100%);
   max-width: 760px;
@@ -550,6 +570,8 @@ h1 em { color: #ffdf9c; font-style: normal; }
 
 @media (max-height: 500px) {
   .intro-actions .secondary-button { margin-top: 16px; }
+  .level-pick { margin-top: 8px; }
+  .level-button { min-height: 32px; font-size: 13px; }
 }
 
 @media (max-width: 600px) and (min-height: 501px) {
@@ -588,6 +610,14 @@ h1 em { color: #ffdf9c; font-style: normal; }
 }
 
 .rotate { display: none; }
+
+/* The shortest sideways phones (iPhone SE): a smaller title makes room for the level buttons. */
+@media (max-height: 340px) {
+  .intro-panel h1 { font-size: 42px; }
+  .intro-panel p { margin-top: 8px; }
+  .intro-panel .primary-button, .intro-actions .secondary-button { margin-top: 12px; }
+  .intro-foot { margin-top: 8px; }
+}
 
 @media (orientation: portrait) and (max-width: 600px) and (pointer: coarse) {
   .rotate {

@@ -124,7 +124,7 @@ test("the Ocean book shows who you have met and replays their cards", async () =
     assert.equal(app.nodes.get("book").hidden, false);
     assert.equal(app.nodes.get("intro").hidden, true);
     assert.equal(app.nodes.get("hud").hidden, true, "no swim is running yet");
-    assert.equal(app.nodes.get("book-count").textContent, "You've met 2 of 13 ocean animals");
+    assert.equal(app.nodes.get("book-count").textContent, "You've met 2 of 21 ocean animals");
     const chain = app.nodes.get("book-chain").innerHTML;
     assert.match(chain, /class="book-tile" type="button" data-kind="plankton"/);
     assert.match(chain, /class="book-tile locked" type="button" data-kind="sardine"/);
@@ -188,7 +188,7 @@ test("the voice can be switched off from the start screen, and the choice is kep
 test("Enter on a focused button only presses that button", async () => {
   const speech = fakeSpeech();
   const app = await openGame(memoryStorage({ [MET_KEY]: '["crab"]' }), speech.globals);
-  const button = { closest: selector => selector === "button" ? {} : null };
+  const button = { closest: selector => selector.split(", ").includes("button") ? {} : null };
   try {
     app.key("Enter", button);
     assert.equal(app.world.phase, "ready", "Enter on the Ocean book button does not also start a swim");

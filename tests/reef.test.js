@@ -10,15 +10,24 @@ function memoryStorage() {
   return { getItem: key => data.get(key) ?? null, setItem: (key, value) => data.set(key, value) };
 }
 
-test("earn, plant, save, reload, and start a new swim beside the same coral", () => {
-  const storage = memoryStorage();
-  const world = createWorld(390, 844, loadReef(storage));
+// Grows a tuna into a shark, then eats the two tuna its Little swimmer mission asks for.
+function finishSwim(world) {
+  const earned = world.reef.pending;
+  Object.assign(world, { phase: "playing", stage: 3, bites: 8 });
+  world.creatures = [{ ...world.player, tier: 3, direction: 1, wobble: 0 }];
+  swim(world, 0.016, idle, 390, 844);
+  assert.equal(world.phase, "mission", "becoming a shark starts the mission");
+  assert.equal(world.reef.pending, earned, "the coral comes when the mission is done");
   world.phase = "playing";
-  world.stage = 3;
-  world.bites = 8;
-  world.creatures = [{ x: 0, y: 0, tier: 3, direction: 1, wobble: 0 }];
+  world.creatures = [0, 1].map(() => ({ ...world.player, tier: 4, direction: 1, wobble: 0 }));
   swim(world, 0.016, idle, 390, 844);
   assert.equal(world.phase, "won");
+}
+
+test("earn, plant, save, reload, and start a new swim beside the same coral", () => {
+  const storage = memoryStorage();
+  const world = createWorld(390, 844, loadReef(storage), 0, "little", "tuna");
+  finishSwim(world);
   assert.equal(world.reef.pending, 1);
   assert.ok(saveReef(world.reef, storage));
   assert.equal(loadReef(storage).pending, 1, "unplanted reward survives reload");
@@ -37,19 +46,15 @@ test("earn, plant, save, reload, and start a new swim beside the same coral", ()
 });
 
 test("one reward per completed swim; another completed swim grows the reef", () => {
-  const world = createWorld(390, 844);
+  const world = createWorld(390, 844, undefined, 0, "little", "tuna");
   for (let adventure = 1; adventure <= 2; adventure++) {
-    world.phase = "playing";
-    world.stage = 3;
-    world.bites = 8;
-    world.creatures = [{ ...world.player, tier: 3, wobble: 0 }];
-    swim(world, 0.016, idle, 390, 844);
+    finishSwim(world);
     assert.equal(world.reef.pending, adventure);
     world.phase = "playing";
     world.creatures = [{ ...world.player, tier: 4, wobble: 0 }];
     swim(world, 0.016, idle, 390, 844);
-    assert.equal(world.reef.pending, adventure, "exploring as a shark does not farm rewards");
-    resetWorld(world, 390, 844);
+    assert.equal(world.reef.pending, adventure, "more tuna after the mission does not farm rewards");
+    resetWorld(world, 390, 844, 0, "little", "tuna");
   }
 });
 

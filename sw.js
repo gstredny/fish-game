@@ -1,4 +1,4 @@
-const CACHE = "little-fish-v11";
+const CACHE = "little-fish-v12";
 const FILES = [
   "./",
   "./index.html",
@@ -21,6 +21,8 @@ const FILES = [
   "./src/photos.js",
   "./src/voice.js",
   "./src/ocean-book.js",
+  "./src/missions.js",
+  "./src/lines.js",
   "./art/ocean.webp",
   "./art/animals/plankton.webp",
   "./art/animals/sardine.webp",
@@ -35,6 +37,15 @@ const FILES = [
   "./art/animals/crab.webp",
   "./art/animals/parrotfish.webp",
   "./art/animals/clownfish.webp",
+  "./art/animals/orca.webp",
+  "./art/animals/dolphin.webp",
+  "./art/animals/jellyfish.webp",
+  "./art/animals/pufferfish.webp",
+  "./art/animals/bluewhale.webp",
+  "./art/animals/manta.webp",
+  "./art/animals/lobster.webp",
+  "./art/animals/urchin.webp",
+  "./voice/manifest.json",
   "./manifest.json",
   "./icons/fish.svg",
   "./icons/fish-192.png",
@@ -42,8 +53,16 @@ const FILES = [
   "./icons/apple-touch-icon.png"
 ];
 
+// The recorded voice clips are listed in voice/manifest.json, so they are cached from there.
+async function install() {
+  const cache = await caches.open(CACHE);
+  await cache.addAll(FILES.map(file => new Request(file, { cache: "reload" })));
+  const manifest = await (await cache.match("./voice/manifest.json")).json();
+  await cache.addAll(Object.values(manifest.clips).map(file => new Request(`./voice/${file}`, { cache: "reload" })));
+}
+
 self.addEventListener("install", event => {
-  event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(FILES.map(file => new Request(file, { cache: "reload" })))));
+  event.waitUntil(install());
   self.skipWaiting();
 });
 
@@ -55,5 +74,23 @@ self.addEventListener("activate", event => {
 
 self.addEventListener("fetch", event => {
   if (event.request.method !== "GET" || new URL(event.request.url).origin !== self.location.origin) return;
-  event.respondWith(caches.match(event.request).then(cached => cached || fetch(event.request)));
+  event.respondWith(respond(event.request));
 });
+
+async function respond(request) {
+  const cached = await caches.match(request);
+  if (!cached) return fetch(request);
+  const range = /^bytes=(\d*)-(\d*)$/.exec(request.headers.get("range") ?? "");
+  if (!range) return cached;
+  // Safari plays a saved voice clip only when asked-for bytes come back as a partial response.
+  const body = await cached.arrayBuffer();
+  const last = body.byteLength - 1;
+  const from = range[1] ? Number(range[1]) : Math.max(0, last + 1 - Number(range[2]));
+  const to = range[1] && range[2] ? Math.min(Number(range[2]), last) : last;
+  return new Response(body.slice(from, to + 1), { status: 206, headers: {
+    "Content-Type": cached.headers.get("Content-Type") ?? "audio/mpeg",
+    "Content-Range": `bytes ${from}-${to}/${body.byteLength}`,
+    "Content-Length": String(to - from + 1),
+    "Accept-Ranges": "bytes"
+  } });
+}

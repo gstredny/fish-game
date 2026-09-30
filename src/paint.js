@@ -20,16 +20,18 @@ export function paintOcean(context, world, width, height, time, art = NO_ART) {
   for (const friend of world.friends) {
     const x = friend.x - cameraX;
     const y = friend.floor ? height * FLOOR : friend.y - cameraY;
-    if (x < -120 || x > width + 120 || y < -120 || y > height + 120) continue;
+    const margin = friend.size * 1.4 + 40;
+    if (x < -margin || x > width + margin || y < -margin || y > height + margin) continue;
     paintAnimal(context, friend.kind, x, y, friend.size, friend.direction, time + friend.wobble,
-      friend.floor ? "floor" : "friend");
+      friend.floor ? "floor" : "friend", { puff: friend.puff ?? 0 });
   }
 
   for (const creature of world.creatures) {
     const x = creature.x - cameraX;
     const y = creature.y - cameraY;
-    if (x < -130 || x > width + 130 || y < -130 || y > height + 130) continue;
     const { kind, size } = CREATURES[creature.tier];
+    const margin = size * 1.4 + 40;
+    if (x < -margin || x > width + margin || y < -margin || y > height + margin) continue;
     const role = canEat(world.stage, creature.tier) ? "prey" : isFriend(world.stage, creature.tier) ? "friend" : "predator";
     const drawing = creature.art === null || creature.art === undefined ? null : art.npc[creature.art];
     if (creature.tier === 0) paintPlankton(context, x, y, time + creature.wobble);
@@ -64,6 +66,32 @@ export function paintOcean(context, world, width, height, time, art = NO_ART) {
       world.player.direction, time, "player");
   }
   paintLabels(context, world, width, height, cameraX, cameraY);
+  paintPointer(context, world, width, height, cameraX, cameraY, time);
+}
+
+// An arrow at the edge of the screen points to the mission's blue whale or orca while it is out of sight.
+function paintPointer(context, world, width, height, cameraX, cameraY, time) {
+  const target = world.mission?.target;
+  if (!target || world.phase !== "playing") return;
+  const x = target.x - cameraX, y = target.y - cameraY;
+  if (x > 0 && x < width && y > 0 && y < height) return;
+  const edge = 46 + Math.sin(time * 6) * 5;
+  const px = Math.min(width - edge, Math.max(edge, x)), py = Math.min(height - edge, Math.max(edge + 60, y));
+  context.save();
+  context.translate(px, py);
+  context.rotate(Math.atan2(y - py, x - px));
+  context.fillStyle = target.hunt ? "#ff8a7a" : "#ffe08a";
+  context.strokeStyle = "rgba(4,50,74,.8)";
+  context.lineWidth = 3;
+  context.beginPath();
+  context.moveTo(24, 0);
+  context.lineTo(-12, -18);
+  context.lineTo(-4, 0);
+  context.lineTo(-12, 18);
+  context.closePath();
+  context.stroke();
+  context.fill();
+  context.restore();
 }
 
 // Name tags float over animals as you meet them.

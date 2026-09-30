@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { canEat, CREATURES, FORMS, isDanger, isFriend, nextGrowth } from "../src/rules.js";
+import { canEat, CREATURES, FORMS, goalFor, hunters, isDanger, isFriend, LEVELS, nextGrowth, ORCA, SHARK, swimSpeed } from "../src/rules.js";
 import { createWorld, dangerBehind, resetWorld, swim } from "../src/world.js";
 
 const idleInput = { keys: new Set(), pointer: null };
@@ -79,20 +79,28 @@ test("replacement fish swim into the visible ocean", () => {
     Math.sign(creature.x - world.player.x) === -creature.direction));
 });
 
-test("growing into a shark wins while keeping the ocean explorable", () => {
-  const world = createWorld(390, 844);
+test("growing into a shark starts the swim's mission instead of ending the swim", () => {
+  const world = createWorld(390, 844, undefined, 0, "little", "tuna");
   world.phase = "playing";
   world.stage = 3;
   world.bites = 8;
   world.creatures = [{ x: 0, y: 0, tier: 3, direction: 1, wobble: 0 }];
   swim(world, 0.016, idleInput, 390, 844);
   assert.equal(world.stage, 4);
-  assert.equal(world.phase, "won");
+  assert.equal(world.phase, "mission", "the game waits while the mission is shown");
+  assert.equal(world.mission.active, true);
+  assert.equal(world.reef.pending, 0);
   world.phase = "playing";
   world.creatures = [{ x: 0, y: 0, tier: 4, direction: 1, wobble: 0 }];
   swim(world, 0.016, idleInput, 390, 844);
   assert.equal(world.hearts, 3);
-  assert.equal(world.creatures.some(creature => creature.tier === 4 && creature.x === 0), false);
+  assert.equal(world.mission.have, 1);
+  assert.equal(world.phase, "playing", "one tuna of two is not the end");
+  world.creatures = [{ x: 0, y: 0, tier: 4, direction: 1, wobble: 0 }];
+  swim(world, 0.016, idleInput, 390, 844);
+  assert.equal(world.phase, "won");
+  assert.equal(world.reef.pending, 1, "finishing the mission earns the coral");
+  assert.ok(world.events.some(event => event.type === "done"));
 });
 
 test("every predator is clearly bigger than the fish it hurts, every snack clearly smaller", () => {
@@ -106,7 +114,7 @@ test("every predator is clearly bigger than the fish it hurts, every snack clear
 });
 
 test("the ocean is one true food chain, and your own kind is your school", () => {
-  assert.deepEqual(CREATURES.map(creature => creature.kind), ["plankton", "sardine", "mackerel", "squid", "tuna", "shark"]);
+  assert.deepEqual(CREATURES.map(creature => creature.kind), ["plankton", "sardine", "mackerel", "squid", "tuna", "shark", "orca"]);
   for (let stage = 0; stage < FORMS.length; stage++) {
     assert.equal(CREATURES[stage + 1].kind, FORMS[stage].kind, `form ${stage} is the same animal as tier ${stage + 1}`);
     for (let tier = 0; tier < CREATURES.length; tier++) {
@@ -145,19 +153,65 @@ test("a new swim starts with a safe period and no predator close by", () => {
   }
 });
 
-test("a shark's ocean holds every kind of fish, but no plankton", () => {
-  const world = createWorld(1440, 900);
-  world.phase = "playing";
-  world.stage = 4;
-  const tiers = new Set();
-  let sharks = 0, total = 0;
-  for (let round = 0; round < 6; round++) {
-    world.creatures = [];
-    swim(world, 0.016, idleInput, 1440, 900);
-    for (const creature of world.creatures) { tiers.add(creature.tier); total++; if (creature.tier === 5) sharks++; }
+test("a shark's ocean holds every kind of fish and a few orcas, but no plankton", () => {
+  for (const level of Object.keys(LEVELS)) {
+    const world = createWorld(1440, 900, undefined, 0, level);
+    world.phase = "playing";
+    world.stage = 4;
+    const tiers = new Set();
+    let sharks = 0, orcas = 0, total = 0;
+    for (let round = 0; round < 30; round++) {
+      world.creatures = [];
+      swim(world, 0.016, idleInput, 1440, 900);
+      for (const creature of world.creatures) {
+        tiers.add(creature.tier);
+        total++;
+        if (creature.tier === 5) sharks++;
+        if (creature.tier === ORCA) orcas++;
+      }
+    }
+    assert.deepEqual([...tiers].sort(), [1, 2, 3, 4, 5, 6], "every fish, and no plankton: great whites don't eat it");
+    assert.ok(sharks / total < 0.5, `${Math.round(sharks / total * 100)}% sharks`);
+    assert.ok(orcas / total < 0.1, `${level}: ${Math.round(orcas / total * 100)}% orcas`);
   }
-  assert.deepEqual([...tiers].sort(), [1, 2, 3, 4, 5], "every fish, and no plankton: great whites don't eat it");
-  assert.ok(sharks / total < 0.5, `${Math.round(sharks / total * 100)}% sharks`);
+});
+
+test("new fish are never more than three tiers above you, so the hunters list is complete", () => {
+  for (const level of Object.keys(LEVELS)) {
+    for (let stage = 0; stage < FORMS.length; stage++) {
+      const world = createWorld(1440, 900, undefined, 0, level);
+      Object.assign(world, { phase: "playing", stage, invulnerable: 99 });
+      const seen = new Set();
+      for (let round = 0; round < 60; round++) {
+        world.creatures = [];
+        swim(world, 0.016, idleInput, 1440, 900);
+        for (const creature of world.creatures) if (isDanger(stage, creature.tier)) seen.add(creature.tier);
+      }
+      assert.deepEqual([...seen].sort(), hunters(stage), `${level}, stage ${stage}`);
+    }
+  }
+});
+
+test("Big swimmer takes longer to grow, and its hunters really chase you", () => {
+  assert.ok(FORMS.slice(0, SHARK).every((form, stage) => goalFor("little", stage) === form.goal), "Little swimmer is the gentle game");
+  assert.ok(FORMS.slice(0, SHARK).every((form, stage) => goalFor("big", stage) > goalFor("little", stage)));
+  const chased = level => {
+    const world = createWorld(390, 844, undefined, 0, level);
+    Object.assign(world, { phase: "playing", stage: 0, invulnerable: 99, friends: [] });
+    // A mackerel 150px to the right, swimming away from you.
+    const hunter = { x: world.player.x + 150, y: world.player.y, tier: 2, direction: 1, wobble: 0 };
+    world.creatures = [hunter];
+    for (let tick = 0; tick < 20; tick++) swim(world, 0.05, idleInput, 390, 844);
+    return { gap: hunter.x - world.player.x, facing: hunter.direction };
+  };
+  const little = chased("little"), big = chased("big");
+  assert.ok(little.gap > 150, `a Little swimmer hunter keeps swimming its way (${little.gap.toFixed(0)}px)`);
+  assert.ok(big.gap < 90, `a Big swimmer hunter turns and chases (${big.gap.toFixed(0)}px)`);
+  assert.equal(big.facing, -1, "and faces you");
+  for (const level of Object.values(LEVELS)) {
+    assert.ok(level.chase < 1 && level.orcaChase < 1, "every hunter is slower than you, so you can always get away");
+  }
+  assert.ok(swimSpeed(SHARK) > 0);
 });
 
 test("a snack is eaten the moment it touches the fish, with a +1 to show it", () => {

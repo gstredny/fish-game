@@ -2,7 +2,7 @@
 // clipped to the fish shape, swims to shark form on a computer and a sideways phone,
 // fills the ocean with an older drawing, and saves screenshots.
 //
-//   node tools/browser-check.mjs [screenshot-folder]
+//   node tools/browser-check.mjs [screenshot-folder]        (FIT_ONLY=1 checks only the screen fits)
 //
 // Needs Playwright with Chromium. Set PLAYWRIGHT_MODULE to its path when it is
 // installed globally, e.g. PLAYWRIGHT_MODULE=/usr/lib/node_modules/playwright/index.mjs
@@ -174,7 +174,7 @@ async function swimToShark(page, label) {
   });
   while (Date.now() < deadline) {
     const phase = await page.evaluate(() => window.littleFish.world.phase);
-    if (phase === "won") break;
+    if (phase === "mission") break;
     if (phase === "gameover") {
       retries++;
       await page.click("#restart-button");
@@ -183,8 +183,20 @@ async function swimToShark(page, label) {
   }
   await page.evaluate(() => clearInterval(window.botTimer));
   const state = await page.evaluate(() => ({ stage: window.littleFish.world.stage, phase: window.littleFish.world.phase }));
-  assert.deepEqual(state, { stage: 4, phase: "won" }, `${label}: did not reach shark form in time`);
+  assert.deepEqual(state, { stage: 4, phase: "mission" }, `${label}: did not reach shark form in time`);
   return retries;
+}
+
+// From the mission card: go, and finish the mission with one tuna.
+async function finishMission(page) {
+  await page.evaluate(() => Object.assign(window.littleFish.world.mission, { id: "tuna", need: 1 }));
+  await page.click("#mission-go");
+  await page.evaluate(() => {
+    const { world } = window.littleFish;
+    world.invulnerable = 999;
+    world.creatures = [{ ...world.player, tier: 4, wobble: 0, art: null }];
+  });
+  await page.waitForFunction(() => !document.querySelector("#won").hidden);
 }
 
 const browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {});
@@ -193,7 +205,7 @@ try {
   for (const [label, options, hintText] of [
     ["desktop", { viewport: { width: 1280, height: 800 } }, "Move the mouse where you want to swim · Arrow keys work too"],
     ["phone", devices["iPhone 13 landscape"], "Hold an arrow to swim"]
-  ]) {
+  ].filter(() => !process.env.FIT_ONLY)) {
     const browserContext = await browser.newContext({ ...options, serviceWorkers: "block" });
     const { page, errors } = await openGame(browserContext);
 
@@ -265,12 +277,11 @@ try {
     const started = Date.now();
     const retries = await swimToShark(page, label);
     const seconds = Math.round((Date.now() - started) / 1000);
+    await page.screenshot({ path: join(shots, `${label}-4-mission.png`) });
+    await finishMission(page);
     assert.equal(await visible(page, "#won-art"), true, `${label}: win screen should show the child's shark`);
     assert.equal(await fits(page, "#won-art"), true, `${label}: the shark portrait should be on screen`);
-    await page.screenshot({ path: join(shots, `${label}-4-won.png`) });
-    await page.click("#continue-button");
-    await page.waitForTimeout(700);
-    await page.screenshot({ path: join(shots, `${label}-5-shark.png`) });
+    await page.screenshot({ path: join(shots, `${label}-5-won.png`) });
 
     await page.goto(base);
     await page.waitForFunction(() => window.littleFish && !document.querySelector("#intro-art").hidden);
@@ -336,12 +347,15 @@ try {
     await page.waitForFunction(() => document.querySelector("#overlay").hidden);
     await page.goto(base);
     await page.waitForFunction(() => window.littleFish && !document.querySelector("#intro-art").hidden);
-    assert.ok(await fits(page, "#intro h1") && await fits(page, "#start-button") && await fits(page, "#draw-button") &&
-      await fits(page, "#intro-art"), `${size}: start screen with a saved fish does not fit`);
     await page.screenshot({ path: join(shots, `fit-${size}-intro.png`) });
+    assert.ok(await fits(page, "#intro h1") && await fits(page, "#start-button") && await fits(page, "#draw-button") &&
+      await fits(page, "#intro-art") && await fits(page, "#level-big"), `${size}: start screen with a saved fish does not fit`);
     await page.click("#start-button");
-    await page.evaluate(() => { const { world } = window.littleFish; world.stage = 3; world.bites = 8; world.creatures = [{ ...world.player, tier: 3, wobble: 0, art: null }]; });
-    await page.waitForFunction(() => !document.querySelector("#won").hidden);
+    await page.evaluate(() => { const { world } = window.littleFish; world.stage = 3; world.bites = 99; world.creatures = [{ ...world.player, tier: 3, wobble: 0, art: null }]; });
+    await page.waitForFunction(() => !document.querySelector("#mission").hidden);
+    assert.ok(await fits(page, "#mission-goal") && await fits(page, "#mission-go"), `${size}: mission card does not fit`);
+    await page.screenshot({ path: join(shots, `fit-${size}-mission.png`) });
+    await finishMission(page);
     const portraitShown = await visible(page, "#won-art");
     // The portrait may sit in the panel's side padding but never over its text or buttons.
     const coversText = await page.evaluate(() => {
@@ -355,12 +369,12 @@ try {
           [...range.getClientRects()].some(line => art.right > line.left + 2 && art.left < line.right && art.bottom > line.top && art.top < line.bottom);
       });
     });
-    assert.ok(width < 620 || portraitShown, `${size}: the shark portrait should show`);
-    assert.ok((!portraitShown || (await fits(page, "#won-art") && !coversText)) && await fits(page, "#continue-button") &&
-      await fits(page, "#win-restart-button"), `${size}: win screen does not fit, or the portrait covers its words`);
     await page.screenshot({ path: join(shots, `fit-${size}-won.png`) });
+    assert.ok(width < 620 || portraitShown, `${size}: the shark portrait should show`);
+    assert.ok((!portraitShown || (await fits(page, "#won-art") && !coversText)) && await fits(page, "#win-plant-button") &&
+      await fits(page, "#win-restart-button"), `${size}: win screen does not fit, or the portrait covers its words`);
     assert.deepEqual(errors, [], `${size}: page errors`);
-    results.push(`${size}: drawing panel (${Math.round(sketch.width)}px drawing space), start screen and win screen fit${portraitShown ? " with the shark portrait" : ""}`);
+    results.push(`${size}: drawing panel (${Math.round(sketch.width)}px drawing space), start screen, mission card and win screen fit${portraitShown ? " with the shark portrait" : ""}`);
     await browserContext.close();
   }
 } finally {

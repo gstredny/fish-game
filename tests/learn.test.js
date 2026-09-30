@@ -1,10 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { CREATURES, FLOOR, FORMS, SEA_FRIENDS } from "../src/rules.js";
+import { CREATURES, FLOOR, FORMS, hunters, SEA_FRIENDS } from "../src/rules.js";
 import { cardSpeech, FOOD_CHAIN, growLine, hurtLine, KINDS, meetLine, SEA_FRIEND_KINDS, SPECIES } from "../src/species.js";
 import { createWorld, nearbyAnimals, swim } from "../src/world.js";
 import { createVoice, VOICE_KEY } from "../src/voice.js";
 import { loadMet, MET_KEY, saveMet } from "../src/ocean-book.js";
+import { PHOTOS } from "../src/photos.js";
+import { existsSync, readFileSync } from "node:fs";
 
 function memoryStorage() {
   const data = new Map();
@@ -32,14 +34,23 @@ test("every animal in the game has a card: a name, two facts, what it eats and w
   assert.equal(meetLine("octopus", () => 0), "Octopus! An octopus has eight arms!");
 });
 
+test("every animal has a real photo, with its credit, in the game and in CREDITS.md", () => {
+  const credits = readFileSync(new URL("../CREDITS.md", import.meta.url), "utf8");
+  for (const kind of KINDS) {
+    assert.ok(PHOTOS[kind]?.credit.startsWith("Photo: "), `${kind} has no photo credit`);
+    assert.ok(existsSync(new URL(`../${PHOTOS[kind].file}`, import.meta.url)), `${PHOTOS[kind].file} is missing`);
+    assert.ok(credits.includes(`- **${kind}**:`), `CREDITS.md does not credit the ${kind} photo`);
+  }
+});
+
 test("what the cards say about eating matches what happens in the game", () => {
   for (let stage = 1; stage < FORMS.length; stage++) {
     const food = SPECIES[FOOD_CHAIN[stage]];
     assert.match(SPECIES[FORMS[stage].kind].eats.toLowerCase(), new RegExp(food.plural),
       `${FORMS[stage].name} eats ${food.plural} in the game, so its card should say so`);
   }
-  for (let stage = 0; stage < FORMS.length - 1; stage++) {
-    for (let tier = stage + 2; tier < CREATURES.length; tier++) {
+  for (let stage = 0; stage < FORMS.length; stage++) {
+    for (const tier of hunters(stage)) {
       const hunter = SPECIES[CREATURES[tier].kind].name.toLowerCase().replace("great white ", "");
       assert.match(SPECIES[FORMS[stage].kind].eatenBy.toLowerCase(), new RegExp(hunter),
         `${CREATURES[tier].kind} hunts the ${FORMS[stage].name} in the game, so its card should say so`);
@@ -52,7 +63,8 @@ test("growing and bumping teach the food chain in words", () => {
   assert.equal(growLine(1), "You're a mackerel now! Mackerel eat sardines. Watch out for squid!");
   assert.equal(growLine(2), "You're a squid now! Squid eat mackerel. Watch out for tuna!");
   assert.equal(growLine(3), "You're a tuna now! Tuna eat squid. Watch out for sharks!");
-  assert.equal(growLine(4), "You're a great white shark! Sharks are at the top of the food chain!");
+  assert.equal(growLine(4), "You're a great white shark now! Sharks eat tuna. Watch out for orcas!");
+  assert.equal(hurtLine("orca", 4), "Watch out! Orcas eat sharks!");
   assert.equal(hurtLine("tuna", 2), "Watch out! Tuna eat squid!");
   assert.equal(hurtLine("shark", 0), "Watch out! Sharks eat sardines!");
 });

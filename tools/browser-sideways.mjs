@@ -224,12 +224,19 @@ for (const height of [390, 340, 330]) {
   await page.send("Page.reload", { ignoreCache: true });
   for (let wait = 0; wait < 50 && !(await evaluate("Boolean(window.__game)")); wait++) await sleep(100);
   await sleep(300);
-  const introFits = await fitsOnScreen("#start-button") && await fitsOnScreen("#intro h1") && await fitsOnScreen("#intro-foot");
+  const introFits = await fitsOnScreen("#start-button") && await fitsOnScreen("#intro h1") && await fitsOnScreen("#intro-foot") &&
+    await fitsOnScreen("#level-little") && await fitsOnScreen("#level-big");
   await tapButton("#start-button");
   await sleep(200);
-  await evaluate(`(() => { const w = __game.world; w.stage = 3; w.bites = 8; w.creatures = [{ ...w.player, tier: 3, wobble: 0 }]; })()`);
+  await evaluate(`(() => { const w = __game.world; Object.assign(w.mission, { id: "tuna", need: 1 }); w.stage = 3; w.bites = 99; w.creatures = [{ ...w.player, tier: 3, wobble: 0 }]; })()`);
   await sleep(300);
-  const wonFits = await fitsOnScreen("#won .text-button") && await fitsOnScreen("#continue-button");
+  const missionFits = await fitsOnScreen("#mission-goal") && await fitsOnScreen("#mission-go") && await fitsOnScreen("#mission-photo");
+  await shot(`08-mission-844x${height}`);
+  assert.equal(await padVisible(), false, "arrow pad should hide on the mission card");
+  await tapButton("#mission-go");
+  await evaluate(`(() => { const w = __game.world; w.invulnerable = 999; w.creatures = [{ ...w.player, tier: 4, wobble: 0 }]; })()`);
+  await sleep(300);
+  const wonFits = missionFits && await fitsOnScreen("#win-plant-button") && await fitsOnScreen("#win-restart-button");
   await shot(`08-won-844x${height}`);
   assert.equal(await padVisible(), false, "arrow pad should hide on the win screen");
   if (height === 390) {
@@ -238,7 +245,7 @@ for (const height of [390, 340, 330]) {
     assert.equal(await evaluate("__game.world.phase"), "planting");
     assert.equal(await padVisible(), false, "arrow pad should hide while planting coral");
   }
-  console.log(`8. 844x${height}: whole start screen fits: ${introFits}; win panel buttons fit: ${wonFits}`);
+  console.log(`8. 844x${height}: whole start screen fits: ${introFits}; mission card fits: ${missionFits}; win panel buttons fit: ${wonFits}`);
   assert.ok(introFits && wonFits, `844x${height}: start or win screen does not fit`);
 }
 

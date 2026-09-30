@@ -1,5 +1,6 @@
-// Plays the real game to the shark in headless Chrome. A seek-food / avoid-predator controller feeds the
-// game's real pointer input; a screenshot is saved at every growth, at the win panel, and as a free shark.
+// Plays the real game to the shark and through an "eat tuna" mission in headless Chrome. A seek-food /
+// avoid-predator controller feeds the game's real pointer input; a screenshot is saved at every growth,
+// at the mission card and at the win panel. LEVEL=big plays Big swimmer.
 // The only test-time change is one line appended to main.js in flight (exposes `world` and `input`).
 // Same setup as tools/browser-play.mjs, then:  node tools/browser-autoplay.mjs
 import { mkdirSync, writeFileSync } from "node:fs";
@@ -13,6 +14,7 @@ const GAME = process.env.GAME || "http://127.0.0.1:8778/";
 const CDP = process.env.CDP || "http://127.0.0.1:9444";
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const W = 1024, H = 700;
+const LEVEL = process.env.LEVEL || "little";
 mkdirSync(OUT, { recursive: true });
 
 // A fresh browser context so the game's service worker cannot serve main.js from cache.
@@ -48,7 +50,7 @@ async function shot(name) {
   const file = `${OUT}/auto-${String(++n).padStart(2, "0")}-${name}.png`;
   writeFileSync(file, Buffer.from(result.data, "base64")); console.log("shot", file);
 }
-const hud = () => evaluate(`JSON.stringify({ stage: __game.world.stage, name: document.querySelector("#stage-name").textContent, bites: __game.world.bites, hearts: __game.world.hearts, phase: __game.world.phase, t: __game.world.time.toFixed(1), overlay: document.querySelector("#overlay").hidden ? "" : ["intro","paused","won","gameover"].find(p => !document.getElementById(p).hidden) })`);
+const hud = () => evaluate(`JSON.stringify({ stage: __game.world.stage, name: document.querySelector("#stage-name").textContent, bites: __game.world.bites, hearts: __game.world.hearts, phase: __game.world.phase, t: __game.world.time.toFixed(1), overlay: document.querySelector("#overlay").hidden ? "" : ["intro","paused","won","gameover","mission"].find(p => !document.getElementById(p).hidden) })`);
 
 await send("Page.enable"); await send("Runtime.enable");
 await send("Fetch.enable", { patterns: [{ urlPattern: "*", requestStage: "Response" }] });
@@ -57,8 +59,12 @@ await send("Page.addScriptToEvaluateOnNewDocument", { source: MET_ALL });
 await send("Page.navigate", { url: GAME });
 await sleep(1500);
 console.log("hooked:", await evaluate(`typeof window.__game`));
+await evaluate(`document.querySelector("#level-${LEVEL}").click()`);
 await evaluate(`document.querySelector("#start-button").click()`);
 await sleep(300);
+// Every swim picks a mission; this one eats tuna, which the controller below knows how to do.
+await evaluate(`Object.assign(__game.world.mission, { id: "tuna", need: ${LEVEL === "big" ? 4 : 2} })`);
+console.log("level:", await evaluate("__game.world.level"));
 // Controller: every 40 ms, steer toward the nearest edible creature (not a schoolmate of your own kind)
 // and away from nearby predators,
 // written into the real pointer input: a finger held 200 px ahead of the fish on screen.
@@ -87,11 +93,8 @@ while (Date.now() - t0 < 150000) {
   if (b.hearts !== a.hearts) events.push(`${secs}s hurt -> hearts ${b.hearts}`);
   if (b.overlay && b.overlay !== a.overlay) { events.push(`${secs}s overlay ${b.overlay}`); await shot("overlay-" + b.overlay); }
   last = now;
-  if (b.overlay === "won") {
-    await evaluate(`document.querySelector("#continue-button").click()`); await sleep(2500); await shot("shark-exploring");
-    console.log("after-explore", await hud()); break;
-  }
-  if (b.overlay === "gameover") break;
+  if (b.overlay === "mission") { await sleep(400); await evaluate(`document.querySelector("#mission-go").click()`); }
+  if (b.overlay === "won" || b.overlay === "gameover") break;
 }
 console.log("events\n" + events.join("\n")); console.log("final", last);
 console.log("console errors:", errors.length ? errors.join("\n") : "none");

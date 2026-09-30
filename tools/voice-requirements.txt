@@ -1,0 +1,12 @@
+# Voice engine for tools/make-voice.py (Python 3.10 to 3.12): pip install -r tools/voice-requirements.txt
+# The extra index gives Linux and Windows the small CPU-only torch; Macs get the regular one from PyPI.
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.14.0
+kokoro==0.9.4
+misaki[en]==0.9.4
+en_core_web_sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl
+spacy==3.8.16
+transformers==5.17.0
+huggingface_hub==1.33.0
+numpy==2.4.6
+imageio-ffmpeg==0.6.0
