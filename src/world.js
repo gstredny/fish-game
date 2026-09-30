@@ -5,7 +5,9 @@ import { followPlayer, toWorld } from "./camera.js";
 import { createMission, MISSIONS, pickMission } from "./missions.js";
 import { SEA_FRIEND_KINDS } from "./species.js";
 
-export function createWorld(width, height, reef = createReef(), artCount = 0, level = "little", mission = pickMission()) {
+// `met` is the device's Ocean book: sea friends it has never met come first (see makeFriend).
+export function createWorld(width, height, reef = createReef(), artCount = 0, level = "little", mission = pickMission(),
+  met = new Set()) {
   const home = reef.corals[0];
   const start = { x: home ? home.x - 100 : 0, y: home ? home.y : 0 };
   const world = {
@@ -30,6 +32,7 @@ export function createWorld(width, height, reef = createReef(), artCount = 0, le
     mission: createMission(mission, level),
     // Learning: kinds already met this swim, floating name tags, and when the next fact card may open.
     greeted: new Set(),
+    met,
     labels: [],
     nextCardAt: 5
   };
@@ -37,8 +40,9 @@ export function createWorld(width, height, reef = createReef(), artCount = 0, le
   return world;
 }
 
-export function resetWorld(world, width, height, artCount = world.artCount, level = world.level, mission = pickMission()) {
-  Object.assign(world, createWorld(width, height, world.reef, artCount, level, mission));
+export function resetWorld(world, width, height, artCount = world.artCount, level = world.level, mission = pickMission(),
+  met = world.met) {
+  Object.assign(world, createWorld(width, height, world.reef, artCount, level, mission, met));
 }
 
 export function swim(world, seconds, input, width, height) {
@@ -270,15 +274,17 @@ function fillOcean(world, width, height, initial) {
   }
 }
 
-// Sea friends not yet met this swim (or this mission) come first, so every swim shows someone new.
-// Now and then the blue whale swims by.
+// Sea friends not yet met this swim (or this mission) come first, so every swim shows someone new;
+// of those, ones this device has never met come before all others, so a child who knows the first
+// animals by heart soon meets the new ones. Now and then the blue whale swims by.
 function makeFriend(world, width, height, initial, floor, only = null) {
   const seen = world.mission.active ? world.mission.seen : world.greeted;
   const choices = SEA_FRIENDS.filter(friend => only ? friend.kind === only : friend.floor === floor && !friend.rare);
   const fresh = choices.filter(choice => !seen.has(choice.kind) &&
     !world.friends.some(friend => friend.kind === choice.kind));
+  const unmet = fresh.filter(choice => !world.met.has(choice.kind));
   const whale = !floor && !only && Math.random() < 0.05 && !world.friends.some(friend => friend.kind === "bluewhale");
-  const pool = whale ? SEA_FRIENDS.filter(friend => friend.rare) : fresh.length ? fresh : choices;
+  const pool = whale ? SEA_FRIENDS.filter(friend => friend.rare) : unmet.length ? unmet : fresh.length ? fresh : choices;
   const { kind, size, speed } = pool[Math.floor(Math.random() * pool.length)];
   // Floor animals wait ahead of the fish, where it is heading; swimmers come from either side.
   const side = floor ? world.player.direction : Math.random() < 0.5 ? -1 : 1;

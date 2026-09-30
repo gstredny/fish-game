@@ -124,7 +124,7 @@ test("the Ocean book shows who you have met and replays their cards", async () =
     assert.equal(app.nodes.get("book").hidden, false);
     assert.equal(app.nodes.get("intro").hidden, true);
     assert.equal(app.nodes.get("hud").hidden, true, "no swim is running yet");
-    assert.equal(app.nodes.get("book-count").textContent, "You've met 2 of 21 ocean animals");
+    assert.equal(app.nodes.get("book-count").textContent, "You've met 2 of 33 ocean animals");
     const chain = app.nodes.get("book-chain").innerHTML;
     assert.match(chain, /class="book-tile" type="button" data-kind="plankton"/);
     assert.match(chain, /class="book-tile locked" type="button" data-kind="sardine"/);

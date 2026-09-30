@@ -4,7 +4,7 @@
 // "zoo" screenshot of every animal drawing. Same server/Chrome setup as browser-play.mjs.
 import assert from "node:assert/strict";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { cardSpeech, growLine, KINDS, SPECIES } from "../src/species.js";
+import { cardSpeech, growLine, KINDS, SEA_FRIEND_KINDS, SPECIES } from "../src/species.js";
 import { PHOTOS } from "../src/photos.js";
 import { CREATURES, SEA_FRIENDS } from "../src/rules.js";
 // Recorded lines are heard as clips; the checks below turn each clip back into its words.
@@ -187,10 +187,13 @@ await tapButton("#book-close");
 await sleep(200);
 assert.ok(await visible("#paused"), "back to the pause screen");
 
-// 7. Card and book fit sideways phones with the browser bars showing, even for the wordiest card.
+// 7. Card and book fit sideways phones with the browser bars showing, even for the wordiest card
+// and the longest name.
 const WORDIEST = KINDS.map(kind => [kind, [...SPECIES[kind].facts, SPECIES[kind].eats, SPECIES[kind].eatenBy].join(" ").length])
   .sort((first, second) => second[1] - first[1])[0][0];
-await evaluate(`localStorage.setItem("little-fish-met-v1", JSON.stringify(["plankton", "crab", "${WORDIEST}"]))`);
+const LONGEST_NAME = [...KINDS].sort((first, second) => SPECIES[second].name.length - SPECIES[first].name.length)[0];
+const LAST_TILE = SEA_FRIEND_KINDS.at(-1);
+await evaluate(`localStorage.setItem("little-fish-met-v1", JSON.stringify(["plankton", "crab", "${WORDIEST}", "${LONGEST_NAME}"]))`);
 for (const [width, height] of [[844, 390], [844, 340], [844, 330], [667, 375], [568, 320]]) {
   await size(width, height);
   await reload();
@@ -198,20 +201,22 @@ for (const [width, height] of [[844, 390], [844, 340], [844, 330], [667, 375], [
   await sleep(300);
   // The book may scroll on short screens, with Back always in view and the last animal reachable above it.
   const bookFits = await fitsOnScreen("#book-close") && await fitsOnScreen("#book-title") &&
-    await evaluate(`(() => { const last = document.querySelector('.book-tile[data-kind="clownfish"]'); last.scrollIntoView({ block: "nearest" });
+    await evaluate(`(() => { const last = document.querySelector('.book-tile[data-kind="${LAST_TILE}"]'); last.scrollIntoView({ block: "nearest" });
       document.querySelector("#book").scrollTop += 80;
       const tile = last.getBoundingClientRect(), back = document.querySelector("#book-close").getBoundingClientRect();
       return tile.top >= 0 && tile.bottom <= back.top + 1 && tile.bottom <= innerHeight; })()`) && await fitsOnScreen("#book-close");
   await shot(`06-book-${width}x${height}`);
-  await tapButton(`.book-tile[data-kind="${WORDIEST}"]`);
-  await sleep(400);
-  const cardFits = await fitsOnScreen("#card-close") && await fitsOnScreen("#card-hear") && await fitsOnScreen("#card-name") &&
-    await fitsOnScreen("#card-more");
-  await shot(`07-card-${width}x${height}`);
-  console.log(`7. ${width}x${height}: book fits: ${bookFits}; card fits: ${cardFits}`);
-  assert.ok(bookFits && cardFits, `${width}x${height}: the book or card does not fit`);
-  await tapButton("#card-close");
-  await sleep(200);
+  for (const kind of [WORDIEST, LONGEST_NAME]) {
+    await tapButton(`.book-tile[data-kind="${kind}"]`);
+    await sleep(400);
+    const cardFits = await fitsOnScreen("#card-close") && await fitsOnScreen("#card-hear") && await fitsOnScreen("#card-name") &&
+      await fitsOnScreen("#card-more");
+    await shot(`07-card-${kind}-${width}x${height}`);
+    console.log(`7. ${width}x${height}: book fits: ${bookFits}; ${kind} card fits: ${cardFits}`);
+    assert.ok(bookFits && cardFits, `${width}x${height}: the book or the ${kind} card does not fit`);
+    await tapButton("#card-close");
+    await sleep(200);
+  }
   await tapButton("#book-close");
   await sleep(200);
   assert.ok(await fitsOnScreen("#start-button") && await fitsOnScreen("#intro-book-button") &&
@@ -241,11 +246,14 @@ for (const [label, width, height, mobile] of [["desktop", 1280, 800, false], ["p
   await evaluate(`(() => { const w = __game.world; w.stage = 2; w.invulnerable = 999; w.player.direction = 1;
     const x = w.player.x, y = w.player.y, s = innerWidth / 1280;
     w.creatures = ${JSON.stringify(CREATURES.map((_, tier) => tier))}.map((tier, i) => ({ x: x + (-520 + i * 175) * s, y: y - 190 * s + (i % 2) * 70 * s, tier, direction: 1, wobble: i }));
+    // Swimmers in two rows under the fish, and every floor animal along the sea bed.
     const swimmers = ${JSON.stringify(SEA_FRIENDS.filter(friend => !friend.floor && !friend.rare))};
+    const floor = ${JSON.stringify(SEA_FRIENDS.filter(friend => friend.floor))};
+    const perRow = Math.ceil(swimmers.length / 2);
     w.friends = [
-      ...swimmers.map((friend, i) => ({ ...friend, speed: 0, x: x + (-500 + i * 200) * s, y: y + 90 * s + (i % 2) * 50 * s, direction: i % 2 ? -1 : 1, wobble: i })),
-      ...${JSON.stringify(SEA_FRIENDS.filter(friend => friend.floor))}.map((friend, i) =>
-        ({ ...friend, speed: 0, x: x + (-560 + i * 170) * s, y: 0, direction: 1, wobble: i }))]; })()`);
+      ...swimmers.map((friend, i) => ({ ...friend, speed: 0, x: x + (-540 + (i % perRow) * 1080 / (perRow - 1)) * s,
+        y: y + (20 + Math.floor(i / perRow) * 150 + (i % 2) * 30) * s, direction: i % 2 ? -1 : 1, wobble: i })),
+      ...floor.map((friend, i) => ({ ...friend, speed: 0, x: x + (-580 + i * 1160 / (floor.length - 1)) * s, y: 0, direction: 1, wobble: i }))]; })()`);
   await evaluate("__game.world.phase = 'paused'");
   await sleep(300);
   await evaluate("document.querySelector('#overlay').hidden = true");

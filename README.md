@@ -24,6 +24,25 @@ The first time a child meets an animal, the game pauses and a card shows a real 
 
 Gentle sea friends come by as well. In open water: a sea turtle, a dolphin, a jellyfish, a pufferfish (swim close and it puffs up), a manta ray, a parrotfish and, once in a while, a huge blue whale. On the sea bed: a seahorse, an octopus, a sea star, a crab, a lobster, a sea urchin and clownfish in their anemone (swim low to meet them). They never eat you and are never eaten.
 
+Twelve harder animals are for a child who knows those by heart. Each one teaches a bigger idea:
+
+- In open water:
+  - a hammerhead shark, which feels the electricity animals make;
+  - a whale shark, the biggest fish, and a filter feeder;
+  - a narwhal, whose tusk is a tooth;
+  - an anglerfish, with a glowing lure (bioluminescence);
+  - a sea otter, which uses a rock as a tool and helps kelp forests grow;
+  - a penguin, a bird that flies underwater;
+  - a flying fish, which glides to get away;
+  - a Portuguese man o' war, a colony of tiny animals and not a jellyfish.
+- On the sea bed:
+  - a mantis shrimp, with a super-fast punch;
+  - a sea cucumber, a cousin of sea stars that breathes through its bottom;
+  - a moray eel, a fish with a second set of jaws;
+  - a horseshoe crab, which is older than the dinosaurs and has blue blood.
+
+Sea friends this device has never met come first, so a child who has met everyone else soon meets the new ones.
+
 The **Ocean book** (on the start and pause screens) keeps every card met on this device, so a second child can hear them all again. **Find out more** on a card opens a Google search for "<animal> facts for kids", with SafeSearch on. It shows only when the device is online. The speaker button at the top turns the voice off; the device remembers. The facts are in `src/species.js`; photo credits are in [CREDITS.md](CREDITS.md).
 
 ## The voice
