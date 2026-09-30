@@ -14,6 +14,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import subprocess
 import sys
 import time
@@ -27,10 +28,26 @@ BITRATE = "48k"
 LOUDNESS_DB = -20  # speech level of every clip
 PEAK_DB = -1  # no sample goes louder than this
 SETUP = "pip install -r tools/voice-requirements.txt"
+# Words Kokoro says wrong, spelled in its own phonemes (misaki's US set: A = the "ay" in day, I = eye,
+# O = oh, T = a soft "d"-like t, ᵻ = a light "i"). Find how a word is said with misaki's G2P, then add it here.
+SAY_AS = {
+    "rattail": "ɹˈæt tˌAl", "rattails": "ɹˈæt tˌAlz",  # "rat tail", not "RADD-ale"
+    "narwhal": "nˈɑɹwˌɑl", "narwhals": "nˈɑɹwˌɑlz", "narwhal's": "nˈɑɹwˌɑlz",  # no "h" in the middle
+    "amphipod": "ˈæmfəpˌɑd", "amphipods": "ˈæmfəpˌɑdz",  # no "p" before the f
+    "axes": "ˈæksᵻz",  # more than one axe, not more than one axis
+    "man o' war": "mˌænəwˈɔɹ", "men o' war": "mˌɛnəwˈɔɹ",  # "man-uh-war", no pause
+}
+SAY_AS_WORDS = re.compile(r"(?<![A-Za-z])(" + "|".join(map(re.escape, sorted(SAY_AS, key=len, reverse=True))) +
+                          r")(?![A-Za-z])", re.IGNORECASE)
+
+
+def spoken(text):
+    """The line as Kokoro should read it: each SAY_AS word marked with its phonemes, [word](/phonemes/)."""
+    return SAY_AS_WORDS.sub(lambda match: f"[{match.group(0)}](/{SAY_AS[match.group(0).lower()]}/)", text)
 
 
 def clip_id(text, voice, speed):
-    return hashlib.sha1(f"{text}\n{voice}\n{speed}".encode("utf-8")).hexdigest()[:12]
+    return hashlib.sha1(f"{spoken(text)}\n{voice}\n{speed}".encode("utf-8")).hexdigest()[:12]
 
 
 def voice_maker(voice, speed):
@@ -105,7 +122,7 @@ def main():
             continue
         make = make or voice_maker(args.voice, args.speed)
         started = time.time()
-        seconds = make(text, out / name)
+        seconds = make(spoken(text), out / name)
         generated += 1
         print(f"{name}  {seconds:4.1f}s audio in {time.time() - started:4.1f}s  {text}", flush=True)
 
