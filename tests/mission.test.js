@@ -38,7 +38,10 @@ test("missions ask more of a Big swimmer and say what to do", () => {
 
 test("the blue whale comes from ahead with an arrow to it, and meeting it finishes the mission", () => {
   const world = sharkOn("whale");
-  swim(world, 0.016, idle, 844, 390);
+  // No whale happens to be passing by (a 1 in 20 chance otherwise): this one comes for the mission.
+  const random = Math.random;
+  Math.random = () => 0.99;
+  try { swim(world, 0.016, idle, 844, 390); } finally { Math.random = random; }
   const whale = world.friends.find(friend => friend.kind === "bluewhale");
   assert.ok(whale, "a blue whale swims in for the mission");
   assert.equal(world.mission.target, whale, "the arrow points at it");

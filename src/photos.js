@@ -1,7 +1,7 @@
 // Real photos shown on the fact cards. Every photo is free to share; see CREDITS.md.
 export const PHOTOS = {
   plankton: { file: "art/animals/plankton.webp", credit: "Photo: NOAA, public domain", source: "https://commons.wikimedia.org/wiki/File:Zooplankton.jpg" },
-  sardine: { file: "art/animals/sardine.webp", credit: "Photo: Dana L. Brown, CC BY-SA 2.0", source: "https://commons.wikimedia.org/wiki/File:Sardinops_sagax_-_Flickr_-_Dana_L._Brown.jpg" },
+  sardine: { file: "art/animals/sardine.webp", credit: "Photo: Roberto Pillon, CC BY 3.0", source: "https://commons.wikimedia.org/wiki/File:Sardina_pilchardus_Sardinia.JPG" },
   mackerel: { file: "art/animals/mackerel.webp", credit: "Photo: Brian Gratwicke, CC BY 2.0", source: "https://commons.wikimedia.org/wiki/File:Scomber_japonicus_Mackrel!_(5625008836).jpg" },
   squid: { file: "art/animals/squid.webp", credit: "Photo: Nick Hobgood, CC BY-SA 3.0", source: "https://commons.wikimedia.org/wiki/File:Sepioteuthis_sepioidea_(Caribbean_Reef_Squid).jpg" },
   tuna: { file: "art/animals/tuna.webp", credit: "Photo: aes256, CC BY 2.1 JP", source: "https://commons.wikimedia.org/wiki/File:Pacific_bluefin_tuna.jpg" },
