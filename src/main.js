@@ -16,7 +16,7 @@ import { swatch } from "./animal-paint.js";
 import { PHOTOS } from "./photos.js";
 import { createVoice } from "./voice.js";
 import { loadMet, saveMet } from "./ocean-book.js";
-import { missionCount, missionDone, missionDoneLine, missionGoal, missionKind, missionLine } from "./missions.js";
+import { missionCount, missionDone, missionDoneLine, missionGoal, missionKind, missionLine, pickMission } from "./missions.js";
 import { FIND_THAT_ONE, VOICE_ON } from "./lines.js";
 
 const canvas = document.querySelector("#ocean");
@@ -61,6 +61,7 @@ let bookFrom = null;
 let hintFrom = null;
 let artLoaded = false;
 let startTicket = 0;
+let lastSwim = null;
 
 // The child's drawings, newest first: the newest is their fish, older ones swim in the ocean.
 let storage = null;
@@ -438,7 +439,9 @@ function begin() {
 
 // Each swim's mission differs from the last one.
 function startSwim() {
-  resetWorld(world, width, height, { artCount: playerArt().npc.length, level, zone, met });
+  const mission = pickMission(lastSwim?.zone === zone ? lastSwim.id : null, ZONES[zone]);
+  resetWorld(world, width, height, { artCount: playerArt().npc.length, level, zone, met, mission });
+  lastSwim = { zone, id: mission };
   world.phase = "playing";
   hintFrom = { ...world.player };
   steering.clear();
