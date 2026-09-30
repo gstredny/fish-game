@@ -562,7 +562,8 @@ h1 em { color: #ffdf9c; font-style: normal; }
 .book-chain .book-tile { position: relative; }
 .book-chain .book-tile:not(:last-child) { margin-right: 14px; }
 .book-chain .book-tile:not(:last-child)::after { content: "→"; position: absolute; top: 20px; right: -19px; color: #ffdd93; font-size: 16px; }
-.book-panel .primary-button { margin-top: 16px; }
+/* The book scrolls on small screens; Back stays in view at the bottom. */
+.book-panel .primary-button { position: sticky; bottom: 0; margin-top: 16px; }
 
 @media (max-width: 600px) {
   .intro-extras { top: calc(16px + env(safe-area-inset-top)); bottom: auto; }
@@ -591,8 +592,8 @@ h1 em { color: #ffdf9c; font-style: normal; }
   .book-count { margin-top: 0; font-size: 13px; }
   .book-panel h3 { margin: 6px 0 4px; font-size: 12px; }
   .book-tile { width: 78px; padding: 4px; font-size: 10px; }
-  .book-tile img, .book-q { width: 66px; height: 38px; }
-  .book-chain .book-tile:not(:last-child)::after { top: 16px; }
+  .book-tile img, .book-q { width: 66px; height: 32px; }
+  .book-chain .book-tile:not(:last-child)::after { top: 13px; }
   .book-panel .primary-button { min-height: 44px; margin-top: 10px; }
 }
 

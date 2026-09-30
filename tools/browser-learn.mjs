@@ -76,7 +76,9 @@ const shot = async name => {
 const size = (width, height, mobile = true) => page.send("Emulation.setDeviceMetricsOverride", { width, height, deviceScaleFactor: 2, mobile });
 const touch = (type, x, y) => page.send("Input.dispatchTouchEvent", { type, touchPoints: type === "touchEnd" ? [] : [{ x, y, id: 1 }] });
 const tapButton = async selector => {
-  const r = await evaluate(`(() => { const r = document.querySelector(${JSON.stringify(selector)}).getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; })()`);
+  // Scrolled into view first, as a child would scroll the Ocean book to reach an animal.
+  const r = await evaluate(`(() => { const node = document.querySelector(${JSON.stringify(selector)}); node.scrollIntoView({ block: "center" });
+    const r = node.getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; })()`);
   await touch("touchStart", r.x, r.y);
   await touch("touchEnd");
 };
@@ -194,8 +196,12 @@ for (const [width, height] of [[844, 390], [844, 340], [844, 330], [667, 375], [
   await reload();
   await tapButton("#intro-book-button");
   await sleep(300);
+  // The book may scroll on short screens, with Back always in view and the last animal reachable above it.
   const bookFits = await fitsOnScreen("#book-close") && await fitsOnScreen("#book-title") &&
-    await fitsOnScreen('.book-tile[data-kind="clownfish"]');
+    await evaluate(`(() => { const last = document.querySelector('.book-tile[data-kind="clownfish"]'); last.scrollIntoView({ block: "nearest" });
+      document.querySelector("#book").scrollTop += 80;
+      const tile = last.getBoundingClientRect(), back = document.querySelector("#book-close").getBoundingClientRect();
+      return tile.top >= 0 && tile.bottom <= back.top + 1 && tile.bottom <= innerHeight; })()`) && await fitsOnScreen("#book-close");
   await shot(`06-book-${width}x${height}`);
   await tapButton(`.book-tile[data-kind="${WORDIEST}"]`);
   await sleep(400);
