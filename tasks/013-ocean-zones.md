@@ -1,7 +1,7 @@
 # Ocean zones: six places to swim, each with its own animals
 
 Date: 2026-09-30
-Status: slices 1 (coral reef + plumbing) and 2 (the deep) pushed; slice 3 (the bottom) committed on `master`, not pushed; slices 4–5 open
+Status: slices 1–3 pushed; slice 3 browser smoke still unverified; slices 4–5 open
 Branch: `master`
 
 ## Intent Contract
@@ -134,7 +134,9 @@ Slice 3 (The bottom):
       the left edge nearly black, the sleeper shark mission card. NOT verified: the browser suite was killed
       mid-run (see attempt log). Earlier hand screenshots of the bottom looked right (vent glow on the mud,
       sea pig and tripod fish faint, sleeper shark dim in the distance; start screen with four places).
-- [ ] Pushed to `origin/master` (sw cache `little-fish-v18`). Committed (eee666a, d47aa29, this write-up), not pushed.
+- [x] Pushed to `origin/master` (sw cache `little-fish-v18`). Bottom zone, voice and write-up included
+      in the authorized push through 0fd2fee; GitHub Pages run 36737004155 succeeded. Live-file fetch
+      was blocked by DNS; the browser smoke above remains unverified.
 
 Later slices (kelp forest, icy sea):
 - [ ] Same checks per zone.
@@ -202,3 +204,9 @@ Later slices (kelp forest, icy sea):
   with explicit pathspecs: eee666a `The bottom: a pitch-black mud floor with a hot vent and eleven new
   animals` (26 files), d47aa29 `Record the voice for the bottom` (68 files), then this write-up. Not pushed;
   the bottom section of `browser-zones` is still unverified.
+- 2026-09-30 (review fixes and push): George requested all three review fixes, commit and push.
+  Commits c8af708 (NPC drawings), a4ca845 (mission history across Home previews), 0fd2fee (new drawing
+  selected) each add a regression test. `npm test`: 116 passed, 0 failed, 0 skipped. `git push origin master`:
+  exit 0, `91872aa..0fd2fee master -> master`, including the previously local-only bottom commits.
+  Remote SHA independently verified; Pages deployment 36737004155 succeeded. Browser discovery empty;
+  fetching live assets blocked by DNS. No new sound test, screenshots or phone verification claimed.
