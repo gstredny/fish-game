@@ -24,7 +24,7 @@ export function paintOcean(context, world, width, height, time, art = NO_ART) {
   const cameraY = world.camera.y - height / 2;
   const backdrop = backdropFor(world.zone);
   paintWater(context, world.zone, backdrop, width, height, time, cameraX);
-  if (world.zone.floor) paintReef(context, backdrop, width, height, time, cameraX);
+  if (world.zone.floor) paintReef(context, world.zone, backdrop, width, height, time, cameraX);
   paintOwnedReef(context, world, width, height, time);
 
   for (const friend of world.friends) {
@@ -254,9 +254,11 @@ function paintCartoonWater(context, zone, width, height, time, cameraX) {
   }
 }
 
-function paintReef(context, backdrop, width, height, time, cameraX) {
+// The sea bed's plants and coral sticks; a bare zone (mud at the bottom of the sea) has none.
+function paintReef(context, zone, backdrop, width, height, time, cameraX) {
   context.save();
   if (!backdrop.naturalWidth) paintCartoonSeabed(context, width, height, cameraX);
+  if (zone.plants === false) return context.restore();
 
   for (let plant = -1; plant < Math.ceil(width / 100) + 1; plant++) {
     const x = plant * 100 + 25 - ((cameraX * 0.38) % 100);

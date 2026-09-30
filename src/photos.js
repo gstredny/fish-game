@@ -53,4 +53,16 @@ export const PHOTOS = {
   vampiresquid: { file: "art/animals/vampiresquid.webp", credit: "Drawing: Carl Chun, 1911, public domain", source: "https://commons.wikimedia.org/wiki/File:Vampyroteuthis_infernalis.jpg" },
   combjelly: { file: "art/animals/combjelly.webp", credit: "Photo: Chad King (NOAA), public domain", source: "https://commons.wikimedia.org/wiki/File:Lobate_Comb_Jelly_(40164874905).jpg" },
   oarfish: { file: "art/animals/oarfish.webp", credit: "Photo: Ryokou man, public domain", source: "https://commons.wikimedia.org/wiki/File:20100216_acaworld07.jpg" },
+  // The bottom
+  amphipod: { file: "art/animals/amphipod.webp", credit: "Photo: Alan Jamieson, CC BY-SA 4.0", source: "https://commons.wikimedia.org/wiki/File:Live_Alicella_gigantea_feeding.jpg" },
+  snailfish: { file: "art/animals/snailfish.webp", credit: "Photo: OldMateWA, CC BY-SA 4.0", source: "https://commons.wikimedia.org/wiki/File:Snailfish_and_cusk_eels.jpg" },
+  rattail: { file: "art/animals/rattail.webp", credit: "Photo: NOAA Okeanos Explorer, public domain", source: "https://commons.wikimedia.org/wiki/File:Expl9749_(14318998877).jpg" },
+  lizardfish: { file: "art/animals/lizardfish.webp", credit: "Photo: NOAA Ocean Exploration, public domain", source: "https://commons.wikimedia.org/wiki/File:Bathysaurus_2.jpg" },
+  sleepershark: { file: "art/animals/sleepershark.webp", credit: "Photo: NOAA Okeanos Explorer, public domain", source: "https://commons.wikimedia.org/wiki/File:Expl9984_(14318817140).jpg" },
+  fangtooth: { file: "art/animals/fangtooth.webp", credit: "Photo: Sandra Raredon, Smithsonian Institution, public domain", source: "https://commons.wikimedia.org/wiki/File:Anoplogaster_cornuta_SI.jpg" },
+  seapig: { file: "art/animals/seapig.webp", credit: "Photo: NOAA Ocean Exploration, public domain", source: "https://commons.wikimedia.org/wiki/File:Amperima-seapig.jpg" },
+  tripodfish: { file: "art/animals/tripodfish.webp", credit: "Photo: NOAA Okeanos Explorer, public domain", source: "https://commons.wikimedia.org/wiki/File:Tripod_fish1.jpg" },
+  giantisopod: { file: "art/animals/giantisopod.webp", credit: "Photo: NOAA Okeanos Explorer, public domain", source: "https://commons.wikimedia.org/wiki/File:Bathynomus_giganteus_hi-res.jpg" },
+  tubeworm: { file: "art/animals/tubeworm.webp", credit: "Photo: NOAA Okeanos Explorer, public domain", source: "https://commons.wikimedia.org/wiki/File:Expl6563_(9664056402).jpg" },
+  dumbooctopus: { file: "art/animals/dumbooctopus.webp", credit: "Photo: NOAA Okeanos Explorer, public domain", source: "https://commons.wikimedia.org/wiki/File:Dumbo-hires.jpg" },
 };

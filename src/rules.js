@@ -104,7 +104,13 @@ export const SEA_FRIENDS = [
   { kind: "barreleye", size: 22, speed: 6, floor: false },
   { kind: "vampiresquid", size: 24, speed: 8, floor: false },
   { kind: "combjelly", size: 18, speed: 5, floor: false },
-  { kind: "oarfish", size: 120, speed: 14, floor: false }
+  { kind: "oarfish", size: 120, speed: 14, floor: false },
+  { kind: "fangtooth", size: 22, speed: 12, floor: false },
+  { kind: "dumbooctopus", size: 30, speed: 10, floor: false },
+  { kind: "seapig", size: 22, speed: 3, floor: true },
+  { kind: "tripodfish", size: 26, speed: 0, floor: true },
+  { kind: "giantisopod", size: 26, speed: 4, floor: true },
+  { kind: "tubeworm", size: 40, speed: 0, floor: true }
 ];
 
 export function friendTraits(kind) {

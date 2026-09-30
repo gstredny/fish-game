@@ -2,6 +2,7 @@
 // the caller mirrors it for left. Floor animals stand on (0, 0), the sea bed.
 import { REEF_PAINTERS, REEF_SWATCHES } from "./paint-reef-animals.js";
 import { DEEP_GLOWS, DEEP_PAINTERS, DEEP_SWATCHES } from "./paint-deep-animals.js";
+import { BOTTOM_GLOWS, BOTTOM_PAINTERS, BOTTOM_SWATCHES } from "./paint-bottom-animals.js";
 
 // role: "player", "prey" (safe to eat, soft glow), "friend" (your own kind, a smile) or
 // "predator" (teeth and a frown). extra carries per-animal settings for custom painters, such as
@@ -2756,7 +2757,8 @@ export const SWATCHES = {
   plankton: "#ffe39a", sardine: "#9cc7e4", mackerel: "#4fb3a4", squid: "#f29a8c", tuna: "#5d8fc8", shark: "#a9bccb",
   orca: "#1f262d",
   ...REEF_SWATCHES,
-  ...DEEP_SWATCHES
+  ...DEEP_SWATCHES,
+  ...BOTTOM_SWATCHES
 };
 
 export function swatch(kind) {
@@ -2767,7 +2769,8 @@ export function swatch(kind) {
 // zone's paint module adds its own; anglerfish lures glow greenish blue.
 export const GLOWS = {
   anglerfish: "#9ff7ff",
-  ...DEEP_GLOWS
+  ...DEEP_GLOWS,
+  ...BOTTOM_GLOWS
 };
 
 export function glowColor(kind) {
@@ -2778,6 +2781,7 @@ export function glowColor(kind) {
 const PAINTERS = {
   ...REEF_PAINTERS,
   ...DEEP_PAINTERS,
+  ...BOTTOM_PAINTERS,
   squid: paintSquid,
   turtle: paintTurtle,
   seahorse: paintSeahorse,

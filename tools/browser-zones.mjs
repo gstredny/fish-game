@@ -247,7 +247,45 @@ await sleep(200);
 await tapButton('.zone-button[data-zone="open"]');
 await sleep(200);
 
-// 8. The start screen and the book fit the shortest sideways phones.
+// 8. The bottom: pitch black, a mud floor with animals on it, the vent's glow, no one to swim away from.
+await tapButton('.zone-button[data-zone="bottom"]');
+await sleep(300);
+assert.equal(await evaluate("__game.world.zone.id"), "bottom");
+await tapButton("#start-button");
+await sleep(500);
+assert.equal((await spoken()).at(-1), growLine(ZONES.bottom, 0), "the bottom's welcome line");
+assert.equal(await text("#stage-name"), "Little amphipod");
+assert.ok(await evaluate("__game.world.friends.some(friend => friend.floor)"), "animals on the mud");
+assert.ok(!missionIds(ZONES.bottom).includes("flee"), "nothing hunts a sleeper shark here");
+await evaluate("__game.world.invulnerable = 999");
+await evaluate(`(() => { const w = __game.world; const x = w.player.x, y = w.player.y;
+  w.friends = [{ kind: "tubeworm", size: 40, speed: 0, floor: true, x: x + 260, y: 0, direction: 1, wobble: 0 },
+    { kind: "seapig", size: 22, speed: 0, floor: true, x: x - 120, y: 0, direction: 1, wobble: 1 },
+    { kind: "fangtooth", size: 22, speed: 0, floor: false, x: x + 120, y: y - 40, direction: -1, wobble: 2 }];
+  w.creatures = [0, 1, 2].map(i => ({ x: x - 200 + i * 60, y: y + 30, tier: 1, direction: 1, wobble: i })); })()`);
+await sleep(600);
+await shot("14-bottom-swim");
+const bottomCorner = await evaluate(`(() => { const c = document.querySelector("#ocean"); const g = c.getContext("2d");
+  const p = g.getImageData(8, c.height / 2, 1, 1).data; return p[0] + p[1] + p[2]; })()`);
+console.log("8. bottom left edge (sum of rgb):", bottomCorner);
+assert.ok(bottomCorner < 40, "the bottom is nearly black away from the fish");
+await evaluate(`(() => { const w = __game.world; w.mission.id = "hunt"; w.mission.need = 2; w.stage = 3; w.bites = 99;
+  w.creatures = [{ ...w.player, tier: 3, direction: 1, wobble: 0 }]; })()`);
+await waitFor("__game.world.phase === 'mission'", "the mission card opens");
+await sleep(300);
+assert.equal(await text("#mission-kicker"), "You're a sleeper shark!");
+assert.equal(await text("#mission-goal"), "Eat 2 deep-sea lizardfish");
+await shot("15-bottom-mission");
+await tapButton("#mission-go");
+await sleep(200);
+await tapButton("#pause-button");
+await sleep(200);
+await tapButton("#paused-home-button");
+await sleep(200);
+await tapButton('.zone-button[data-zone="open"]');
+await sleep(200);
+
+// 9. The start screen and the book fit the shortest sideways phones.
 for (const [width, height] of [[844, 340], [667, 375], [568, 320]]) {
   await size(width, height);
   await reload();

@@ -10,7 +10,9 @@ The start screen asks **Where will you swim?** Each place has its own water, its
 - **Open ocean**: deep blue. Plankton → sardine → mackerel → squid → tuna → great white shark → orca. Dolphins, a hammerhead, a narwhal and more swim by; the blue whale is the rare giant.
 - **The deep**: the twilight zone, nearly dark, with no floor in sight. Marine snow → deep-sea shrimp → lanternfish → viperfish → giant squid → sperm whale, and nothing hunts a grown sperm whale. The water is black except around you (many deep animals make light, and so do you), and the animals that glow (`glow: true` on their card) show as little lights in the dark, so a child swims over to find out what they are. An anglerfish, a hatchetfish, a vampire squid, a comb jelly and a barreleye live here; the oarfish is the rare giant. No free photo of a live vampire squid exists, so its card shows Carl Chun's 1911 scientific drawing instead (the card says so).
 
-More places are on the way (see `tasks/013-ocean-zones.md`): a kelp forest, an icy sea, and the very bottom.
+- **The bottom**: the abyssal sea floor, pitch black, icy cold and muddy, with a hot vent. Marine snow → amphipod → snailfish → rattail → deep-sea lizardfish → sleeper shark, and nothing here hunts a grown sleeper shark. You see only by your own light; the vent's heat shimmer shows from afar. A fangtooth swims by; sea pigs, a tripod fish, a giant isopod and tube worms live on the mud; the dumbo octopus is the one to find.
+
+More places are on the way (see `tasks/013-ocean-zones.md`): a kelp forest and an icy sea.
 
 ## Missions and levels
 
@@ -116,6 +118,7 @@ Apple GPUs) and bump the cache name in `sw.js`:
 blender -b -P tools/render-ocean.py -- art/ocean.webp open
 blender -b -P tools/render-ocean.py -- art/ocean-reef.webp reef
 blender -b -P tools/render-ocean.py -- art/ocean-deep.webp deep
+blender -b -P tools/render-ocean.py -- art/ocean-bottom.webp bottom
 ```
 
 ## Check the rules

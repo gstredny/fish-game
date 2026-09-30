@@ -26,6 +26,11 @@ ZONES = {
                  absorb=(0.1, 0.28, 0.5), absorb_density=0.045, sand=((0.02, 0.03, 0.05), (0.03, 0.04, 0.07)),
                  rocks=[], rock_count=0, lumpy=0.3, sun=4, sun_color=(0.5, 0.72, 1.0), exposure=0.3,
                  depth=40, floor=False),
+    # The abyssal floor: no sunlight at all, a faint cold glow so the mud and a few dark rocks just show.
+    "bottom": dict(sky=(0.07, 0.11, 0.17), sky_strength=2.0, scatter=(0.03, 0.05, 0.09), scatter_density=0.03,
+                   absorb=(0.15, 0.25, 0.4), absorb_density=0.045, sand=((0.24, 0.22, 0.2), (0.28, 0.26, 0.24)),
+                   rocks=[((0.08, 0.08, 0.09), (0.2, 0.19, 0.19))], rock_count=18, lumpy=0.5,
+                   sun=0, sun_color=(0.6, 0.7, 0.9), exposure=1.0, depth=40),
 }
 
 args = sys.argv[sys.argv.index("--") + 1:]

@@ -4,6 +4,7 @@
 // (paint.js). The first animals live here; each later zone's animals live in their own species-*.js.
 import { REEF_SPECIES } from "./species-reef.js";
 import { DEEP_SPECIES } from "./species-deep.js";
+import { BOTTOM_SPECIES } from "./species-bottom.js";
 import { formKind } from "./zones.js";
 
 export const SPECIES = {
@@ -309,7 +310,8 @@ export const SPECIES = {
       "Horseshoe crabs are cousins of spiders."]
   },
   ...REEF_SPECIES,
-  ...DEEP_SPECIES
+  ...DEEP_SPECIES,
+  ...BOTTOM_SPECIES
 };
 
 // Spoken when a card opens: its name, first fact, and who eats whom.

@@ -56,3 +56,10 @@ test("a floorless zone paints no sea bed plants or coral", () => {
   assert.ok(open.stroke < sunny.stroke, "the seaweed strokes are gone");
   assert.ok(open.quadraticCurveTo < sunny.quadraticCurveTo);
 });
+
+test("a bare sea bed (mud at the bottom of the sea) has no plants or coral sticks", () => {
+  const planted = paintIn({ ...ZONES.open, id: "planted" }, []);
+  const bare = paintIn({ ...ZONES.open, id: "bare", plants: false }, []);
+  assert.ok(bare.stroke < planted.stroke, "the seaweed strokes are gone");
+  assert.equal(bare.save, planted.save, "the sea bed itself is still painted");
+});

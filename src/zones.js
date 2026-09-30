@@ -34,6 +34,16 @@ export const ZONES = {
     friends: ["anglerfish", "hatchetfish", "vampiresquid", "combjelly", "barreleye"],
     giant: "oarfish",
     backdrop: "art/ocean-deep.webp", water: ["#0b2a55", "#04122b", "#010409"]
+  },
+  // The abyssal sea floor: pitch black, icy cold, soft mud, and a hot vent with its tube worms. You see
+  // only by your own light. Nothing here hunts a grown sleeper shark.
+  bottom: {
+    name: "The bottom", blurb: "Pitch black, cold and muddy", hello: "Welcome to the bottom of the sea!",
+    light: 0.05, floor: true, plants: false,
+    chain: ["marinesnow", "amphipod", "snailfish", "rattail", "lizardfish", "sleepershark"],
+    friends: ["fangtooth", "seapig", "tripodfish", "giantisopod", "tubeworm"],
+    giant: "dumbooctopus",
+    backdrop: "art/ocean-bottom.webp", water: ["#0a1424", "#050a14", "#020408"]
   }
 };
 for (const [id, zone] of Object.entries(ZONES)) zone.id = id;
