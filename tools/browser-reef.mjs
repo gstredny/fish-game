@@ -132,13 +132,16 @@ async function checkReef(browser, mode) {
     assert.equal(await evaluate("__reefGame.world.hearts"), 3);
     assert.equal(await evaluate("document.querySelector('#reef-status').textContent"), "Safe in your coral");
     await shot("sheltered");
+    // Clear the water first: the shark from the shelter test could bump the fish on its way out,
+    // and a second bump would take it straight past two hearts.
+    await evaluate("__reefGame.world.creatures = []");
     await page.send("Input.dispatchKeyEvent", { type: "keyDown", key: "ArrowRight", code: "ArrowRight", windowsVirtualKeyCode: 39 });
     await waitFor("!__reefGame.world.sheltered");
     await page.send("Input.dispatchKeyEvent", { type: "keyUp", key: "ArrowRight", code: "ArrowRight", windowsVirtualKeyCode: 39 });
-    // A random fish may already have bumped the sardine on its way out, so count from here.
-    const before = await evaluate("__reefGame.world.hearts");
+    assert.equal(await evaluate("__reefGame.world.hearts"), 3, "leaving the shelter should not cost a heart");
     await evaluate(meetShark);
-    await waitFor(`__reefGame.world.hearts === ${before - 1}`);
+    await waitFor("__reefGame.world.hearts < 3");
+    assert.equal(await evaluate("__reefGame.world.hearts"), 2, "outside the shelter one bump costs one heart");
     await shot("outside-shelter");
     await clickButton("#pause-button");
     await page.send("Emulation.setDeviceMetricsOverride", { width: height, height: width, deviceScaleFactor: 1, mobile: mode === "phone" });

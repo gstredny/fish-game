@@ -276,3 +276,21 @@ test("the HUD only turns see-through for fish that can hurt the player", () => {
   world.creatures = [{ ...behindHud, y: 300, tier: 2 }];
   assert.equal(dangerBehind(world, box, 390, 844), false);
 });
+
+test("new fish swim in from off screen at spread-out distances, not in a column", () => {
+  const world = createWorld(844, 390);
+  world.phase = "playing";
+  world.invulnerable = 99;
+  const gaps = [];
+  for (let round = 0; round < 40; round++) {
+    world.creatures = [];
+    swim(world, 0.016, idleInput, 844, 390);
+    for (const creature of world.creatures) {
+      const gap = Math.abs(creature.x - world.camera.x) - 844 / 2 - CREATURES[creature.tier].size * 1.6;
+      gaps.push(Math.round(gap));
+    }
+  }
+  assert.ok(gaps.every(gap => gap >= 0), "every new fish starts fully off screen");
+  assert.ok(new Set(gaps).size > 30, "arrivals are spread out");
+  assert.ok(Math.max(...gaps) - Math.min(...gaps) > 30, "some come from further out than others");
+});

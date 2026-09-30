@@ -240,7 +240,7 @@ function followMission(world, step, width, height) {
     mission.target = world.creatures.find(creature => creature.hunt && !creature.gone) ?? null;
     mission.wait -= step;
     if (!mission.target && mission.wait <= 0) {
-      mission.target = { x: world.camera.x + ahead * (width / 2 + 80), y: world.player.y + (Math.random() - 0.5) * 120,
+      mission.target = { x: world.camera.x + ahead * (width / 2 + CREATURES[ORCA].size * 1.6), y: world.player.y + (Math.random() - 0.5) * 120,
         tier: ORCA, direction: -ahead, wobble: 0, art: null, hunt: true };
       world.creatures.push(mission.target);
     }
@@ -298,6 +298,9 @@ function makeCreature(world, width, height, initial) {
   if (initial && Math.abs(x - world.player.x) < 100 && Math.abs(vertical) < 100) x += 180;
   let tier = pickTier(world);
   if (initial && Math.hypot(x - world.player.x, vertical) < 260) tier = Math.min(tier, world.stage);
+  // New arrivals start fully off screen (big fish need more room) and a little spread out, so they
+  // swim in rather than popping in at the edge in a column. Kept tight so the ocean stays as busy.
+  if (!initial) x += side * (Math.max(0, CREATURES[tier].size * 1.6 - 45) + Math.random() * width * 0.05);
   return {
     x,
     y,

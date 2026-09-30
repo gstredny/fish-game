@@ -71,6 +71,15 @@ George's choices, 2026-09-29:
   - The pufferfish card said "swim close and watch it puff".
 - Not tested: real Safari or WebKit (only Chromium ran here). The 206 range path is unit-tested for Safari's `bytes=0-1`.
 
+## Merged with master's sound (2026-09-30)
+
+Master had gained sound effects and quick updates (`tasks/010-sound-and-quick-updates.md`). Merging them needed three changes:
+- The fanfare now plays on the game's mission events: once on becoming the shark and once on finishing the mission. It no longer keys on the "won" screen, so coming back to it after planting coral doesn't replay the fanfare.
+- The offline cache is now v14. Master was already on v13, so phones that had it would otherwise never have fetched this version.
+- `browser-sound` covers both fanfares, and `browser-update` copies `voice/` into its "next version".
+
+Checks on the merged code: `npm test` 101/101. These browser checks all pass: sound, update, voice, reef, sideways, learn and check.
+
 ## Open
 
 - George still needs to try it on his iPhone: the recorded voice after tapping Dive in, and whether Big swimmer is hard enough.

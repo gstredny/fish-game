@@ -3,6 +3,7 @@ import { paintOcean, portrait } from "./paint.js";
 import { CRAYONS, prepareArt } from "./art.js";
 import { loadDrawings, saveDrawing } from "./gallery.js";
 import { createSketchpad } from "./sketchpad.js";
+import { createSound } from "./sound.js";
 import { createSteering } from "./steering.js";
 import { padDirection } from "./pad.js";
 import { toWorld } from "./camera.js";
@@ -66,6 +67,8 @@ try { if (storage?.getItem(LEVEL_KEY) === "big") level = "big"; } catch {}
 const art = { player: null, npc: [] };
 const portraits = new Map();
 const sketchpad = createSketchpad(document.querySelector("#sketch"));
+const sound = createSound();
+sound.setMuted(voice.muted);
 
 async function decode(drawing) {
   try {
@@ -243,15 +246,16 @@ function tell(line, duration) {
 
 function showVoice() {
   for (const button of voiceButtons) {
-    button.hidden = !voice.available;
+    button.hidden = !voice.available && !sound.available;
     button.textContent = voice.muted ? "🔇" : "🔊";
-    button.setAttribute("aria-label", voice.muted ? "Turn the voice on" : "Turn the voice off");
+    button.setAttribute("aria-label", voice.muted ? "Turn the sound on" : "Turn the sound off");
   }
 }
 
 // Turning the voice on says so from the tap itself: iPhone speaks only once a tap has spoken.
 function toggleVoice() {
   voice.setMuted(!voice.muted);
+  sound.setMuted(voice.muted);
   if (!voice.muted) voice.say(VOICE_ON);
   showVoice();
 }
@@ -471,6 +475,7 @@ function frame(timestamp) {
   visualTime += Math.min(seconds, 0.05);
   if (!pad.hidden) placePad();
   swim(world, seconds, input, width, height);
+  sound.listen(world);
   if (world.stage === SHARK && world.phase === "playing") showProgress();
   paintOcean(context, world, width, height, visualTime, art);
   watchBehindHud();
@@ -662,4 +667,24 @@ showPanel("intro");
 const artReady = Promise.all(drawings.map(decode)).then(setArt).catch(() => {}).finally(() => { artLoaded = true; });
 requestAnimationFrame(frame);
 
-if ("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js");
+// Phones allow sound only after a tap (when the finger lifts), click or key press.
+for (const type of ["pointerup", "touchend", "click", "keydown"]) document.addEventListener(type, () => sound.unlock(), true);
+
+// When an update takes over in the background, show it straight away, but only from the start
+// screen itself: never mid-swim, mid-drawing, or with the Ocean book or a card open. Once per launch.
+if ("serviceWorker" in navigator) {
+  const updating = Boolean(navigator.serviceWorker.controller);
+  navigator.serviceWorker.register("./sw.js").then(registration => {
+    // Coming back to the app from the background also checks for a new version.
+    document.addEventListener("visibilitychange", () => { if (!document.hidden) registration.update().catch(() => {}); });
+  }).catch(() => {});
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    const onStartScreen = world.phase === "ready" && !document.querySelector("#intro").hidden;
+    if (!updating || !onStartScreen) return;
+    try {
+      if (sessionStorage.getItem("little-fish-updated")) return;
+      sessionStorage.setItem("little-fish-updated", "1");
+    } catch { /* no session storage: still reload once, as the page is fresh after it */ }
+    location.reload();
+  });
+}
