@@ -1,7 +1,7 @@
 # Ocean zones: six places to swim, each with its own animals
 
 Date: 2026-09-30
-Status: slices 1 (coral reef + plumbing) and 2 (the deep) done and pushed; slices 3–5 open
+Status: slices 1 (coral reef + plumbing) and 2 (the deep) pushed; slice 3 (the bottom) committed on `master`, not pushed; slices 4–5 open
 Branch: `master`
 
 ## Intent Contract
@@ -125,8 +125,19 @@ Slice 2 (The deep):
       deep drawings, the start screen with three places.
 - [x] Pushed to `origin/master` (sw cache `little-fish-v17`).
 
-Later slices (the bottom, kelp forest, icy sea):
-- [ ] Same checks per zone; the bottom's screenshots show the glow, the mud floor and the hot vent.
+Slice 3 (The bottom):
+- [x] `npm test` → 113 passed, 0 failed. New paint test for a bare sea bed (`plants: false`).
+- [x] Eleven animals: cards (helper's facts with sources; flags below), drawings (looked at), photos (each
+      looked at: nine NOAA public domain, two CC BY-SA; the fangtooth is a preserved specimen, the sea pig an
+      Amperima not a Scotoplanes), voice (67 new clips, 333 total), CREDITS.
+- [ ] `browser-zones` bottom section: welcome line, "Little amphipod", animals on the mud, no flee mission,
+      the left edge nearly black, the sleeper shark mission card. NOT verified: the browser suite was killed
+      mid-run (see attempt log). Earlier hand screenshots of the bottom looked right (vent glow on the mud,
+      sea pig and tripod fish faint, sleeper shark dim in the distance; start screen with four places).
+- [ ] Pushed to `origin/master` (sw cache `little-fish-v18`). Committed (eee666a, d47aa29, this write-up), not pushed.
+
+Later slices (kelp forest, icy sea):
+- [ ] Same checks per zone.
 
 ## Attempt log
 
@@ -172,3 +183,22 @@ Later slices (the bottom, kelp forest, icy sea):
   viperfish and sperm whale eats viperfish (simplifications of "deep fish and squid"), vampire squid's hunters
   ("big fish and whales of the deep", least sure). Commits `The deep: a dark zone...` and `Record the voice
   for the deep`, then this write-up; pushed after it.
+- 2026-09-30 (slice 3 done): The bottom. `light: 0.05`, `floor: true`, `plants: false` (paint.js skips the
+  seaweed and coral sticks on a bare mud floor). Blender palette `bottom`: no sun at all (sun through the
+  gappy surface plane painted sunlight ripples on mud four kilometres down; three renders to get flat mud
+  under a faint even glow). Chain marine snow → amphipod → snailfish → rattail → deep-sea lizardfish →
+  sleeper shark, no top hunter. Friends fangtooth (swims), sea pig, tripod fish, giant isopod, tube worms
+  at a vent (the vent's orange shimmer is the one `glow` here, stylised: the card says it is heat, not light);
+  dumbo octopus is the giant. Helper flags kept: several of these animals live shallower than 4,000 m, so the
+  zone text names no depth; the chain links rattail→snailfish, lizardfish→rattail, sleeper shark→lizardfish
+  are plausible game design, hedged in the cards ("we think"); sleeper shark's card admits killer whales
+  catch them. `paint-bottom-animals.js` is 1,218 lines (one zone's drawings; no cap in this repo).
+- 2026-09-30 (slice 3 stopped before browser checks): the background browser suite ran `browser-sound.mjs`
+  in Playwright Chromium and it played the game's audio through George's speakers. George: "stop the sound!!!
+  STOP TESTING NOWWWWW". Killed every `tools/browser-*` script, Playwright's Chromium and headless Chrome on
+  9444; the local `http.server 8778` later stopped at its time limit. Slice 3 is NOT committed. Do not run
+  `browser-sound.mjs` on this Mac again without muting Chromium (`--mute-audio`) or George's say-so.
+- 2026-09-30 (slice 3 committed): George: "commit everything". `npm test` 113 passed, 0 failed. Three commits
+  with explicit pathspecs: eee666a `The bottom: a pitch-black mud floor with a hot vent and eleven new
+  animals` (26 files), d47aa29 `Record the voice for the bottom` (68 files), then this write-up. Not pushed;
+  the bottom section of `browser-zones` is still unverified.
