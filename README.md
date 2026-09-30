@@ -1,17 +1,26 @@
 # Little Fish, Big Ocean
 
-A bright, simple fish-eats-fish ocean game for young children. Swim toward food, avoid larger fish, and grow up a real ocean food chain: plankton → sardine → mackerel → squid → tuna → great white shark → orca. Each animal really eats the ones below it. Fish of your own kind swim beside you as a friendly school.
+A bright, simple fish-eats-fish ocean game for young children. Swim toward food, avoid larger fish, and grow up a real ocean food chain. Each animal really eats the ones below it. Fish of your own kind swim beside you as a friendly school.
+
+## Places to swim
+
+The start screen asks **Where will you swim?** Each place has its own water, its own food chain and its own animals, so a child keeps meeting new ones. The device remembers the pick, and a place still holding animals this device has never met shows how many are new. The places are in `src/zones.js`:
+
+- **Coral reef**: sunny and warm. Plankton → damselfish → lionfish → grouper → reef shark → tiger shark, with orcas passing by now and then. Clownfish, a moray, a mantis shrimp, coral (an animal!) and a giant clam live on the reef; a whale shark is the rare giant.
+- **Open ocean**: deep blue. Plankton → sardine → mackerel → squid → tuna → great white shark → orca. Dolphins, a hammerhead, a narwhal and more swim by; the blue whale is the rare giant.
+
+More places are on the way (see `tasks/013-ocean-zones.md`): a kelp forest, an icy sea, the deep and the very bottom, where it is dark and you see by your own glow.
 
 ## Missions and levels
 
-Once you become a great white shark, the game pauses on a mission card, and the voice says it. Each swim gets a different mission from the last:
+Once you reach the biggest form (the great white shark in the open ocean, the tiger shark on the reef), the game pauses on a mission card, and the voice says it. Each swim gets a different mission from the last:
 
-- eat some tuna, or some squid;
+- eat some of the place's tier-4 animal (tuna, reef sharks), or some of its tier-3 animal (squid, groupers);
 - meet some sea friends;
-- find the blue whale (an arrow at the screen edge points to it);
-- swim away from an orca for a while. Orcas are the only animals that hunt great whites, and a bump starts the count over.
+- find the place's giant (an arrow at the screen edge points to it);
+- swim away from the top hunter for a while, in places that have one. Orcas are the only animals that hunt great whites, and a bump starts the count over.
 
-Finishing the mission ends the swim with **Mission complete!** and earns a coral colony. Orcas also turn up now and then once you are a tuna or a shark.
+Finishing the mission ends the swim with **Mission complete!** and earns a coral colony. The top hunter also turns up now and then once you are big.
 
 The start screen has two levels, and the device remembers the choice:
 
@@ -20,7 +29,7 @@ The start screen has two levels, and the device remembers the choice:
 
 ## Learning as you swim
 
-The first time a child meets an animal, the game pauses and a card shows a real photo of it. A voice reads out a fact, what the animal eats, and who eats it. After that, a name tag floats above the animal and the voice says one short line. Growing up and getting bumped are told as food-chain lines too, such as "You're a tuna now! Tuna eat squid. Watch out for sharks!" and "Watch out! Mackerel eat sardines!"
+The first time a child meets an animal, the game pauses and a card shows a real photo of it. A voice reads out a fact, what the animal eats, and who eats it. After that, a name tag floats above the animal and the voice says one short line. Growing up and getting bumped are told as food-chain lines too, such as "You're a tuna now! Tuna eat squid. Watch out for sharks!" and "Watch out! Mackerel eat sardines!" The first line of a swim starts with a welcome to the place.
 
 Gentle sea friends come by as well. In open water: a sea turtle, a dolphin, a jellyfish, a pufferfish (swim close and it puffs up), a manta ray, a parrotfish and, once in a while, a huge blue whale. On the sea bed: a seahorse, an octopus, a sea star, a crab, a lobster, a sea urchin and clownfish in their anemone (swim low to meet them). They never eat you and are never eaten.
 
@@ -43,7 +52,7 @@ Twelve harder animals teach bigger ideas:
 
 Sea friends this device has never met come first, so a child who has met everyone else soon meets the new ones.
 
-The **Ocean book** (on the start and pause screens) keeps every card met on this device, so a second child can hear them all again. **Find out more** on a card opens a Google search for "<animal> facts for kids", with SafeSearch on. It shows only when the device is online. The speaker button at the top turns the voice off; the device remembers. The facts are in `src/species.js`; photo credits are in [CREDITS.md](CREDITS.md).
+The **Ocean book** (on the start and pause screens) keeps every card met on this device, grouped by place, so a second child can hear them all again. An animal that lives in two places shows in both. **Find out more** on a card opens a Google search for "<animal> facts for kids", with SafeSearch on. It shows only when the device is online. The speaker button at the top turns the voice off; the device remembers. The facts are in `src/species.js`; photo credits are in [CREDITS.md](CREDITS.md).
 
 ## The voice
 
@@ -57,7 +66,13 @@ node tools/voice-lines.mjs > /tmp/lines.json
 .venv/bin/python tools/make-voice.py /tmp/lines.json voice --prune
 ```
 
-The first run downloads the model (about 330 MB). Clips that already exist are reused, so only new or changed lines are recorded (about 1.5 s each). The voice is `af_heart` at speed 0.9; `--voice` and `--speed` change them. Bump the cache name in `sw.js` afterwards.
+The first run downloads the model (about 330 MB). Clips that already exist are reused, so only new or changed lines are recorded (about 1.5 s each). On a network that inspects HTTPS with its own certificate (a work Mac), Python will not trust the download until it sees that certificate: build a bundle from the Mac's keychain and point Python at it for the run:
+
+```sh
+cat .venv/lib/python3.12/site-packages/certifi/cacert.pem > /tmp/ca-bundle.pem
+security find-certificate -a -p /Library/Keychains/System.keychain >> /tmp/ca-bundle.pem
+SSL_CERT_FILE=/tmp/ca-bundle.pem .venv/bin/python tools/make-voice.py /tmp/lines.json voice --prune
+``` The voice is `af_heart` at speed 0.9; `--voice` and `--speed` change them. Bump the cache name in `sw.js` afterwards.
 
 Every finished mission earns one coral colony. Choose **Plant your coral**, then tap or click open water (or press Enter to plant ahead). The coral and any unplanted rewards are saved on this device across new swims and reloads. Three clownfish live around each colony and retreat when predators approach. Sardines and mackerel can shelter inside the marked circle; larger forms cannot. Each new swim starts beside your reef. If browser storage is unavailable, the reef lasts for the current visit and the game says so.
 
@@ -89,12 +104,14 @@ For full screen and an app icon, add it to the home screen once. On iPhone, tap 
 
 ## Ocean art
 
-The realistic ocean behind the fish is `art/ocean.webp`, a 360° underwater panorama rendered in Blender, so it wraps
-seamlessly as the fish swims. To change it, edit `tools/render-ocean.py`, then re-render (about 25 s on Apple GPUs)
-and bump the cache name in `sw.js`:
+The realistic ocean behind the fish is a 360° underwater panorama rendered in Blender, one per place (`art/ocean.webp`
+for the open ocean, `art/ocean-reef.webp` for the reef), so it wraps seamlessly as the fish swims. Each place's water,
+light and colours are in `ZONES` at the top of `tools/render-ocean.py`. To change one, edit it, re-render (about 25 s on
+Apple GPUs) and bump the cache name in `sw.js`:
 
 ```sh
-blender -b -P tools/render-ocean.py -- art/ocean.webp
+blender -b -P tools/render-ocean.py -- art/ocean.webp open
+blender -b -P tools/render-ocean.py -- art/ocean-reef.webp reef
 ```
 
 ## Check the rules
@@ -115,6 +132,7 @@ node tools/browser-sideways.mjs       # sideways phone: arrow pad steers, finger
 node tools/browser-autoplay.mjs       # seek-food controller plays to the shark and an eat-tuna mission (LEVEL=big for Big swimmer)
 node tools/browser-reef.mjs           # earn, plant, reload, shelter; desktop + phone
 node tools/browser-learn.mjs          # fact cards, voice, Ocean book, mission card, sea-bed friends, fits; "zoo" screenshots
+node tools/browser-zones.mjs          # picking a place, the reef swim and mission, Home, the book by place, swim as a real fish, fits
 ```
 
 `tools/browser-sound.mjs` checks that sound stays off until a tap and that each main moment plays its sound. `tools/browser-update.mjs` checks that an update shows on the first open. `tools/browser-check.mjs` checks drawing: it draws a fish, checks the saved drawing stays inside the fish shape, swims to shark form on a computer and a sideways phone, and checks the drawing screens fit. It uses [Playwright](https://playwright.dev) instead of the Chrome above: `npm i --no-save playwright && npx playwright install chromium`, then `node tools/browser-check.mjs screenshots` (or point `PLAYWRIGHT_MODULE` at an installed copy).

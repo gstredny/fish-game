@@ -4,7 +4,8 @@
 // "zoo" screenshot of every animal drawing. Same server/Chrome setup as browser-play.mjs.
 import assert from "node:assert/strict";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { cardSpeech, growLine, KINDS, SEA_FRIEND_KINDS, SPECIES } from "../src/species.js";
+import { cardSpeech, growLine, SPECIES } from "../src/species.js";
+import { KINDS, ZONES, zoneKinds } from "../src/zones.js";
 import { PHOTOS } from "../src/photos.js";
 import { CREATURES, SEA_FRIENDS } from "../src/rules.js";
 // Recorded lines are heard as clips; the checks below turn each clip back into its words.
@@ -124,7 +125,9 @@ assert.ok(await fitsOnScreen("#intro-book-button"), "the Ocean book button fits 
 await tapButton("#intro-book-button");
 await sleep(300);
 assert.equal(await evaluate("document.querySelector('#book-count').textContent"), `You've met 0 of ${KINDS.length} ocean animals`);
-assert.equal(await evaluate("document.querySelectorAll('.book-tile.locked').length"), KINDS.length);
+// An animal that lives in two places has a tile in each place's section.
+const TILES = Object.values(ZONES).reduce((count, zone) => count + zoneKinds(zone).length, 0);
+assert.equal(await evaluate("document.querySelectorAll('.book-tile.locked').length"), TILES);
 await shot("01-empty-book");
 await tapButton("#book-close");
 await sleep(200);
@@ -132,7 +135,7 @@ await sleep(200);
 // 3. Dive in: the first line says what a sardine eats. Then plankton close by opens its card.
 await tapButton("#start-button");
 await sleep(300);
-assert.deepEqual(await spoken(), [growLine(0)]);
+assert.deepEqual(await spoken(), [growLine(ZONES.open, 0)]);
 await evaluate(`(() => { const w = __game.world; w.invulnerable = 999; w.time = 5.2; w.friends = [];
   w.creatures = [{ x: w.player.x + 70, y: w.player.y, tier: 0, direction: 1, wobble: 0 }]; })()`);
 await waitFor("__game.world.phase === 'meeting'", "the plankton card opens");
@@ -192,7 +195,7 @@ assert.ok(await visible("#paused"), "back to the pause screen");
 const WORDIEST = KINDS.map(kind => [kind, [...SPECIES[kind].facts, SPECIES[kind].eats, SPECIES[kind].eatenBy].join(" ").length])
   .sort((first, second) => second[1] - first[1])[0][0];
 const LONGEST_NAME = [...KINDS].sort((first, second) => SPECIES[second].name.length - SPECIES[first].name.length)[0];
-const LAST_TILE = SEA_FRIEND_KINDS.at(-1);
+const LAST_TILE = Object.values(ZONES).at(-1).giant;
 await evaluate(`localStorage.setItem("little-fish-met-v1", JSON.stringify(["plankton", "crab", "${WORDIEST}", "${LONGEST_NAME}"]))`);
 for (const [width, height] of [[844, 390], [844, 340], [844, 330], [667, 375], [568, 320]]) {
   await size(width, height);
@@ -247,7 +250,7 @@ for (const [label, width, height, mobile] of [["desktop", 1280, 800, false], ["p
     const x = w.player.x, y = w.player.y, s = innerWidth / 1280;
     w.creatures = ${JSON.stringify(CREATURES.map((_, tier) => tier))}.map((tier, i) => ({ x: x + (-520 + i * 175) * s, y: y - 190 * s + (i % 2) * 70 * s, tier, direction: 1, wobble: i }));
     // Swimmers in two rows under the fish, and every floor animal along the sea bed.
-    const swimmers = ${JSON.stringify(SEA_FRIENDS.filter(friend => !friend.floor && !friend.rare))};
+    const swimmers = ${JSON.stringify(SEA_FRIENDS.filter(friend => !friend.floor && !Object.values(ZONES).some(zone => zone.giant === friend.kind)))};
     const floor = ${JSON.stringify(SEA_FRIENDS.filter(friend => friend.floor))};
     const perRow = Math.ceil(swimmers.length / 2);
     w.friends = [

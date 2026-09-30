@@ -1,20 +1,29 @@
 import { canEat, CREATURES, FLOOR, FORMS, isFriend } from "./rules.js";
 import { paintOwnedReef } from "./reef-paint.js";
-import { paintAnimal } from "./animal-paint.js";
+import { paintAnimal, swatch } from "./animal-paint.js";
 import { FRAME, paintFace, paintHalo, TAIL_JOINT } from "./art.js";
 
 const NO_ART = { player: null, npc: [] };
+const kindAt = (world, tier) => world.zone.chain[tier];
 
-// The realistic ocean is a Blender render (tools/render-ocean.py): a 360-degree strip that wraps
-// seamlessly. Until it loads, the drawn cartoon water shows.
-const backdrop = new Image();
-backdrop.src = "art/ocean.webp";
+// Each zone's realistic ocean is a Blender render (tools/render-ocean.py): a 360-degree strip that
+// wraps seamlessly. Until it loads, the drawn cartoon water in the zone's colours shows.
+const backdrops = new Map();
+function backdropFor(zone) {
+  if (!backdrops.has(zone.backdrop)) {
+    const image = new Image();
+    image.src = zone.backdrop;
+    backdrops.set(zone.backdrop, image);
+  }
+  return backdrops.get(zone.backdrop);
+}
 
 export function paintOcean(context, world, width, height, time, art = NO_ART) {
   const cameraX = world.camera.x - width / 2;
   const cameraY = world.camera.y - height / 2;
-  paintWater(context, width, height, time, cameraX);
-  paintReef(context, width, height, time, cameraX);
+  const backdrop = backdropFor(world.zone);
+  paintWater(context, world.zone, backdrop, width, height, time, cameraX);
+  if (world.zone.floor) paintReef(context, backdrop, width, height, time, cameraX);
   paintOwnedReef(context, world, width, height, time);
 
   for (const friend of world.friends) {
@@ -29,19 +38,20 @@ export function paintOcean(context, world, width, height, time, art = NO_ART) {
   for (const creature of world.creatures) {
     const x = creature.x - cameraX;
     const y = creature.y - cameraY;
-    const { kind, size } = CREATURES[creature.tier];
+    const { size } = CREATURES[creature.tier];
+    const kind = kindAt(world, creature.tier);
     const margin = size * 1.4 + 40;
     if (x < -margin || x > width + margin || y < -margin || y > height + margin) continue;
     const role = canEat(world.stage, creature.tier) ? "prey" : isFriend(world.stage, creature.tier) ? "friend" : "predator";
     const drawing = creature.art === null || creature.art === undefined ? null : art.npc[creature.art];
     if (creature.tier === 0) paintPlankton(context, x, y, time + creature.wobble);
-    else if (drawing) paintArtFish(context, drawing, x, y, size, kind === "shark", creature.direction, time + creature.wobble, role);
+    else if (drawing) paintArtFish(context, drawing, x, y, size, isShark(kind), creature.direction, time + creature.wobble, role);
     else paintAnimal(context, kind, x, y, size, creature.direction, time + creature.wobble, role);
   }
 
   for (const particle of world.particles) {
     context.globalAlpha = Math.min(1, Math.max(0, particle.life / 0.55));
-    context.fillStyle = particle.color;
+    context.fillStyle = particle.color ?? swatch(particle.kind);
     if (particle.text) {
       context.font = "bold 22px 'Trebuchet MS', sans-serif";
       context.textAlign = "center";
@@ -58,15 +68,20 @@ export function paintOcean(context, world, width, height, time, art = NO_ART) {
   context.globalAlpha = 1;
 
   if (world.invulnerable <= 0 || Math.floor(time * 9) % 2 === 0) {
-    const form = FORMS[world.stage];
-    const size = form.size * (1 + world.gulp * 0.8);
+    const size = FORMS[world.stage].size * (1 + world.gulp * 0.8);
+    const kind = kindAt(world, world.stage + 1);
     if (art.player) paintArtFish(context, art.player, world.player.x - cameraX, world.player.y - cameraY, size,
-      form.kind === "shark", world.player.direction, time, "player");
-    else paintAnimal(context, form.kind, world.player.x - cameraX, world.player.y - cameraY, size,
+      isShark(kind), world.player.direction, time, "player");
+    else paintAnimal(context, kind, world.player.x - cameraX, world.player.y - cameraY, size,
       world.player.direction, time, "player");
   }
   paintLabels(context, world, width, height, cameraX, cameraY);
   paintPointer(context, world, width, height, cameraX, cameraY, time);
+}
+
+// A child's drawing gets a fin and gills when it plays a shark.
+function isShark(kind) {
+  return kind.endsWith("shark");
 }
 
 // An arrow at the edge of the screen points to the mission's blue whale or orca while it is out of sight.
@@ -119,17 +134,17 @@ function paintLabels(context, world, width, height, cameraX, cameraY) {
 }
 
 // A child's drawing as a still picture, sized for menus and the HUD.
-export function portrait(drawing, stage) {
+export function portrait(drawing, kind) {
   const canvas = document.createElement("canvas");
   canvas.width = 300;
   canvas.height = 220;
-  paintArtFish(canvas.getContext("2d"), drawing, 175, 130, 80, FORMS[stage].kind === "shark", 1, 0, "portrait");
+  paintArtFish(canvas.getContext("2d"), drawing, 175, 130, 80, isShark(kind), 1, 0, "portrait");
   return canvas.toDataURL("image/png");
 }
 
-function paintWater(context, width, height, time, cameraX) {
-  if (backdrop.naturalWidth) paintBackdrop(context, width, height, cameraX);
-  else paintCartoonWater(context, width, height, time, cameraX);
+function paintWater(context, zone, backdrop, width, height, time, cameraX) {
+  if (backdrop.naturalWidth) paintBackdrop(context, backdrop, width, height, cameraX);
+  else paintCartoonWater(context, zone, width, height, time, cameraX);
 
   for (let bubble = 0; bubble < 30; bubble++) {
     const x = ((bubble * 137.3 - cameraX * 0.18) % (width + 80) + width + 80) % (width + 80) - 40;
@@ -142,18 +157,18 @@ function paintWater(context, width, height, time, cameraX) {
   }
 }
 
-function paintBackdrop(context, width, height, cameraX) {
+function paintBackdrop(context, backdrop, width, height, cameraX) {
   const tile = backdrop.naturalWidth * height / backdrop.naturalHeight;
   const left = -((cameraX * 0.2 % tile) + tile) % tile;
   context.drawImage(backdrop, left, 0, tile, height);
   context.drawImage(backdrop, left + tile, 0, tile, height);
 }
 
-function paintCartoonWater(context, width, height, time, cameraX) {
+function paintCartoonWater(context, zone, width, height, time, cameraX) {
   const water = context.createLinearGradient(0, 0, 0, height);
-  water.addColorStop(0, "#137ea0");
-  water.addColorStop(0.42, "#096681");
-  water.addColorStop(1, "#073c5e");
+  water.addColorStop(0, zone.water[0]);
+  water.addColorStop(0.42, zone.water[1]);
+  water.addColorStop(1, zone.water[2]);
   context.fillStyle = water;
   context.fillRect(0, 0, width, height);
 
@@ -192,7 +207,7 @@ function paintCartoonWater(context, width, height, time, cameraX) {
   }
 }
 
-function paintReef(context, width, height, time, cameraX) {
+function paintReef(context, backdrop, width, height, time, cameraX) {
   context.save();
   if (!backdrop.naturalWidth) paintCartoonSeabed(context, width, height, cameraX);
 

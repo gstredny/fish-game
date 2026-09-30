@@ -1,4 +1,4 @@
-import { FORMS, goalFor, SHARK } from "./rules.js";
+import { goalFor, SHARK } from "./rules.js";
 import { paintOcean, portrait } from "./paint.js";
 import { CRAYONS, prepareArt } from "./art.js";
 import { loadDrawings, saveDrawing } from "./gallery.js";
@@ -10,11 +10,13 @@ import { toWorld } from "./camera.js";
 import { createWorld, dangerBehind, nearbyAnimals, resetWorld, swim } from "./world.js";
 import { plantCoral } from "./reef.js";
 import { loadReef, saveReef } from "./reef-save.js";
-import { cardSpeech, FOOD_CHAIN, growLine, hurtLine, KINDS, meetLine, SEA_FRIEND_KINDS, searchLink, SPECIES } from "./species.js";
+import { cardSpeech, growLine, hurtLine, meetLine, searchLink, SPECIES } from "./species.js";
+import { DEFAULT_ZONE, formKind, KINDS, ZONE_IDS, ZONES, zoneKinds } from "./zones.js";
+import { swatch } from "./animal-paint.js";
 import { PHOTOS } from "./photos.js";
 import { createVoice } from "./voice.js";
 import { loadMet, saveMet } from "./ocean-book.js";
-import { MISSIONS, missionCount, missionDoneLine, missionGoal, missionLine, pickMission } from "./missions.js";
+import { missionCount, missionDone, missionDoneLine, missionGoal, missionKind, missionLine } from "./missions.js";
 import { FIND_THAT_ONE, VOICE_ON } from "./lines.js";
 
 const canvas = document.querySelector("#ocean");
@@ -25,6 +27,7 @@ const hint = document.querySelector("#hint");
 const toast = document.querySelector("#toast");
 const panels = ["intro", "draw", "paused", "won", "gameover", "card", "book", "mission"];
 const LEVEL_KEY = "little-fish-level-v1";
+const ZONE_KEY = "little-fish-zone-v1";
 const PORTRAIT_PHONE = "(orientation: portrait) and (max-width: 600px) and (pointer: coarse)";
 const input = { keys: new Set(), pointer: null, pad: null };
 const steering = createSteering(input);
@@ -39,7 +42,6 @@ let padOwner = null;
 let installPrompt = null;
 let width = window.innerWidth;
 let height = window.innerHeight;
-let world = createWorld(width, height, loadReef());
 let reefSaved = true;
 let previousFrame = 0;
 let visualTime = 0;
@@ -61,9 +63,14 @@ let startTicket = 0;
 let storage = null;
 try { storage = window.localStorage; } catch { /* private mode: drawings last for this visit */ }
 let drawings = loadDrawings(storage);
-// Little swimmer or Big swimmer, remembered on this device.
+// Little swimmer or Big swimmer, and where to swim, both remembered on this device.
 let level = "little";
-try { if (storage?.getItem(LEVEL_KEY) === "big") level = "big"; } catch {}
+let zone = DEFAULT_ZONE;
+try {
+  if (storage?.getItem(LEVEL_KEY) === "big") level = "big";
+  if (ZONE_IDS.includes(storage?.getItem(ZONE_KEY))) zone = storage.getItem(ZONE_KEY);
+} catch {}
+let world = createWorld(width, height, { reef: loadReef(), zone });
 const art = { player: null, npc: [] };
 const portraits = new Map();
 const sketchpad = createSketchpad(document.querySelector("#sketch"));
@@ -92,8 +99,9 @@ function setArt(layers) {
 }
 
 function portraitAt(stage) {
-  if (!portraits.has(stage)) portraits.set(stage, portrait(art.player, stage));
-  return portraits.get(stage);
+  const kind = formKind(world.zone, stage);
+  if (!portraits.has(kind)) portraits.set(kind, portrait(art.player, kind));
+  return portraits.get(kind);
 }
 
 function showArt(image, mark, stage) {
@@ -112,6 +120,29 @@ function renderIntro() {
   start.innerHTML = 'Dive in <span aria-hidden="true">↗</span>';
   draw.innerHTML = `${saved ? "Draw a new fish" : "Draw my fish"} <span aria-hidden="true">✎</span>`;
   showArt(document.querySelector("#intro-art"), document.querySelector("#intro-mark"), 0);
+  renderZones();
+}
+
+// Where to swim: one button per zone, with how many of its animals this device has yet to meet.
+function renderZones() {
+  document.querySelector("#zone-pick").innerHTML = ZONE_IDS.map(id => {
+    const place = ZONES[id];
+    const fresh = zoneKinds(place).filter(kind => !met.has(kind)).length;
+    return `<button class="zone-button" type="button" data-zone="${id}" aria-pressed="${id === zone}" ` +
+      `style="--top:${place.water[0]};--bottom:${place.water[2]}"><span class="zone-name">${place.name}</span>` +
+      `<span class="zone-blurb">${place.blurb}</span>${fresh ? `<span class="zone-new">${fresh} new</span>` : ""}</button>`;
+  }).join("");
+}
+
+function chooseZone(id) {
+  if (!ZONE_IDS.includes(id)) return;
+  zone = id;
+  try { storage?.setItem(ZONE_KEY, zone); } catch {}
+  // The water behind the start screen is the place you picked.
+  resetWorld(world, width, height, { zone });
+  portraits.clear();
+  renderIntro();
+  updateHud();
 }
 
 function resize() {
@@ -130,14 +161,21 @@ function showPanel(name) {
   hud.hidden = name === "intro" || name === "draw" || world.phase === "ready";
   hint.hidden = Boolean(name);
   showPad(!name);
+  if (name === "intro") renderZones();
   if (name === "won") showArt(document.querySelector("#won-art"), document.querySelector("#won-mark"), 4);
   document.querySelector("#reef-bar").hidden = Boolean(name) || (!world.reef.pending && !world.reef.corals.length);
 }
 
+// "Little sardine", then the animal's own name as you grow.
+function formName(stage) {
+  const { name } = SPECIES[formKind(world.zone, stage)];
+  return stage ? name : `Little ${name.toLowerCase()}`;
+}
+
 function updateHud() {
-  const form = FORMS[world.stage];
-  document.querySelector("#stage-name").textContent = form.name;
-  document.querySelector("#stage-dot").style.background = form.color;
+  const kind = formKind(world.zone, world.stage);
+  document.querySelector("#stage-name").textContent = formName(world.stage);
+  document.querySelector("#stage-dot").style.background = swatch(kind);
   showArt(document.querySelector("#stage-art"), document.querySelector("#stage-dot"), world.stage);
   showProgress();
   const hearts = document.querySelector("#hearts");
@@ -316,11 +354,19 @@ function closeCard() {
   world.invulnerable = Math.max(world.invulnerable, 2);
 }
 
+// The book is grouped by place; an animal that lives in two places shows in both, and counts once.
 function openBook(from) {
   bookFrom = from;
   document.querySelector("#book-count").textContent = `You've met ${met.size} of ${KINDS.length} ocean animals`;
-  document.querySelector("#book-chain").innerHTML = FOOD_CHAIN.map(bookTile).join("");
-  document.querySelector("#book-friends").innerHTML = SEA_FRIEND_KINDS.map(bookTile).join("");
+  document.querySelector("#book-zones").innerHTML = ZONE_IDS.map(id => {
+    const place = ZONES[id];
+    const known = zoneKinds(place).filter(kind => met.has(kind)).length;
+    return `<section class="book-zone"><h3>${place.name} <span>· ${known} of ${zoneKinds(place).length} met</span></h3>` +
+      `<p class="book-row-title">The food chain <span>· each one is eaten by the next</span></p>` +
+      `<div class="book-row book-chain">${place.chain.map(bookTile).join("")}</div>` +
+      `<p class="book-row-title">Sea friends</p>` +
+      `<div class="book-row">${[...place.friends, place.giant].map(bookTile).join("")}</div></section>`;
+  }).join("");
   showPanel("book");
 }
 
@@ -366,14 +412,14 @@ function begin() {
 
 // Each swim's mission differs from the last one.
 function startSwim() {
-  resetWorld(world, width, height, Math.max(0, drawings.length - 1), level, pickMission(world.mission.id), met);
+  resetWorld(world, width, height, { artCount: Math.max(0, drawings.length - 1), level, zone, met });
   world.phase = "playing";
   hintFrom = { ...world.player };
   steering.clear();
   input.keys.clear();
   updateHud();
   showPanel(null);
-  tell(growLine(0), 3200);
+  tell(growLine(world.zone, 0), 3200);
   if (document.hidden) pause();
 }
 
@@ -408,14 +454,16 @@ function watchBehindHud() {
   hud.classList.toggle("see-through", hidden);
 }
 
-// Becoming a shark: the game waits while the mission is shown and said.
+// Reaching the biggest form: the game waits while the mission is shown and said.
 function openMission() {
   const { mission } = world;
-  const photo = PHOTOS[MISSIONS[mission.id].photo];
+  const kind = missionKind(mission);
+  const photo = PHOTOS[kind];
   const image = document.querySelector("#mission-photo");
   image.src = photo?.file ?? "";
   image.hidden = !photo;
-  image.alt = photo ? `Photo of a real ${SPECIES[MISSIONS[mission.id].photo].name.toLowerCase()}` : "";
+  image.alt = photo ? `Photo of a real ${SPECIES[kind].name.toLowerCase()}` : "";
+  document.querySelector("#mission-kicker").textContent = `You're a ${SPECIES[formKind(world.zone, SHARK)].name.toLowerCase()}!`;
   document.querySelector("#mission-goal").textContent = missionGoal(mission);
   steering.clear();
   input.keys.clear();
@@ -428,10 +476,10 @@ function closeMission() {
   resume();
 }
 
-// An animal that finished the mission (the blue whale, the last sea friend) and is new to the
+// An animal that finished the mission (the giant, the last sea friend) and is new to the
 // Ocean book gets its card before the win screen.
 function finishSwim(first = false) {
-  const kind = { whale: "bluewhale", friends: world.mission.last }[world.mission.id];
+  const kind = { find: world.zone.giant, friends: world.mission.last }[world.mission.id];
   if (first && kind && !met.has(kind)) {
     met.add(kind);
     saveMet(met);
@@ -447,7 +495,7 @@ function showWon() {
   const again = document.querySelector("#win-restart-button");
   plant.hidden = !world.reef.pending;
   again.className = plant.hidden ? "primary-button" : "text-button";
-  document.querySelector("#won-text").textContent = `${MISSIONS[mission.id].done(mission.need)} ` +
+  document.querySelector("#won-text").textContent = `${missionDone(mission)} ` +
     (plant.hidden ? "Every swim has a new mission." : "You earned a coral colony! Plant a home for little fish.");
   showPanel("won");
 }
@@ -484,8 +532,8 @@ function frame(timestamp) {
 
   if (world.events.length) {
     for (const event of world.events.splice(0)) {
-      if (event.type === "grow" && world.stage < SHARK) tell(growLine(world.stage), 3200);
-      if (event.type === "hurt") tell(hurtLine(event.by, world.stage), 2400);
+      if (event.type === "grow" && world.stage < SHARK) tell(growLine(world.zone, world.stage), 3200);
+      if (event.type === "hurt") tell(hurtLine(world.zone, event.by, world.stage), 2400);
       if (event.type === "reef") rememberReef();
       if (event.type === "mission") openMission();
       if (event.type === "mission-count") flash(missionCount(world.mission));
@@ -618,13 +666,13 @@ document.querySelector("#cancel-plant-button").addEventListener("click", stopPla
 document.querySelector("#mission-go").addEventListener("click", closeMission);
 document.querySelector("#level-little").addEventListener("click", () => chooseLevel("little"));
 document.querySelector("#level-big").addEventListener("click", () => chooseLevel("big"));
+document.querySelector("#zone-pick").addEventListener("click", event => chooseZone(event.target?.closest?.("[data-zone]")?.dataset.zone));
 document.querySelector("#card-close").addEventListener("click", closeCard);
 document.querySelector("#card-hear").addEventListener("click", () => voice.say(cardSpeech(cardKind), { force: true }));
 document.querySelector("#intro-book-button").addEventListener("click", () => openBook("intro"));
 document.querySelector("#paused-book-button").addEventListener("click", () => openBook("paused"));
 document.querySelector("#book-close").addEventListener("click", closeBook);
-document.querySelector("#book-chain").addEventListener("click", chooseFromBook);
-document.querySelector("#book-friends").addEventListener("click", chooseFromBook);
+document.querySelector("#book-zones").addEventListener("click", chooseFromBook);
 for (const button of voiceButtons) button.addEventListener("click", toggleVoice);
 // iPhone speaks only after a tap has spoken; the first tap anywhere wakes the voice silently.
 window.addEventListener("click", () => voice.unlock(), true);

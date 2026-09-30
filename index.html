@@ -58,7 +58,9 @@
       <div id="intro-mark" class="tiny-fish" aria-hidden="true">✦</div>
       <img id="intro-art" class="intro-art" alt="Your fish" hidden>
       <h1>Little Fish,<br><em>Big Ocean.</em></h1>
-      <p>Chase snacks. Dodge big fish. Grow into a shark, then finish your mission!</p>
+      <p>Chase snacks. Dodge big fish. Grow up the food chain, then finish your mission!</p>
+      <p class="zone-ask">Where will you swim?</p>
+      <div id="zone-pick" class="zone-pick" role="group" aria-label="Where will you swim?"></div>
       <div class="level-pick" role="group" aria-label="How hard">
         <button id="level-little" class="level-button" type="button" aria-pressed="true">Little swimmer</button>
         <button id="level-big" class="level-button" type="button" aria-pressed="false">Big swimmer</button>
@@ -132,7 +134,7 @@
         <img id="mission-photo" alt="">
       </figure>
       <div class="card-text">
-        <p class="card-kicker">You're a great white shark!</p>
+        <p id="mission-kicker" class="card-kicker">You're a great white shark!</p>
         <h2 id="mission-title">Your mission</h2>
         <p id="mission-goal" class="mission-goal"></p>
         <div class="card-actions">
@@ -144,10 +146,7 @@
     <section id="book" class="panel book-panel" hidden aria-labelledby="book-title">
       <h2 id="book-title">Ocean book</h2>
       <p id="book-count" class="book-count"></p>
-      <h3>The food chain <span>· each one is eaten by the next</span></h3>
-      <div id="book-chain" class="book-row book-chain"></div>
-      <h3>Sea friends</h3>
-      <div id="book-friends" class="book-row"></div>
+      <div id="book-zones" class="book-zones"></div>
       <button id="book-close" class="primary-button" type="button">Back</button>
     </section>
 
@@ -163,7 +162,7 @@
     <section id="gameover" class="panel result-panel" hidden>
       <div class="result-icon" aria-hidden="true">♡</div>
       <h2>One more swim?</h2>
-      <p>Every great shark starts out little.</p>
+      <p>Every big fish starts out little.</p>
       <button id="restart-button" class="primary-button" type="button">Try again</button>
     </section>
   </main>

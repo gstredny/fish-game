@@ -21,7 +21,7 @@ function fakeSpeech() {
 
 // Grows the fish into a shark on its mission.
 function becomeShark(app, id) {
-  app.world.mission = createMission(id, app.world.level);
+  app.world.mission = createMission(id, app.world.level, app.world.zone);
   Object.assign(app.world, { stage: 3, bites: 99, friends: [], creatures: [{ ...app.world.player, tier: 3, wobble: 0 }] });
   app.frame(16);
 }
@@ -50,7 +50,7 @@ test("becoming a shark shows and says the mission; finishing it ends the swim", 
   const app = await openGame(memoryStorage(), speech.globals);
   try {
     app.click("start-button");
-    becomeShark(app, "tuna");
+    becomeShark(app, "hunt");
     assert.equal(app.world.phase, "mission");
     assert.equal(app.nodes.get("mission").hidden, false);
     assert.equal(app.nodes.get("mission-goal").textContent, "Eat 2 tuna");
@@ -94,7 +94,7 @@ test("finding the blue whale for the first time shows its card before the win sc
     const app = await openGame(storage, speech.globals);
     try {
       app.click("start-button");
-      becomeShark(app, "whale");
+      becomeShark(app, "find");
       app.click("mission-go");
       app.frame(32);
       const whale = app.world.friends.find(friend => friend.kind === "bluewhale");
@@ -145,7 +145,7 @@ test("leaving the planting after the mission goes back to the win screen, not to
   const app = await openGame(memoryStorage());
   try {
     app.click("start-button");
-    becomeShark(app, "tuna");
+    becomeShark(app, "hunt");
     app.click("mission-go");
     app.world.creatures = [0, 1].map(() => ({ ...app.world.player, tier: 4, wobble: 0 }));
     app.frame(32);
@@ -165,7 +165,7 @@ test("a fact card links to a kid-safe web search, when there is a connection", a
     const app = await openGame(memoryStorage({ [MET_KEY]: '["crab"]' }), { navigator: { onLine } });
     try {
       app.click("intro-book-button");
-      app.nodes.get("book-friends").emit("click", { target: { closest: () => ({ dataset: { kind: "crab" } }) } });
+      app.nodes.get("book-zones").emit("click", { target: { closest: () => ({ dataset: { kind: "crab" } }) } });
       const more = app.nodes.get("card-more");
       assert.equal(more.href, searchLink("crab"));
       assert.match(more.href, /^https:\/\/www\.google\.com\/search\?safe=active&q=Crab%20facts%20for%20kids$/);
@@ -189,7 +189,7 @@ test("everything the game says is a line with a recording", async () => {
     app.click("card-close");
     app.click("voice-button");
     app.click("voice-button");
-    for (const id of ["tuna", "squid", "friends", "whale", "orca"]) {
+    for (const id of ["hunt", "snack", "friends", "find", "flee"]) {
       app.click("pause-button");
       app.click("restart-button");
       becomeShark(app, id);
@@ -199,7 +199,7 @@ test("everything the game says is a line with a recording", async () => {
       app.frame(48);
     }
     app.click("intro-book-button");
-    app.nodes.get("book-chain").emit("click", { target: { closest: () => ({ dataset: { kind: "orca" } }) } });
+    app.nodes.get("book-zones").emit("click", { target: { closest: () => ({ dataset: { kind: "orca" } }) } });
     assert.ok(speech.spoken.length > 12);
     for (const line of speech.spoken) assert.ok(lines.has(line), `no recording for: ${line}`);
   } finally { app.close(); }

@@ -6,7 +6,7 @@
 //     --remote-debugging-port=9444 --user-data-dir=/tmp/fish-chrome about:blank &
 //   node tools/browser-play.mjs desktop     # or: phone
 import { mkdirSync, writeFileSync } from "node:fs";
-import { KINDS } from "../src/species.js";
+import { KINDS } from "../src/zones.js";
 // Every animal counts as met, so first-meeting fact cards don't pause these checks;
 // tools/browser-learn.mjs checks the cards.
 const MET_ALL = `try { localStorage.setItem("little-fish-met-v1", ${JSON.stringify(JSON.stringify(KINDS))}); } catch {}`;

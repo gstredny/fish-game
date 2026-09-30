@@ -3,7 +3,7 @@
 // asks to turn, and every panel fits. Same server/Chrome setup as browser-play.mjs.
 import assert from "node:assert/strict";
 import { mkdirSync, writeFileSync } from "node:fs";
-import { KINDS } from "../src/species.js";
+import { KINDS } from "../src/zones.js";
 // Every animal counts as met, so first-meeting fact cards don't pause these checks;
 // tools/browser-learn.mjs checks the cards.
 const MET_ALL = `try { localStorage.setItem("little-fish-met-v1", ${JSON.stringify(JSON.stringify(KINDS))}); } catch {}`;
@@ -228,7 +228,7 @@ for (const height of [390, 340, 330]) {
     await fitsOnScreen("#level-little") && await fitsOnScreen("#level-big");
   await tapButton("#start-button");
   await sleep(200);
-  await evaluate(`(() => { const w = __game.world; Object.assign(w.mission, { id: "tuna", need: 1 }); w.stage = 3; w.bites = 99; w.creatures = [{ ...w.player, tier: 3, wobble: 0 }]; })()`);
+  await evaluate(`(() => { const w = __game.world; Object.assign(w.mission, { id: "hunt", need: 1 }); w.stage = 3; w.bites = 99; w.creatures = [{ ...w.player, tier: 3, wobble: 0 }]; })()`);
   await sleep(300);
   const missionFits = await fitsOnScreen("#mission-goal") && await fitsOnScreen("#mission-go") && await fitsOnScreen("#mission-photo");
   await shot(`08-mission-844x${height}`);

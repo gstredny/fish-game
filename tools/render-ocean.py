@@ -1,15 +1,33 @@
-# Renders the realistic ocean backdrop as a 360-degree underwater panorama, so it wraps seamlessly while the
-# fish swims. Sand dunes with caustic light, rocks fading into blue haze, light shafts from the surface.
-#   blender -b -P tools/render-ocean.py -- art/ocean.webp [width height samples]
+# Renders a zone's realistic ocean backdrop as a 360-degree underwater panorama, so it wraps seamlessly while
+# the fish swims. Sand dunes with caustic light, rocks (or coral heads) fading into haze, light shafts from the
+# surface. Each zone in ZONES below has its own water, light and colours.
+#   blender -b -P tools/render-ocean.py -- art/ocean.webp [zone] [width height samples]
 import math
 import random
 import sys
 
 import bpy
 
+# Colours are linear RGB. `rocks` are (dark, light) pairs a rock is tinted between.
+ZONES = {
+    "open": dict(sky=(0.3, 0.72, 0.85), sky_strength=0.7, scatter=(0.1, 0.6, 0.82), scatter_density=0.045,
+                 absorb=(0.18, 0.62, 0.8), absorb_density=0.04, sand=((0.5, 0.45, 0.32), (0.62, 0.57, 0.42)),
+                 rocks=[((0.06, 0.1, 0.08), (0.18, 0.26, 0.16))], rock_count=34, lumpy=0.3,
+                 sun=12, sun_color=(0.9, 1.0, 0.95), exposure=0.35, depth=18),
+    # Shallow and sunny: clearer, warmer water, pale sand, and coral heads in pinks, oranges and purples.
+    "reef": dict(sky=(0.4, 0.82, 0.88), sky_strength=1.0, scatter=(0.16, 0.72, 0.8), scatter_density=0.03,
+                 absorb=(0.28, 0.72, 0.82), absorb_density=0.028, sand=((0.66, 0.6, 0.46), (0.86, 0.8, 0.62)),
+                 rocks=[((0.5, 0.14, 0.2), (0.9, 0.42, 0.42)), ((0.5, 0.28, 0.06), (0.95, 0.62, 0.2)),
+                        ((0.28, 0.12, 0.42), (0.62, 0.4, 0.85)), ((0.08, 0.32, 0.28), (0.3, 0.72, 0.55)),
+                        ((0.55, 0.5, 0.35), (0.9, 0.85, 0.7))], rock_count=52, lumpy=0.55,
+                 sun=16, sun_color=(1.0, 0.98, 0.9), exposure=0.5, depth=13),
+}
+
 args = sys.argv[sys.argv.index("--") + 1:]
 OUT = args[0]
-WIDTH, HEIGHT, SAMPLES = (int(value) for value in args[1:4]) if len(args) >= 4 else (4800, 800, 160)
+ZONE = ZONES[args[1]] if len(args) >= 2 and args[1] in ZONES else ZONES["open"]
+numbers = [value for value in args[1:] if value.isdigit()]
+WIDTH, HEIGHT, SAMPLES = (int(value) for value in numbers[:3]) if len(numbers) >= 3 else (4800, 800, 160)
 random.seed(7)
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
@@ -29,7 +47,7 @@ scene.render.resolution_percentage = 100
 scene.render.image_settings.file_format = "WEBP"
 scene.render.image_settings.quality = 78
 scene.view_settings.view_transform = "Standard"
-scene.view_settings.exposure = 0.35
+scene.view_settings.exposure = ZONE["exposure"]
 
 
 def material(name, build):
@@ -44,19 +62,19 @@ def material(name, build):
 world = bpy.data.worlds.new("Surface light")
 scene.world = world
 world.use_nodes = True
-world.node_tree.nodes["Background"].inputs["Color"].default_value = (0.3, 0.72, 0.85, 1)
-world.node_tree.nodes["Background"].inputs["Strength"].default_value = 0.7
+world.node_tree.nodes["Background"].inputs["Color"].default_value = (*ZONE["sky"], 1)
+world.node_tree.nodes["Background"].inputs["Strength"].default_value = ZONE["sky_strength"]
 
 
 def water_nodes(nodes, links, bsdf):
     nodes.remove(bsdf)
     scatter = nodes.new("ShaderNodeVolumeScatter")
-    scatter.inputs["Color"].default_value = (0.1, 0.6, 0.82, 1)
-    scatter.inputs["Density"].default_value = 0.045
+    scatter.inputs["Color"].default_value = (*ZONE["scatter"], 1)
+    scatter.inputs["Density"].default_value = ZONE["scatter_density"]
     scatter.inputs["Anisotropy"].default_value = 0.65
     absorb = nodes.new("ShaderNodeVolumeAbsorption")
-    absorb.inputs["Color"].default_value = (0.18, 0.62, 0.8, 1)
-    absorb.inputs["Density"].default_value = 0.04
+    absorb.inputs["Color"].default_value = (*ZONE["absorb"], 1)
+    absorb.inputs["Density"].default_value = ZONE["absorb_density"]
     water = nodes.new("ShaderNodeAddShader")
     links.new(scatter.outputs[0], water.inputs[0])
     links.new(absorb.outputs[0], water.inputs[1])
@@ -93,23 +111,25 @@ def sand_nodes(nodes, links, bsdf):
     links.new(caustic.outputs["Distance"], lines.inputs["Value"])
     color = nodes.new("ShaderNodeMix")
     color.data_type = "RGBA"
-    color.inputs["A"].default_value = (0.5, 0.45, 0.32, 1)
-    color.inputs["B"].default_value = (0.62, 0.57, 0.42, 1)
+    color.inputs["A"].default_value = (*ZONE["sand"][0], 1)
+    color.inputs["B"].default_value = (*ZONE["sand"][1], 1)
     links.new(lines.outputs["Result"], color.inputs["Factor"])
     links.new(color.outputs["Result"], bsdf.inputs["Base Color"])
     bsdf.inputs["Roughness"].default_value = 0.95
 
 
-def rock_nodes(nodes, links, bsdf):
-    noise = nodes.new("ShaderNodeTexNoise")
-    noise.inputs["Scale"].default_value = 3
-    tint = nodes.new("ShaderNodeMix")
-    tint.data_type = "RGBA"
-    tint.inputs["A"].default_value = (0.06, 0.1, 0.08, 1)
-    tint.inputs["B"].default_value = (0.18, 0.26, 0.16, 1)
-    links.new(noise.outputs["Fac"], tint.inputs["Factor"])
-    links.new(tint.outputs["Result"], bsdf.inputs["Base Color"])
-    bsdf.inputs["Roughness"].default_value = 0.85
+def rock_nodes(dark, light):
+    def build(nodes, links, bsdf):
+        noise = nodes.new("ShaderNodeTexNoise")
+        noise.inputs["Scale"].default_value = 3
+        tint = nodes.new("ShaderNodeMix")
+        tint.data_type = "RGBA"
+        tint.inputs["A"].default_value = (*dark, 1)
+        tint.inputs["B"].default_value = (*light, 1)
+        links.new(noise.outputs["Fac"], tint.inputs["Factor"])
+        links.new(tint.outputs["Result"], bsdf.inputs["Base Color"])
+        bsdf.inputs["Roughness"].default_value = 0.85
+    return build
 
 
 def surface_nodes(nodes, links, bsdf):
@@ -135,10 +155,10 @@ displace.texture = dunes
 displace.strength = 2.2
 sand.data.materials.append(material("Sand", sand_nodes))
 
-rock_material = material("Rock", rock_nodes)
+rock_materials = [material(f"Rock {index}", rock_nodes(*pair)) for index, pair in enumerate(ZONE["rocks"])]
 lumps = bpy.data.textures.new("Lumps", "CLOUDS")
 lumps.noise_scale = 1.3
-for index in range(34):
+for index in range(ZONE["rock_count"]):
     angle = random.uniform(0, math.tau)
     distance = random.uniform(9, 70)
     size = random.uniform(0.8, 3.6) * (1 + distance / 60)
@@ -148,16 +168,16 @@ for index in range(34):
     rock.scale = (random.uniform(0.8, 1.5), random.uniform(0.8, 1.5), random.uniform(0.45, 0.9))
     lump = rock.modifiers.new("Lumps", "DISPLACE")
     lump.texture = lumps
-    lump.strength = size * 0.3
-    rock.data.materials.append(rock_material)
+    lump.strength = size * ZONE["lumpy"]
+    rock.data.materials.append(random.choice(rock_materials))
     bpy.ops.object.shade_smooth()
 
-bpy.ops.mesh.primitive_cube_add(size=1, location=(0, 0, 7))
+bpy.ops.mesh.primitive_cube_add(size=1, location=(0, 0, ZONE["depth"] / 2 - 2))
 water = bpy.context.object
-water.scale = (320, 320, 18)
+water.scale = (320, 320, ZONE["depth"])
 water.data.materials.append(material("Water", water_nodes))
 
-bpy.ops.mesh.primitive_plane_add(size=400, location=(0, 0, 16.5))
+bpy.ops.mesh.primitive_plane_add(size=400, location=(0, 0, ZONE["depth"] - 1.5))
 surface = bpy.context.object
 surface.data.materials.append(material("Surface", surface_nodes))
 surface.visible_camera = False
@@ -168,9 +188,9 @@ surface.visible_volume_scatter = False
 
 bpy.ops.object.light_add(type="SUN", rotation=(math.radians(14), math.radians(6), 0))
 sun = bpy.context.object
-sun.data.energy = 12
+sun.data.energy = ZONE["sun"]
 sun.data.angle = math.radians(2)
-sun.data.color = (0.9, 1.0, 0.95)
+sun.data.color = ZONE["sun_color"]
 
 # A 360-degree strip: its left and right edges meet, so the game can scroll it forever.
 bpy.ops.object.camera_add(location=(0, 0, 3.2), rotation=(math.radians(90), 0, 0))

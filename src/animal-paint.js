@@ -1,5 +1,7 @@
 // Cartoon drawings of the real animals in the game. Each is drawn facing right around (0, 0);
 // the caller mirrors it for left. Floor animals stand on (0, 0), the sea bed.
+import { REEF_PAINTERS, REEF_SWATCHES } from "./paint-reef-animals.js";
+
 // role: "player", "prey" (safe to eat, soft glow), "friend" (your own kind, a smile) or
 // "predator" (teeth and a frown). extra carries per-animal settings for custom painters, such as
 // { puff: 0..1 } for how blown up a pufferfish is.
@@ -2748,7 +2750,20 @@ function paintHorseshoeCrabShellPath(context, R, dx, dy) {
   context.closePath();
 }
 
+// One colour per food-chain animal, for the HUD dot and the snack burst.
+export const SWATCHES = {
+  plankton: "#ffe39a", sardine: "#9cc7e4", mackerel: "#4fb3a4", squid: "#f29a8c", tuna: "#5d8fc8", shark: "#a9bccb",
+  orca: "#1f262d",
+  ...REEF_SWATCHES
+};
+
+export function swatch(kind) {
+  return SWATCHES[kind] ?? "#ffffff";
+}
+
+// Each zone's drawings live in their own paint-*-animals.js and are registered here.
 const PAINTERS = {
+  ...REEF_PAINTERS,
   squid: paintSquid,
   turtle: paintTurtle,
   seahorse: paintSeahorse,

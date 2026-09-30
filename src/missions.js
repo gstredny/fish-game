@@ -1,46 +1,72 @@
-import { growLine } from "./species.js";
+import { SPECIES, growLine } from "./species.js";
+import { formKind, hasTopHunter, topTier, ZONES } from "./zones.js";
 
-// Once you're a great white shark, the swim has one mission, different from the last one.
-// Finishing it ends the swim and earns a coral colony. `need` depends on the level; for the
-// orca it's seconds of staying away.
+// Once you're the biggest form, the swim has one mission, different from the last one. Finishing
+// it ends the swim and earns a coral colony. Missions are roles; the zone fills in the animals:
+// eat the tier-4 kind (tuna in the open ocean), eat the tier-3 kind, meet sea friends, find the
+// zone's giant, or stay away from the top hunter, in zones that have one. `need` depends on the
+// level; for fleeing it's seconds of staying away.
 export const MISSIONS = {
-  tuna: { photo: "tuna", eat: "tuna", need: { little: 2, big: 4 }, goal: need => `Eat ${need} tuna`,
-    done: need => `You ate ${need} tuna!`, count: (have, need) => `${have} of ${need} tuna!` },
-  squid: { photo: "squid", eat: "squid", need: { little: 3, big: 5 }, goal: need => `Eat ${need} squid`,
-    done: need => `You ate ${need} squid!`, count: (have, need) => `${have} of ${need} squid!` },
-  friends: { photo: "dolphin", need: { little: 2, big: 4 }, goal: need => `Meet ${need} sea friends`,
-    done: need => `You met ${need} sea friends!`, count: (have, need) => `${have} of ${need} sea friends!` },
-  whale: { photo: "bluewhale", need: { little: 1, big: 1 }, goal: () => "Find the blue whale",
-    done: () => "You found the blue whale, the biggest animal ever!" },
-  orca: { photo: "orca", need: { little: 10, big: 18 }, goal: () => "Swim away from the orca",
-    done: () => "You got away from the orca!" }
+  hunt: { tier: 4, need: { little: 2, big: 4 } },
+  snack: { tier: 3, need: { little: 3, big: 5 } },
+  friends: { need: { little: 2, big: 4 } },
+  find: { need: { little: 1, big: 1 } },
+  flee: { need: { little: 10, big: 18 } }
 };
 
-export function pickMission(last, random = Math.random) {
-  const ids = Object.keys(MISSIONS).filter(id => id !== last);
+export function missionIds(zone) {
+  return Object.keys(MISSIONS).filter(id => id !== "flee" || hasTopHunter(zone));
+}
+
+export function pickMission(last, zone = ZONES.open, random = Math.random) {
+  const ids = missionIds(zone).filter(id => id !== last);
   return ids[Math.floor(random() * ids.length)];
 }
 
-export function createMission(id, level) {
-  return { id, need: MISSIONS[id].need[level] ?? MISSIONS[id].need.little, have: 0, active: false, done: false,
-    seen: new Set(), target: null, wait: 0 };
+export function createMission(id, level, zone = ZONES.open) {
+  return { id, zone: zone.id, need: MISSIONS[id].need[level] ?? MISSIONS[id].need.little, have: 0, active: false,
+    done: false, seen: new Set(), target: null, wait: 0 };
+}
+
+// The animal a mission is about: the snack to eat, the giant to find, the hunter to flee, or the
+// poster friend.
+export function missionKind(mission) {
+  const zone = ZONES[mission.zone];
+  const { tier } = MISSIONS[mission.id];
+  if (tier) return zone.chain[tier];
+  return { friends: zone.friends[0], find: zone.giant, flee: zone.chain[topTier(zone)] }[mission.id];
 }
 
 export function missionGoal(mission) {
-  return MISSIONS[mission.id].goal(mission.need);
+  const animal = SPECIES[missionKind(mission)];
+  const { need } = mission;
+  return { hunt: `Eat ${need} ${animal.plural}`, snack: `Eat ${need} ${animal.plural}`,
+    friends: `Meet ${need} sea friends`, find: `Find the ${lower(animal.name)}`,
+    flee: `Swim away from the ${lower(animal.name)}` }[mission.id];
 }
 
-// Said when you become a shark: what sharks eat, who hunts them, and your mission.
+// Said when you become the biggest form: what it eats, who hunts it, and your mission.
 export function missionLine(mission) {
-  return `${growLine(4)} Your mission: ${lower(missionGoal(mission))}!`;
+  return `${growLine(ZONES[mission.zone], 4)} Your mission: ${lower(missionGoal(mission))}!`;
+}
+
+export function missionDone(mission) {
+  const animal = SPECIES[missionKind(mission)];
+  const { need } = mission;
+  return { hunt: `You ate ${need} ${animal.plural}!`, snack: `You ate ${need} ${animal.plural}!`,
+    friends: `You met ${need} sea friends!`, find: `You found the ${lower(animal.name)}! ${animal.lines[0]}`,
+    flee: `You got away from the ${lower(animal.name)}!` }[mission.id];
 }
 
 export function missionDoneLine(mission) {
-  return `Mission complete! ${MISSIONS[mission.id].done(mission.need)}`;
+  return `Mission complete! ${missionDone(mission)}`;
 }
 
+// How far along, for missions that count: "1 of 2 tuna!".
 export function missionCount(mission) {
-  return MISSIONS[mission.id].count?.(mission.have, mission.need) ?? null;
+  if (!MISSIONS[mission.id].tier && mission.id !== "friends") return null;
+  const what = mission.id === "friends" ? "sea friends" : SPECIES[missionKind(mission)].plural;
+  return `${mission.have} of ${mission.need} ${what}!`;
 }
 
 function lower(text) {

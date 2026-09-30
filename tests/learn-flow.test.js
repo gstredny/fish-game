@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { cardSpeech, growLine, hurtLine, SEA_FRIEND_KINDS } from "../src/species.js";
+import { cardSpeech, growLine, hurtLine } from "../src/species.js";
+import { KINDS, ZONES } from "../src/zones.js";
 import { MET_KEY } from "../src/ocean-book.js";
 import { VOICE_KEY } from "../src/voice.js";
 import { openGame } from "./app-fixture.js";
@@ -27,8 +28,8 @@ test("the first meeting pauses the swim for a spoken photo card; the next new an
   const app = await openGame(storage, speech.globals);
   try {
     app.click("start-button");
-    assert.equal(speech.spoken.at(-1), growLine(0), "the swim starts by saying what a sardine eats");
-    assert.equal(app.nodes.get("toast").textContent, growLine(0));
+    assert.equal(speech.spoken.at(-1), growLine(ZONES.open, 0), "the swim starts by saying what a sardine eats");
+    assert.equal(app.nodes.get("toast").textContent, growLine(ZONES.open, 0));
     Object.assign(app.world, { creatures: [plankton(app.world)], friends: [] });
     app.frame(16);
     assert.equal(app.world.phase, "playing", "no card in the first seconds of a swim");
@@ -105,25 +106,25 @@ test("a bump and a growth say the food chain out loud", async () => {
     app.frame(16);
     assert.equal(app.world.hearts, 2);
     assert.equal(app.nodes.get("toast").textContent, "Watch out! Mackerel eat sardines!");
-    assert.equal(speech.spoken.at(-1), hurtLine("mackerel", 0));
+    assert.equal(speech.spoken.at(-1), hurtLine(ZONES.open, "mackerel", 0));
 
     Object.assign(app.world, { stage: 1, bites: 6, friends: [],
       creatures: [{ ...app.world.player, tier: 1, direction: 1, wobble: 0 }] });
     app.frame(32);
     assert.equal(app.world.stage, 2);
     assert.equal(app.nodes.get("toast").textContent, "You're a squid now! Squid eat mackerel. Watch out for tuna!");
-    assert.equal(speech.spoken.at(-1), growLine(2));
+    assert.equal(speech.spoken.at(-1), growLine(ZONES.open, 2));
   } finally { app.close(); }
 });
 
 test("a swim sees the Ocean book, so a sea friend never met on this device comes first", async () => {
-  const known = SEA_FRIEND_KINDS.filter(kind => kind !== "moray");
+  const known = KINDS.filter(kind => kind !== "horseshoecrab");
   const app = await openGame(memoryStorage({ [MET_KEY]: JSON.stringify(known) }), fakeSpeech().globals);
   try {
     app.click("start-button");
     assert.deepEqual([...app.world.met].sort(), [...known].sort());
     // This narrow screen has room for one sea-bed animal, so it must be the one not met yet.
-    assert.deepEqual(app.world.friends.filter(friend => friend.floor).map(friend => friend.kind), ["moray"]);
+    assert.deepEqual(app.world.friends.filter(friend => friend.floor).map(friend => friend.kind), ["horseshoecrab"]);
   } finally { app.close(); }
 });
 
@@ -135,16 +136,19 @@ test("the Ocean book shows who you have met and replays their cards", async () =
     assert.equal(app.nodes.get("book").hidden, false);
     assert.equal(app.nodes.get("intro").hidden, true);
     assert.equal(app.nodes.get("hud").hidden, true, "no swim is running yet");
-    assert.equal(app.nodes.get("book-count").textContent, "You've met 2 of 33 ocean animals");
-    const chain = app.nodes.get("book-chain").innerHTML;
-    assert.match(chain, /class="book-tile" type="button" data-kind="plankton"/);
-    assert.match(chain, /class="book-tile locked" type="button" data-kind="sardine"/);
-    assert.match(app.nodes.get("book-friends").innerHTML, /class="book-tile" type="button" data-kind="crab"><img src="art\/animals\/crab.webp"/);
+    assert.equal(app.nodes.get("book-count").textContent, `You've met 2 of ${KINDS.length} ocean animals`);
+    const book = app.nodes.get("book-zones").innerHTML;
+    assert.match(book, /class="book-tile" type="button" data-kind="plankton"/);
+    assert.match(book, /class="book-tile locked" type="button" data-kind="sardine"/);
+    assert.match(book, /class="book-tile" type="button" data-kind="crab"><img src="art\/animals\/crab.webp"/);
+    assert.match(book, /<h3>Coral reef <span>· 2 of \d+ met<\/span><\/h3>/, "each place counts its own animals");
+    assert.match(book, /<h3>Open ocean <span>· 2 of \d+ met<\/span><\/h3>/);
+    assert.equal(book.match(/data-kind="crab"/g).length, 2, "an animal that lives in two places shows in both");
 
     app.key("Enter");
     assert.equal(app.world.phase, "ready", "Enter in the book does not start a swim");
     const tile = kind => ({ target: { closest: () => ({ dataset: { kind } }) } });
-    app.nodes.get("book-friends").emit("click", tile("crab"));
+    app.nodes.get("book-zones").emit("click", tile("crab"));
     assert.equal(app.nodes.get("card").hidden, false);
     assert.equal(app.nodes.get("card-kicker").textContent, "Ocean book");
     assert.equal(app.nodes.get("card-close").textContent, "Back to the book");
@@ -153,7 +157,7 @@ test("the Ocean book shows who you have met and replays their cards", async () =
     assert.equal(app.nodes.get("card").hidden, true);
     assert.equal(app.nodes.get("book").hidden, false, "closing a book card goes back to the book");
 
-    app.nodes.get("book-chain").emit("click", tile("sardine"));
+    app.nodes.get("book-zones").emit("click", tile("sardine"));
     assert.equal(app.nodes.get("card").hidden, true, "animals not met yet stay hidden");
     assert.equal(app.nodes.get("book-count").textContent, "Keep swimming to find that one!");
     app.click("book-close");
@@ -182,7 +186,7 @@ test("the voice can be switched off from the start screen, and the choice is kep
     assert.equal(app.nodes.get("voice-button").textContent, "🔇", "the in-game button agrees");
     app.click("start-button");
     assert.deepEqual(speech.spoken, [], "nothing is said with the voice off");
-    assert.equal(app.nodes.get("toast").textContent, growLine(0), "the words still show");
+    assert.equal(app.nodes.get("toast").textContent, growLine(ZONES.open, 0), "the words still show");
     app.click("voice-button");
     assert.deepEqual(speech.spoken, ["Voice on!"], "turning it on speaks from the tap, which iPhone needs");
     app.click("voice-button");
@@ -204,7 +208,7 @@ test("Enter on a focused button only presses that button", async () => {
     app.key("Enter", button);
     assert.equal(app.world.phase, "ready", "Enter on the Ocean book button does not also start a swim");
     app.click("intro-book-button");
-    app.nodes.get("book-friends").emit("click", { target: { closest: () => ({ dataset: { kind: "crab" } }) } });
+    app.nodes.get("book-zones").emit("click", { target: { closest: () => ({ dataset: { kind: "crab" } }) } });
     app.key("Enter", button);
     assert.equal(app.nodes.get("card").hidden, false, "Enter on Hear it again keeps the card open");
     app.click("card-close");

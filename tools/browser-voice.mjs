@@ -7,6 +7,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { growLine } from "../src/species.js";
+import { ZONES } from "../src/zones.js";
 
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || "playwright");
 const GAME = process.env.GAME || "http://127.0.0.1:8778/";
@@ -46,11 +47,11 @@ try {
     await page.waitForSelector("#start-button");
     await page.waitForTimeout(500);
     await page.click("#start-button");
-    await heard(clips[growLine(0)]);
+    await heard(clips[growLine(ZONES.open, 0)]);
     const label = online ? "online" : "offline";
     assert.deepEqual(await page.evaluate(() => window.__robot), [], `${label}: the device voice stays quiet`);
     assert.equal(await page.evaluate(() => window.__audio.error), null, `${label}: the clip decoded`);
-    console.log(`${label}: Dive in played ${clips[growLine(0)]} (${growLine(0)})`);
+    console.log(`${label}: Dive in played ${clips[growLine(ZONES.open, 0)]} (${growLine(ZONES.open, 0)})`);
   }
   assert.deepEqual(errors, []);
   console.log("browser-voice: PASS");

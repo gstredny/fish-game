@@ -1,0 +1,54 @@
+// The places you can swim. Each has its own real food chain and its own animals; the tier ladder
+// (sizes, speeds, goals) is the same everywhere and lives in rules.js.
+// `chain`: kinds by tier. Tier 0 is the snack nobody plays, tiers 1 to 5 are the five forms you grow
+// through, and tier 6, when there is one, is the top hunter that nothing here eats.
+// `friends`: gentle animals that live here, first one on the poster for the "meet friends" mission.
+// `giant`: the rare one the "find" mission looks for. `floor`: whether there is a sea bed to stand on.
+// `light`: 1 is sunny; below 1 the water darkens and you see by your own glow (paint.js).
+export const ZONES = {
+  reef: {
+    name: "Coral reef", blurb: "Sunny, warm and busy", hello: "Welcome to the coral reef!",
+    light: 1, floor: true,
+    chain: ["plankton", "damselfish", "lionfish", "grouper", "reefshark", "tigershark", "orca"],
+    friends: ["turtle", "parrotfish", "pufferfish", "manta", "clownfish", "seahorse", "octopus", "moray",
+      "mantisshrimp", "starfish", "crab", "lobster", "urchin", "seacucumber", "coral", "giantclam"],
+    giant: "whaleshark",
+    backdrop: "art/ocean-reef.webp", water: ["#26a9c9", "#128aa8", "#0c5f80"]
+  },
+  open: {
+    name: "Open ocean", blurb: "Deep blue, far from land", hello: "Welcome to the open ocean!",
+    light: 1, floor: true,
+    chain: ["plankton", "sardine", "mackerel", "squid", "tuna", "shark", "orca"],
+    friends: ["dolphin", "turtle", "jellyfish", "pufferfish", "manta", "hammerhead", "whaleshark", "narwhal",
+      "anglerfish", "otter", "penguin", "flyingfish", "manofwar",
+      "octopus", "starfish", "crab", "lobster", "urchin", "horseshoecrab", "seacucumber"],
+    giant: "bluewhale",
+    backdrop: "art/ocean.webp", water: ["#137ea0", "#096681", "#073c5e"]
+  }
+};
+for (const [id, zone] of Object.entries(ZONES)) zone.id = id;
+
+export const ZONE_IDS = Object.keys(ZONES);
+export const DEFAULT_ZONE = "open";
+
+// Every animal in the game, each once, in the order the Ocean book counts them.
+export const KINDS = [...new Set(Object.values(ZONES).flatMap(zone => [...zone.chain, ...zone.friends, zone.giant]))];
+
+// The animals that live in a zone, each once.
+export function zoneKinds(zone) {
+  return [...new Set([...zone.chain, ...zone.friends, zone.giant])];
+}
+
+// The kind you are at a stage, and the top hunter, if this zone has one.
+export function formKind(zone, stage) {
+  return zone.chain[stage + 1];
+}
+
+export function topTier(zone) {
+  return zone.chain.length - 1;
+}
+
+// True when tier 6 exists: something here hunts even the biggest form.
+export function hasTopHunter(zone) {
+  return zone.chain.length > 6;
+}

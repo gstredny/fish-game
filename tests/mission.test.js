@@ -1,25 +1,27 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { ORCA } from "../src/rules.js";
-import { createMission, MISSIONS, missionDoneLine, missionGoal, missionLine, pickMission } from "../src/missions.js";
+import { createMission, missionDoneLine, missionGoal, missionIds, missionLine, pickMission } from "../src/missions.js";
+import { topTier, ZONES } from "../src/zones.js";
+
+const ORCA = topTier(ZONES.open);
 import { createWorld, swim } from "../src/world.js";
 
 const idle = { keys: new Set(), pointer: null };
 
 // A shark on its mission, alone in the ocean.
-function sharkOn(id, level = "little") {
-  const world = createWorld(844, 390, undefined, 0, level, id);
+function sharkOn(id, level = "little", zone = "open") {
+  const world = createWorld(844, 390, { level, zone, mission: id });
   Object.assign(world, { phase: "playing", stage: 4, invulnerable: 0, creatures: [], friends: [] });
   world.mission.active = true;
   return world;
 }
 
 test("every swim's mission differs from the last one, and every mission comes up", () => {
-  const ids = Object.keys(MISSIONS);
+  const ids = missionIds(ZONES.open);
   const seen = new Set();
   let last = null;
   for (let swim = 0; swim < 200; swim++) {
-    const next = pickMission(last);
+    const next = pickMission(last, ZONES.open);
     assert.notEqual(next, last);
     assert.ok(ids.includes(next));
     seen.add(next);
@@ -29,15 +31,15 @@ test("every swim's mission differs from the last one, and every mission comes up
 });
 
 test("missions ask more of a Big swimmer and say what to do", () => {
-  const little = createMission("tuna", "little"), big = createMission("tuna", "big");
+  const little = createMission("hunt", "little"), big = createMission("hunt", "big");
   assert.ok(big.need > little.need);
   assert.equal(missionGoal(little), "Eat 2 tuna");
   assert.equal(missionLine(little), "You're a great white shark now! Sharks eat tuna. Watch out for orcas! Your mission: eat 2 tuna!");
-  assert.equal(missionDoneLine(createMission("whale", "big")), "Mission complete! You found the blue whale, the biggest animal ever!");
+  assert.equal(missionDoneLine(createMission("find", "big")), "Mission complete! You found the blue whale! Blue whales are the biggest animals ever!");
 });
 
 test("the blue whale comes from ahead with an arrow to it, and meeting it finishes the mission", () => {
-  const world = sharkOn("whale");
+  const world = sharkOn("find");
   // No whale happens to be passing by (a 1 in 20 chance otherwise): this one comes for the mission.
   const random = Math.random;
   Math.random = () => 0.99;
@@ -56,7 +58,7 @@ test("the blue whale comes from ahead with an arrow to it, and meeting it finish
 });
 
 test("the orca chases the shark; staying away long enough finishes the mission, a bump starts it over", () => {
-  const world = sharkOn("orca");
+  const world = sharkOn("flee");
   swim(world, 0.016, idle, 844, 390);
   const orca = world.creatures.find(creature => creature.hunt);
   assert.equal(orca?.tier, ORCA, "an orca comes hunting");
@@ -108,7 +110,7 @@ test("meeting sea friends counts each kind once, even ones already met earlier i
 });
 
 test("eating the mission's animal counts; other snacks don't", () => {
-  const world = sharkOn("squid");
+  const world = sharkOn("snack");
   world.creatures = [{ ...world.player, tier: 4, direction: 1, wobble: 0 }];
   swim(world, 0.016, idle, 844, 390);
   assert.equal(world.mission.have, 0);

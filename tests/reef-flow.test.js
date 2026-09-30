@@ -13,7 +13,7 @@ test("the real app saves the mission reward, plants by touch, reloads, and shows
   let app = await openGame(storage);
   try {
     app.click("start-button");
-    Object.assign(app.world.mission, { id: "tuna", need: 2 });
+    Object.assign(app.world.mission, { id: "hunt", need: 2 });
     Object.assign(app.world, { stage: 3, bites: 8,
       creatures: [{ ...app.world.player, tier: 3, wobble: 0 }] });
     app.frame(16);

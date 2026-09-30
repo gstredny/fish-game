@@ -26,14 +26,14 @@ function finishSwim(world) {
 
 test("earn, plant, save, reload, and start a new swim beside the same coral", () => {
   const storage = memoryStorage();
-  const world = createWorld(390, 844, loadReef(storage), 0, "little", "tuna");
+  const world = createWorld(390, 844, { reef: loadReef(storage), mission: "hunt" });
   finishSwim(world);
   assert.equal(world.reef.pending, 1);
   assert.ok(saveReef(world.reef, storage));
   assert.equal(loadReef(storage).pending, 1, "unplanted reward survives reload");
   assert.ok(plantCoral(world.reef, 420, -280));
   assert.ok(saveReef(world.reef, storage));
-  const next = createWorld(390, 844, loadReef(storage));
+  const next = createWorld(390, 844, { reef: loadReef(storage) });
   assert.equal(next.stage, 0);
   assert.deepEqual(next.reef, { pending: 0, corals: [{ x: 420, y: -280 }] });
   assert.equal(next.player.x, 320);
@@ -46,7 +46,7 @@ test("earn, plant, save, reload, and start a new swim beside the same coral", ()
 });
 
 test("one reward per completed swim; another completed swim grows the reef", () => {
-  const world = createWorld(390, 844, undefined, 0, "little", "tuna");
+  const world = createWorld(390, 844, { mission: "hunt" });
   for (let adventure = 1; adventure <= 2; adventure++) {
     finishSwim(world);
     assert.equal(world.reef.pending, adventure);
@@ -54,7 +54,7 @@ test("one reward per completed swim; another completed swim grows the reef", () 
     world.creatures = [{ ...world.player, tier: 4, wobble: 0 }];
     swim(world, 0.016, idle, 390, 844);
     assert.equal(world.reef.pending, adventure, "more tuna after the mission does not farm rewards");
-    resetWorld(world, 390, 844, 0, "little", "tuna");
+    resetWorld(world, 390, 844, { mission: "hunt" });
   }
 });
 
@@ -86,7 +86,7 @@ test("unavailable storage leaves a playable reef and reports save failure", () =
 });
 
 test("a sardine can enter saved coral, withstand a shark, then leave and take damage", () => {
-  const world = createWorld(390, 844, { pending: 0, corals: [{ x: 420, y: -280 }] });
+  const world = createWorld(390, 844, { reef: { pending: 0, corals: [{ x: 420, y: -280 }] } });
   world.phase = "playing";
   world.creatures = [];
   for (let tick = 0; tick < 12; tick++) swim(world, 0.05, { keys: new Set(["ArrowRight"]), pointer: null }, 390, 844);
@@ -105,7 +105,7 @@ test("a sardine can enter saved coral, withstand a shark, then leave and take da
 });
 
 test("only small forms that fit entirely inside the colony get shelter", () => {
-  const world = createWorld(390, 844, { pending: 0, corals: [{ x: 0, y: 0 }] });
+  const world = createWorld(390, 844, { reef: { pending: 0, corals: [{ x: 0, y: 0 }] } });
   world.player.x = 0;
   assert.ok(isSheltered(world));
   world.stage = 1;
@@ -118,7 +118,7 @@ test("only small forms that fit entirely inside the colony get shelter", () => {
 });
 
 test("growing too large inside coral ends protection in the same frame", () => {
-  const world = createWorld(390, 844, { pending: 0, corals: [{ x: 0, y: 0 }] });
+  const world = createWorld(390, 844, { reef: { pending: 0, corals: [{ x: 0, y: 0 }] } });
   Object.assign(world, { phase: "playing", stage: 1, bites: 6, invulnerable: 0 });
   world.player.x = 0;
   world.creatures = [
@@ -135,12 +135,12 @@ test("each colony houses clownfish that retreat from predators and stay through 
   const storage = memoryStorage();
   const reef = { pending: 0, corals: [{ x: 200, y: 300 }] };
   saveReef(reef, storage);
-  const world = createWorld(390, 844, loadReef(storage));
+  const world = createWorld(390, 844, { reef: loadReef(storage) });
   world.creatures = [];
   const residents = reefResidents(world, 0);
   assert.equal(residents.length, 3);
   assert.notDeepEqual(reefResidents(world, 1), residents, "resident fish swim");
-  const reloaded = createWorld(390, 844, loadReef(storage));
+  const reloaded = createWorld(390, 844, { reef: loadReef(storage) });
   reloaded.creatures = [];
   assert.deepEqual(reefResidents(reloaded, 0), residents);
   world.creatures = [{ x: 200, y: 300, tier: 4 }];

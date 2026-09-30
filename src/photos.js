@@ -33,4 +33,12 @@ export const PHOTOS = {
   seacucumber: { file: "art/animals/seacucumber.webp", credit: "Photo: Bernard Dupont, CC BY-SA 2.0", source: "https://commons.wikimedia.org/wiki/File:Sea_Cucumber_(Thelenota_ananas)_(6094180400).jpg" },
   moray: { file: "art/animals/moray.webp", credit: "Photo: Greg McFall (NOAA), public domain", source: "https://commons.wikimedia.org/wiki/File:FKNMS_Green_Moray_Eel_(48779495451).jpg" },
   horseshoecrab: { file: "art/animals/horseshoecrab.webp", credit: "Photo: Hans Hillewaert, CC BY-SA 3.0", source: "https://commons.wikimedia.org/wiki/File:Limulus_polyphemus_(aquarium).jpg" },
+  // Coral reef
+  damselfish: { file: "art/animals/damselfish.webp", credit: "Photo: Brian Gratwicke, CC BY 2.0", source: "https://commons.wikimedia.org/wiki/File:Blue_Damselfish_Chrysiptera_cyanea.jpg" },
+  lionfish: { file: "art/animals/lionfish.webp", credit: "Photo: Jens Petersen, CC BY 2.5", source: "https://commons.wikimedia.org/wiki/File:Pterois_volitans_Manado-e_edit.jpg" },
+  grouper: { file: "art/animals/grouper.webp", credit: "Photo: q phia, CC BY 2.0", source: "https://commons.wikimedia.org/wiki/File:2017,_cuba,_jardines_aggressor,_los_indios,_nassau_grouper_maw_(36883128693).jpg" },
+  reefshark: { file: "art/animals/reefshark.webp", credit: "Photo: Charles J. Sharp, CC BY-SA 4.0", source: "https://commons.wikimedia.org/wiki/File:Blacktip_reef_shark_(Carcharhinus_melanopterus)_Moorea_3.jpg" },
+  tigershark: { file: "art/animals/tigershark.webp", credit: "Photo: Albert kok, CC BY-SA 3.0", source: "https://commons.wikimedia.org/wiki/File:Tiger_shark.jpg" },
+  coral: { file: "art/animals/coral.webp", credit: "Photo: Diego Delso, CC BY-SA 4.0", source: "https://commons.wikimedia.org/wiki/File:Coral_(Galaxea_fascicularis),_mar_Rojo,_Egipto,_2023-04-18,_DD_128.jpg" },
+  giantclam: { file: "art/animals/giantclam.webp", credit: "Photo: Diego Delso, CC BY-SA 4.0", source: "https://commons.wikimedia.org/wiki/File:Almeja_gigante_(Tridacna_maxima),_mar_Rojo,_Egipto,_2023-04-18,_DD_103.jpg" },
 };

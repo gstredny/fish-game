@@ -1,7 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { CREATURES, FLOOR, FORMS, hunters, SEA_FRIENDS } from "../src/rules.js";
-import { cardSpeech, FOOD_CHAIN, growLine, hurtLine, KINDS, meetLine, SEA_FRIEND_KINDS, SPECIES } from "../src/species.js";
+import { cardSpeech, growLine, hurtLine, meetLine, SPECIES } from "../src/species.js";
+import { formKind, KINDS, ZONES } from "../src/zones.js";
+import { missionIds, pickMission } from "../src/missions.js";
 import { createWorld, nearbyAnimals, resetWorld, swim } from "../src/world.js";
 import { paintAnimal } from "../src/animal-paint.js";
 import { createVoice, VOICE_KEY } from "../src/voice.js";
@@ -21,8 +23,9 @@ function fakeSpeech() {
   return { synth, spoken, Utterance: class { constructor(text) { this.text = text; } } };
 }
 
+const SEA_FRIEND_KINDS = [...new Set(Object.values(ZONES).flatMap(zone => [...zone.friends, zone.giant]))];
+
 test("every animal in the game has a card: a name, two facts, what it eats and who eats it", () => {
-  assert.deepEqual(FOOD_CHAIN, CREATURES.map(creature => creature.kind));
   assert.deepEqual([...SEA_FRIEND_KINDS].sort(), SEA_FRIENDS.map(friend => friend.kind).sort());
   for (const kind of KINDS) {
     const animal = SPECIES[kind];
@@ -44,30 +47,41 @@ test("every animal has a real photo, with its credit, in the game and in CREDITS
   }
 });
 
-test("what the cards say about eating matches what happens in the game", () => {
-  for (let stage = 1; stage < FORMS.length; stage++) {
-    const food = SPECIES[FOOD_CHAIN[stage]];
-    assert.match(SPECIES[FORMS[stage].kind].eats.toLowerCase(), new RegExp(food.plural),
-      `${FORMS[stage].name} eats ${food.plural} in the game, so its card should say so`);
-  }
-  for (let stage = 0; stage < FORMS.length; stage++) {
-    for (const tier of hunters(stage)) {
-      const hunter = SPECIES[CREATURES[tier].kind].name.toLowerCase().replace("great white ", "");
-      assert.match(SPECIES[FORMS[stage].kind].eatenBy.toLowerCase(), new RegExp(hunter),
-        `${CREATURES[tier].kind} hunts the ${FORMS[stage].name} in the game, so its card should say so`);
+test("what the cards say about eating matches what happens in every zone", () => {
+  for (const zone of Object.values(ZONES)) {
+    for (let stage = 1; stage < FORMS.length; stage++) {
+      const you = formKind(zone, stage), food = SPECIES[zone.chain[stage]];
+      assert.match(SPECIES[you].eats.toLowerCase(), new RegExp(food.plural),
+        `${zone.id}: ${you} eats ${food.plural} in the game, so its card should say so`);
+    }
+    for (let stage = 0; stage < FORMS.length; stage++) {
+      for (const tier of hunters(stage, zone)) {
+        const hunter = SPECIES[zone.chain[tier]].name.toLowerCase().replace("great white ", "");
+        assert.match(SPECIES[formKind(zone, stage)].eatenBy.toLowerCase(), new RegExp(hunter),
+          `${zone.id}: ${zone.chain[tier]} hunts the ${formKind(zone, stage)} in the game, so its card should say so`);
+      }
     }
   }
 });
 
-test("growing and bumping teach the food chain in words", () => {
-  assert.equal(growLine(0), "You're a little sardine! Sardines eat plankton. Watch out for mackerel!");
-  assert.equal(growLine(1), "You're a mackerel now! Mackerel eat sardines. Watch out for squid!");
-  assert.equal(growLine(2), "You're a squid now! Squid eat mackerel. Watch out for tuna!");
-  assert.equal(growLine(3), "You're a tuna now! Tuna eat squid. Watch out for sharks!");
-  assert.equal(growLine(4), "You're a great white shark now! Sharks eat tuna. Watch out for orcas!");
-  assert.equal(hurtLine("orca", 4), "Watch out! Orcas eat sharks!");
-  assert.equal(hurtLine("tuna", 2), "Watch out! Tuna eat squid!");
-  assert.equal(hurtLine("shark", 0), "Watch out! Sharks eat sardines!");
+test("growing and bumping teach the zone's food chain in words", () => {
+  const open = ZONES.open, reef = ZONES.reef;
+  assert.equal(growLine(open, 0), "Welcome to the open ocean! You're a little sardine! Sardines eat plankton. Watch out for mackerel!");
+  assert.equal(growLine(open, 1), "You're a mackerel now! Mackerel eat sardines. Watch out for squid!");
+  assert.equal(growLine(open, 2), "You're a squid now! Squid eat mackerel. Watch out for tuna!");
+  assert.equal(growLine(open, 3), "You're a tuna now! Tuna eat squid. Watch out for sharks!");
+  assert.equal(growLine(open, 4), "You're a great white shark now! Sharks eat tuna. Watch out for orcas!");
+  assert.equal(hurtLine(open, "orca", 4), "Watch out! Orcas eat sharks!");
+  assert.equal(hurtLine(open, "tuna", 2), "Watch out! Tuna eat squid!");
+  assert.equal(hurtLine(open, "shark", 0), "Watch out! Sharks eat sardines!");
+  assert.equal(growLine(reef, 0), "Welcome to the coral reef! You're a little damselfish! Damselfish eat plankton. Watch out for lionfish!");
+  assert.equal(growLine(reef, 3), "You're a reef shark now! Reef sharks eat groupers. Watch out for tiger sharks!");
+  assert.equal(growLine(reef, 4), "You're a tiger shark now! Tiger sharks eat reef sharks. Watch out for orcas!");
+  assert.equal(hurtLine(reef, "grouper", 0), "Watch out! Groupers eat damselfish!");
+  // A zone where nothing hunts the biggest form, and a form whose name starts with a vowel.
+  const quiet = { ...open, chain: ["plankton", "sardine", "octopus", "squid", "tuna", "shark"] };
+  assert.equal(growLine(quiet, 1), "You're an octopus now! Octopuses eat sardines. Watch out for squid!");
+  assert.equal(growLine(quiet, 4), "You're a great white shark now! Sharks eat tuna. Nothing here hunts you!");
 });
 
 test("animals are met once per swim, nearest first, only when close", () => {
@@ -118,18 +132,46 @@ test("each swim has sea friends on the sea bed and in the water, new ones first"
 });
 
 test("sea friends this device has never met come before ones it met on earlier swims", () => {
-  const met = new Set(SEA_FRIEND_KINDS.filter(kind => kind !== "moray" && kind !== "narwhal"));
+  const met = new Set(SEA_FRIEND_KINDS.filter(kind => kind !== "horseshoecrab" && kind !== "narwhal"));
   for (let trial = 0; trial < 20; trial++) {
-    const world = createWorld(844, 390, undefined, 0, "little", "tuna", met);
+    const world = createWorld(844, 390, { mission: "hunt", met });
     assert.equal(world.met, met, "the swim sees the Ocean book itself, so animals met mid-swim count at once");
-    assert.ok(world.friends.some(friend => friend.floor && friend.kind === "moray"), "the unmet floor animal comes first");
+    assert.ok(world.friends.some(friend => friend.floor && friend.kind === "horseshoecrab"), "the unmet floor animal comes first");
     assert.ok(world.friends.some(friend => !friend.floor && friend.kind === "narwhal"), "the unmet swimmer comes first");
     resetWorld(world, 844, 390);
     assert.equal(world.met, met, "a new swim keeps the same book");
   }
   // Once every animal is met, the ocean still fills with sea friends.
-  const world = createWorld(844, 390, undefined, 0, "little", "tuna", new Set(SEA_FRIEND_KINDS));
+  const world = createWorld(844, 390, { mission: "hunt", met: new Set(SEA_FRIEND_KINDS) });
   assert.ok(world.friends.some(friend => friend.floor) && world.friends.some(friend => !friend.floor));
+});
+
+test("a swim in a zone fills the water with that zone's animals only", () => {
+  for (let trial = 0; trial < 10; trial++) {
+    const world = createWorld(1440, 900, { zone: "reef" });
+    Object.assign(world, { phase: "playing", invulnerable: 99 });
+    for (let round = 0; round < 20; round++) {
+      world.friends = [];
+      swim(world, 0.016, { keys: new Set(), pointer: null }, 1440, 900);
+      for (const friend of world.friends) assert.ok([...ZONES.reef.friends, ZONES.reef.giant].includes(friend.kind), `${friend.kind} does not live on the reef`);
+    }
+    world.creatures = [{ ...world.player, tier: 2, direction: 1, wobble: 0 }];
+    world.invulnerable = 0;
+    swim(world, 0.016, { keys: new Set(), pointer: null }, 1440, 900);
+    assert.deepEqual(world.events.at(-1), { type: "hurt", by: "lionfish" }, "the bump names the reef's hunter");
+  }
+  const dark = { ...ZONES.open, id: "dark", floor: false, friends: ["dolphin", "jellyfish"], chain: ZONES.open.chain.slice(0, 6) };
+  const world = createWorld(1440, 900, { zone: dark });
+  assert.ok(world.friends.every(friend => !friend.floor), "no floor animals where there is no floor");
+  Object.assign(world, { phase: "playing", stage: 4, invulnerable: 99 });
+  for (let round = 0; round < 30; round++) {
+    world.creatures = [];
+    swim(world, 0.016, { keys: new Set(), pointer: null }, 1440, 900);
+    assert.ok(world.creatures.every(creature => creature.tier <= 5), "nothing hunts the biggest form here");
+  }
+  assert.ok(!missionIds(dark).includes("flee"), "no one to swim away from, so no such mission");
+  assert.ok(missionIds(ZONES.open).includes("flee"));
+  for (let pick = 0; pick < 50; pick++) assert.notEqual(pickMission(null, dark), "flee");
 });
 
 test("every sea friend has its own drawing, on the sea bed or swimming", () => {

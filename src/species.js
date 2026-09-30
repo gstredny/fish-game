@@ -1,5 +1,9 @@
 // What the fact cards and the voice say. Written for five- and six-year-olds: short, true,
 // and about who eats whom. `lines` are the one-liners spoken when you meet an animal again.
+// The first animals live here; each later zone's animals live in their own species-*.js.
+import { REEF_SPECIES } from "./species-reef.js";
+import { formKind } from "./zones.js";
+
 export const SPECIES = {
   plankton: {
     name: "Plankton", plural: "plankton", hello: "This is plankton!",
@@ -301,15 +305,9 @@ export const SPECIES = {
     say: "Horseshoe crabs have blue blood! Doctors use it to check that medicines are safe.",
     lines: ["Horseshoe crabs have blue blood!", "Horseshoe crabs are older than the dinosaurs!",
       "Horseshoe crabs are cousins of spiders."]
-  }
+  },
+  ...REEF_SPECIES
 };
-
-export const FOOD_CHAIN = ["plankton", "sardine", "mackerel", "squid", "tuna", "shark", "orca"];
-export const SEA_FRIEND_KINDS = ["turtle", "dolphin", "jellyfish", "pufferfish", "manta", "bluewhale", "parrotfish",
-  "seahorse", "octopus", "starfish", "crab", "lobster", "urchin", "clownfish",
-  "hammerhead", "whaleshark", "narwhal", "anglerfish", "otter", "penguin", "flyingfish", "manofwar",
-  "mantisshrimp", "seacucumber", "moray", "horseshoecrab"];
-export const KINDS = [...FOOD_CHAIN, ...SEA_FRIEND_KINDS];
 
 // Spoken when a card opens: its name, first fact, and who eats whom.
 export function cardSpeech(kind) {
@@ -322,21 +320,29 @@ export function meetLine(kind, random = Math.random) {
   return `${animal.name}! ${animal.lines[Math.floor(random() * animal.lines.length)]}`;
 }
 
-// Growing up the food chain: what you eat now, and who still eats you.
-export function growLine(stage) {
-  const you = FOOD_CHAIN[stage + 1];
-  const food = FOOD_CHAIN[stage];
-  const hunter = FOOD_CHAIN[stage + 2];
-  const name = SPECIES[you].name.toLowerCase();
-  return `You're a${stage ? "" : " little"} ${name}${stage ? " now" : ""}! ${capital(SPECIES[you].plural)} eat ${SPECIES[food].plural}. Watch out for ${SPECIES[hunter].plural}!`;
+// Growing up a zone's food chain: what you eat now, and who still eats you. The first line of a
+// swim starts with the zone's welcome.
+export function growLine(zone, stage) {
+  const you = SPECIES[formKind(zone, stage)];
+  const food = SPECIES[zone.chain[stage]];
+  const hunter = SPECIES[zone.chain[stage + 2]];
+  const name = you.name.toLowerCase();
+  const start = stage ? "" : `${zone.hello} `;
+  const who = stage ? `${article(name)} ${name} now` : `a little ${name}`;
+  const watch = hunter ? `Watch out for ${hunter.plural}!` : "Nothing here hunts you!";
+  return `${start}You're ${who}! ${capital(you.plural)} eat ${food.plural}. ${watch}`;
 }
 
-export function hurtLine(hunterKind, stage) {
-  return `Watch out! ${capital(SPECIES[hunterKind].plural)} eat ${SPECIES[FOOD_CHAIN[stage + 1]].plural}!`;
+export function hurtLine(zone, hunterKind, stage) {
+  return `Watch out! ${capital(SPECIES[hunterKind].plural)} eat ${SPECIES[formKind(zone, stage)].plural}!`;
 }
 
 function capital(text) {
   return text[0].toUpperCase() + text.slice(1);
+}
+
+function article(word) {
+  return /^[aeiou]/.test(word) ? "an" : "a";
 }
 
 // "Find out more" on a card: a web search for kids' facts, with Google's SafeSearch switched on.

@@ -11,7 +11,7 @@ import { createServer } from "node:http";
 import { mkdirSync, readFileSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { extname, join, normalize } from "node:path";
-import { KINDS } from "../src/species.js";
+import { KINDS } from "../src/zones.js";
 
 let playwright;
 try {
@@ -189,7 +189,7 @@ async function swimToShark(page, label) {
 
 // From the mission card: go, and finish the mission with one tuna.
 async function finishMission(page) {
-  await page.evaluate(() => Object.assign(window.littleFish.world.mission, { id: "tuna", need: 1 }));
+  await page.evaluate(() => Object.assign(window.littleFish.world.mission, { id: "hunt", need: 1 }));
   await page.click("#mission-go");
   await page.evaluate(() => {
     const { world } = window.littleFish;

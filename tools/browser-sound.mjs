@@ -9,7 +9,7 @@ import assert from "node:assert/strict";
 import { createServer } from "node:http";
 import { readFileSync, statSync } from "node:fs";
 import { extname, join, normalize } from "node:path";
-import { KINDS } from "../src/species.js";
+import { KINDS } from "../src/zones.js";
 
 let playwright;
 try {
@@ -129,7 +129,7 @@ try {
     await page.click("#mission-go");
     await moment("mission done", () => {
       const { world } = window.littleFish;
-      Object.assign(world.mission, { id: "tuna", need: 1 });
+      Object.assign(world.mission, { id: "hunt", need: 1 });
       world.creatures = [{ ...world.player, tier: 4, wobble: 0, art: null }];
     }, "won");
     await page.click("#win-restart-button");

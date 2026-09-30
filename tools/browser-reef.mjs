@@ -3,7 +3,7 @@
 // Planting, reload, restart, and swimming use real mouse/touch/keyboard input.
 import assert from "node:assert/strict";
 import { mkdirSync, writeFileSync } from "node:fs";
-import { KINDS } from "../src/species.js";
+import { KINDS } from "../src/zones.js";
 // Every animal counts as met, so first-meeting fact cards don't pause these checks;
 // tools/browser-learn.mjs checks the cards.
 const MET_ALL = `try { localStorage.setItem("little-fish-met-v1", ${JSON.stringify(JSON.stringify(KINDS))}); } catch {}`;
@@ -97,7 +97,7 @@ async function checkReef(browser, mode) {
     await waitFor("Boolean(window.__reefGame)");
     await clickButton("#start-button");
     // Grow into a shark, then finish an "eat one tuna" mission.
-    await evaluate(`(() => { const w = __reefGame.world; Object.assign(w.mission, { id: "tuna", need: 1 }); w.stage = 3; w.bites = 99; w.creatures = [{ ...w.player, tier: 3, wobble: 0 }]; __reefGame.input.pointer = null; })()`);
+    await evaluate(`(() => { const w = __reefGame.world; Object.assign(w.mission, { id: "hunt", need: 1 }); w.stage = 3; w.bites = 99; w.creatures = [{ ...w.player, tier: 3, wobble: 0 }]; __reefGame.input.pointer = null; })()`);
     await waitFor("!document.querySelector('#mission').hidden");
     assert.equal(await evaluate("JSON.parse(localStorage.getItem('little-fish-reef-v1') ?? '{\"pending\":0}').pending"), 0, "no coral until the mission is done");
     await shot("mission");

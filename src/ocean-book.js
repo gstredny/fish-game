@@ -1,4 +1,4 @@
-import { KINDS } from "./species.js";
+import { KINDS } from "./zones.js";
 
 // The animals met on this device. The first meeting opens a fact card; after that the
 // Ocean book lets anyone who plays here see every card again.

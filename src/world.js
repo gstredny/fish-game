@@ -1,19 +1,23 @@
-import { canEat, CREATURES, FLOOR, FORMS, goalFor, isDanger, isFriend, LEVELS, nextGrowth, ORCA, SEA_FRIENDS, SHARK,
+import { canEat, CREATURES, FLOOR, FORMS, friendTraits, goalFor, isDanger, isFriend, LEVELS, nextGrowth, SHARK,
   swimSpeed } from "./rules.js";
 import { createReef, isSheltered } from "./reef.js";
 import { followPlayer, toWorld } from "./camera.js";
 import { createMission, MISSIONS, pickMission } from "./missions.js";
-import { SEA_FRIEND_KINDS } from "./species.js";
+import { DEFAULT_ZONE, hasTopHunter, topTier, ZONES } from "./zones.js";
 
-// `met` is the device's Ocean book: sea friends it has never met come first (see makeFriend).
-export function createWorld(width, height, reef = createReef(), artCount = 0, level = "little", mission = pickMission(),
-  met = new Set()) {
+// `zone` is where this swim happens (zones.js): its food chain fills the tiers and its list of sea
+// friends fills the water and the sea bed. `met` is the device's Ocean book: sea friends it has
+// never met come first (see makeFriend).
+export function createWorld(width, height, { reef = createReef(), artCount = 0, level = "little", zone = DEFAULT_ZONE,
+  mission, met = new Set() } = {}) {
+  const place = typeof zone === "string" ? ZONES[zone] : zone;
   const home = reef.corals[0];
   const start = { x: home ? home.x - 100 : 0, y: home ? home.y : 0 };
   const world = {
     player: { ...start, direction: 1 },
     camera: { ...start },
     reef,
+    zone: place,
     sheltered: false,
     stage: 0,
     bites: 0,
@@ -28,8 +32,8 @@ export function createWorld(width, height, reef = createReef(), artCount = 0, le
     events: [],
     artCount,
     level,
-    // Chosen at the start; it begins when you become a shark, and finishing it ends the swim.
-    mission: createMission(mission, level),
+    // Chosen at the start; it begins when you reach the biggest form, and finishing it ends the swim.
+    mission: createMission(mission ?? pickMission(null, place), level, place),
     // Learning: kinds already met this swim, floating name tags, and when the next fact card may open.
     greeted: new Set(),
     met,
@@ -40,9 +44,19 @@ export function createWorld(width, height, reef = createReef(), artCount = 0, le
   return world;
 }
 
-export function resetWorld(world, width, height, artCount = world.artCount, level = world.level, mission = pickMission(),
-  met = world.met) {
-  Object.assign(world, createWorld(width, height, world.reef, artCount, level, mission, met));
+// A new swim in the same place (or another): the reef, drawings, level and Ocean book carry over,
+// and the mission differs from the last one.
+export function resetWorld(world, width, height, options = {}) {
+  const zone = options.zone ?? world.zone;
+  const place = typeof zone === "string" ? ZONES[zone] : zone;
+  const mission = options.mission ?? pickMission(place === world.zone ? world.mission.id : null, place);
+  Object.assign(world, createWorld(width, height, { reef: world.reef, artCount: world.artCount, level: world.level,
+    met: world.met, ...options, zone: place, mission }));
+}
+
+// The animal on a tier, in this swim's zone.
+export function kindAt(world, tier) {
+  return world.zone.chain[tier];
 }
 
 export function swim(world, seconds, input, width, height) {
@@ -59,10 +73,11 @@ export function swim(world, seconds, input, width, height) {
   world.sheltered = isSheltered(world);
 
   const level = LEVELS[world.level] ?? LEVELS.little;
+  const top = topTier(world.zone);
   for (const creature of world.creatures) {
     const gap = distance(world.player, creature);
     const danger = !world.sheltered && isDanger(world.stage, creature.tier);
-    const pace = creature.tier === ORCA ? level.orcaChase : level.chase;
+    const pace = creature.tier === top && hasTopHunter(world.zone) ? level.orcaChase : level.chase;
     if (danger && pace && gap > 1 && (creature.hunt || gap < level.reach)) {
       // A hunter turns and chases, a little slower than you, so you can always get away.
       const speed = pace * swimSpeed(world.stage);
@@ -131,8 +146,8 @@ export function nearbyAnimals(world, width, height, skip = world.greeted) {
   };
   for (const creature of world.creatures) {
     if (creature.gone || !onScreen(creature)) continue;
-    const { kind, size } = CREATURES[creature.tier];
-    consider(kind, creature, distance(world.player, creature), 130 + size, size + 16);
+    const { size } = CREATURES[creature.tier];
+    consider(kindAt(world, creature.tier), creature, distance(world.player, creature), 130 + size, size + 16);
   }
   for (const friend of world.friends) {
     if (friend.floor) {
@@ -180,18 +195,18 @@ function meetCreature(world, creature) {
   if (edible) {
     creature.gone = true;
     world.gulp = 0.25;
-    burst(world, creature.x, creature.y, CREATURES[creature.tier].color, 7);
+    burst(world, creature.x, creature.y, { kind: kindAt(world, creature.tier) }, 7);
     world.particles.push({ x: creature.x, y: creature.y - 12, vx: 0, vy: -55, life: 0.9, color: "#fff4ad", text: "+1" });
     const growth = nextGrowth(world.stage, world.bites + 1, goalFor(world.level, world.stage));
     world.stage = growth.stage;
     world.bites = growth.bites;
     world.events.push({ type: growth.grew ? "grow" : "eat" });
     if (world.stage === SHARK && growth.grew) {
-      // A shark now: the swim's mission begins, and the game waits while it is explained.
+      // The biggest form now: the swim's mission begins, and the game waits while it is explained.
       world.mission.active = true;
       world.phase = "mission";
       world.events.push({ type: "mission" });
-    } else if (world.mission.active && !world.mission.done && MISSIONS[world.mission.id].eat === CREATURES[creature.tier].kind) {
+    } else if (world.mission.active && !world.mission.done && MISSIONS[world.mission.id].tier === creature.tier) {
       advanceMission(world, 1);
     }
     return;
@@ -201,10 +216,10 @@ function meetCreature(world, creature) {
   creature.gone = true;
   world.hearts -= 1;
   world.invulnerable = (LEVELS[world.level] ?? LEVELS.little).safe;
-  // Caught by the mission's orca: start staying away again.
+  // Caught by the mission's hunter: start staying away again.
   if (creature.hunt) Object.assign(world.mission, { have: 0, wait: 2 });
-  burst(world, world.player.x, world.player.y, "#ffdaab", 14);
-  world.events.push({ type: "hurt", by: CREATURES[creature.tier].kind });
+  burst(world, world.player.x, world.player.y, { color: "#ffdaab" }, 14);
+  world.events.push({ type: "hurt", by: kindAt(world, creature.tier) });
   if (world.hearts === 0) world.phase = "gameover";
 }
 
@@ -216,7 +231,7 @@ function swimAlong(world, creature, step) {
 function advanceMission(world, amount) {
   const mission = world.mission;
   mission.have = Math.min(mission.need, mission.have + amount);
-  if (MISSIONS[mission.id].count) world.events.push({ type: "mission-count" });
+  if (mission.id !== "find" && mission.id !== "flee") world.events.push({ type: "mission-count" });
   if (mission.have < mission.need) return;
   mission.done = true;
   mission.target = null;
@@ -225,33 +240,36 @@ function advanceMission(world, amount) {
   world.events.push({ type: "reef" }, { type: "done" });
 }
 
-// The blue whale and the orca come from ahead, where the shark is looking; an arrow on screen
+// The giant and the top hunter come from ahead, where the player is looking; an arrow on screen
 // points at them (see paint.js). Sea friends count once each.
 function followMission(world, step, width, height) {
   const mission = world.mission;
   if (!mission.active || mission.done || world.phase !== "playing") return;
   const ahead = world.player.direction || 1;
-  if (mission.id === "whale") {
-    let whale = world.friends.find(friend => friend.kind === "bluewhale");
-    if (!whale) {
-      whale = makeFriend(world, width, height, false, false, "bluewhale");
-      Object.assign(whale, { x: world.camera.x + ahead * (width / 2 + whale.size + 80), y: world.player.y, direction: -ahead });
-      world.friends.push(whale);
+  if (mission.id === "find") {
+    const giant = world.zone.giant;
+    let target = world.friends.find(friend => friend.kind === giant);
+    if (!target) {
+      target = makeFriend(world, width, height, false, false, giant);
+      Object.assign(target, { x: world.camera.x + ahead * (width / 2 + target.size + 80), y: world.player.y, direction: -ahead });
+      world.friends.push(target);
     }
-    mission.target = whale;
-    if (distance(world.player, whale) < 110 + whale.size) advanceMission(world, 1);
-  } else if (mission.id === "orca") {
+    mission.target = target;
+    if (distance(world.player, target) < 110 + target.size) advanceMission(world, 1);
+  } else if (mission.id === "flee") {
+    const top = topTier(world.zone);
     mission.target = world.creatures.find(creature => creature.hunt && !creature.gone) ?? null;
     mission.wait -= step;
     if (!mission.target && mission.wait <= 0) {
-      mission.target = { x: world.camera.x + ahead * (width / 2 + CREATURES[ORCA].size * 1.6), y: world.player.y + (Math.random() - 0.5) * 120,
-        tier: ORCA, direction: -ahead, wobble: 0, art: null, hunt: true };
+      mission.target = { x: world.camera.x + ahead * (width / 2 + CREATURES[top].size * 1.6), y: world.player.y + (Math.random() - 0.5) * 120,
+        tier: top, direction: -ahead, wobble: 0, art: null, hunt: true };
       world.creatures.push(mission.target);
     }
     advanceMission(world, step);
   } else if (mission.id === "friends") {
+    const gentle = [...world.zone.friends, world.zone.giant];
     for (const { kind } of nearbyAnimals(world, width, height, mission.seen)) {
-      if (!SEA_FRIEND_KINDS.includes(kind) || world.phase !== "playing") continue;
+      if (!gentle.includes(kind) || world.phase !== "playing") continue;
       mission.seen.add(kind);
       mission.last = kind;
       advanceMission(world, 1);
@@ -264,7 +282,7 @@ function fillOcean(world, width, height, initial) {
   while (world.creatures.length < target) {
     world.creatures.push(makeCreature(world, width, height, initial));
   }
-  const floorTarget = Math.max(1, Math.round(width / 520));
+  const floorTarget = world.zone.floor ? Math.max(1, Math.round(width / 520)) : 0;
   while (world.friends.filter(friend => friend.floor).length < floorTarget) {
     world.friends.push(makeFriend(world, width, height, initial, true));
   }
@@ -276,15 +294,16 @@ function fillOcean(world, width, height, initial) {
 
 // Sea friends not yet met this swim (or this mission) come first, so every swim shows someone new;
 // of those, ones this device has never met come before all others, so a child who knows the first
-// animals by heart soon meets the new ones. Now and then the blue whale swims by.
+// animals by heart soon meets the new ones. Now and then the zone's giant swims by.
 function makeFriend(world, width, height, initial, floor, only = null) {
   const seen = world.mission.active ? world.mission.seen : world.greeted;
-  const choices = SEA_FRIENDS.filter(friend => only ? friend.kind === only : friend.floor === floor && !friend.rare);
+  const zone = world.zone;
+  const choices = only ? [friendTraits(only)] : zone.friends.map(friendTraits).filter(friend => friend.floor === floor);
   const fresh = choices.filter(choice => !seen.has(choice.kind) &&
     !world.friends.some(friend => friend.kind === choice.kind));
   const unmet = fresh.filter(choice => !world.met.has(choice.kind));
-  const whale = !floor && !only && Math.random() < 0.05 && !world.friends.some(friend => friend.kind === "bluewhale");
-  const pool = whale ? SEA_FRIENDS.filter(friend => friend.rare) : unmet.length ? unmet : fresh.length ? fresh : choices;
+  const giant = !floor && !only && Math.random() < 0.05 && !world.friends.some(friend => friend.kind === zone.giant);
+  const pool = giant ? [friendTraits(zone.giant)] : unmet.length ? unmet : fresh.length ? fresh : choices;
   const { kind, size, speed } = pool[Math.floor(Math.random() * pool.length)];
   // Floor animals wait ahead of the fish, where it is heading; swimmers come from either side.
   const side = floor ? world.player.direction : Math.random() < 0.5 ? -1 : 1;
@@ -313,7 +332,7 @@ function makeCreature(world, width, height, initial) {
     tier,
     direction: initial ? (Math.random() < 0.5 ? -1 : 1) : -side,
     wobble: Math.random() * Math.PI * 2,
-    // About half the fish (never plankton) wear one of the child's older drawings.
+    // About half the fish (never the tier-0 snack) wear one of the child's older drawings.
     art: tier > 0 && world.artCount > 0 && Math.random() < 0.5 ? Math.floor(Math.random() * world.artCount) : null
   };
 }
@@ -331,21 +350,25 @@ export function dangerBehind(world, box, width, height) {
 
 function pickTier(world) {
   const level = LEVELS[world.level] ?? LEVELS.little;
-  // The shark's ocean holds every kind of fish but no plankton (great whites don't eat it),
-  // and now and then an orca.
-  if (world.stage === SHARK) return Math.random() < level.orcas ? ORCA : 1 + Math.floor(Math.random() * (SHARK + 1));
+  const top = topTier(world.zone);
+  // The biggest form's ocean holds every kind of fish but no tier-0 snack (great whites don't eat
+  // plankton), and now and then the top hunter, where the zone has one.
+  if (world.stage === SHARK) {
+    return hasTopHunter(world.zone) && Math.random() < level.orcas ? top : 1 + Math.floor(Math.random() * (SHARK + 1));
+  }
   const roll = Math.random();
   // Mostly snacks, a few of your own kind, and some bigger hunters.
   const [below, snack, school, hunter] = level.odds;
   const offset = roll < below ? -1 : roll < snack ? 0 : roll < school ? 1 : roll < hunter ? 2 : 3;
-  return Math.max(0, Math.min(ORCA, world.stage + offset));
+  return Math.max(0, Math.min(top, world.stage + offset));
 }
 
-function burst(world, x, y, color, count) {
+// `paint` is the burst's colour, or the kind whose swatch colours it (paint.js looks it up).
+function burst(world, x, y, paint, count) {
   for (let index = 0; index < count; index++) {
     const angle = Math.random() * Math.PI * 2;
     const speed = 20 + Math.random() * 65;
-    world.particles.push({ x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, life: 0.55, color });
+    world.particles.push({ x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, life: 0.55, ...paint });
   }
 }
 

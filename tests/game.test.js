@@ -1,7 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { canEat, CREATURES, FORMS, goalFor, hunters, isDanger, isFriend, LEVELS, nextGrowth, ORCA, SHARK, swimSpeed } from "../src/rules.js";
+import { canEat, CREATURES, FORMS, friendTraits, goalFor, hunters, isDanger, isFriend, LEVELS, nextGrowth, SEA_FRIENDS, SHARK,
+  swimSpeed } from "../src/rules.js";
 import { createWorld, dangerBehind, resetWorld, swim } from "../src/world.js";
+import { formKind, hasTopHunter, KINDS, topTier, ZONES, zoneKinds } from "../src/zones.js";
+import { SPECIES } from "../src/species.js";
+
+const ORCA = topTier(ZONES.open);
 
 const idleInput = { keys: new Set(), pointer: null };
 
@@ -80,7 +85,7 @@ test("replacement fish swim into the visible ocean", () => {
 });
 
 test("growing into a shark starts the swim's mission instead of ending the swim", () => {
-  const world = createWorld(390, 844, undefined, 0, "little", "tuna");
+  const world = createWorld(390, 844, { mission: "hunt" });
   world.phase = "playing";
   world.stage = 3;
   world.bites = 8;
@@ -113,10 +118,24 @@ test("every predator is clearly bigger than the fish it hurts, every snack clear
   }
 });
 
-test("the ocean is one true food chain, and your own kind is your school", () => {
-  assert.deepEqual(CREATURES.map(creature => creature.kind), ["plankton", "sardine", "mackerel", "squid", "tuna", "shark", "orca"]);
+test("every zone is one true food chain, and your own kind is your school", () => {
+  assert.deepEqual(ZONES.open.chain, ["plankton", "sardine", "mackerel", "squid", "tuna", "shark", "orca"]);
+  assert.deepEqual(ZONES.reef.chain, ["plankton", "damselfish", "lionfish", "grouper", "reefshark", "tigershark", "orca"]);
+  for (const zone of Object.values(ZONES)) {
+    assert.ok(zone.chain.length === 6 || zone.chain.length === 7, `${zone.id}: five forms, a snack, and maybe a top hunter`);
+    assert.equal(hasTopHunter(zone), zone.chain.length === 7);
+    for (let stage = 0; stage < FORMS.length; stage++) {
+      assert.equal(formKind(zone, stage), zone.chain[stage + 1], `${zone.id} form ${stage} is the same animal as tier ${stage + 1}`);
+    }
+    for (const kind of zoneKinds(zone)) assert.ok(SPECIES[kind], `${zone.id}: ${kind} has no card`);
+    for (const kind of [...zone.friends, zone.giant]) assert.ok(friendTraits(kind), `${zone.id}: ${kind} has no size or speed`);
+    assert.ok(zone.friends.map(friendTraits).some(friend => !friend.floor), `${zone.id}: someone swims`);
+    assert.equal(zone.friends.map(friendTraits).some(friend => friend.floor), zone.floor, `${zone.id}: floor animals only where there is a floor`);
+    assert.ok(!zone.friends.includes(zone.giant), `${zone.id}: the giant is rare, not an everyday friend`);
+  }
+  assert.deepEqual([...new Set(KINDS)].length, KINDS.length, "every animal is counted once");
+  for (const friend of SEA_FRIENDS) assert.ok(KINDS.includes(friend.kind), `${friend.kind} lives nowhere`);
   for (let stage = 0; stage < FORMS.length; stage++) {
-    assert.equal(CREATURES[stage + 1].kind, FORMS[stage].kind, `form ${stage} is the same animal as tier ${stage + 1}`);
     for (let tier = 0; tier < CREATURES.length; tier++) {
       const roles = [canEat(stage, tier), isFriend(stage, tier), isDanger(stage, tier)].filter(Boolean);
       assert.equal(roles.length, 1, `tier ${tier} has exactly one role for stage ${stage}`);
@@ -155,7 +174,7 @@ test("a new swim starts with a safe period and no predator close by", () => {
 
 test("a shark's ocean holds every kind of fish and a few orcas, but no plankton", () => {
   for (const level of Object.keys(LEVELS)) {
-    const world = createWorld(1440, 900, undefined, 0, level);
+    const world = createWorld(1440, 900, { level });
     world.phase = "playing";
     world.stage = 4;
     const tiers = new Set();
@@ -179,7 +198,7 @@ test("a shark's ocean holds every kind of fish and a few orcas, but no plankton"
 test("new fish are never more than three tiers above you, so the hunters list is complete", () => {
   for (const level of Object.keys(LEVELS)) {
     for (let stage = 0; stage < FORMS.length; stage++) {
-      const world = createWorld(1440, 900, undefined, 0, level);
+      const world = createWorld(1440, 900, { level });
       Object.assign(world, { phase: "playing", stage, invulnerable: 99 });
       const seen = new Set();
       for (let round = 0; round < 60; round++) {
@@ -187,7 +206,7 @@ test("new fish are never more than three tiers above you, so the hunters list is
         swim(world, 0.016, idleInput, 1440, 900);
         for (const creature of world.creatures) if (isDanger(stage, creature.tier)) seen.add(creature.tier);
       }
-      assert.deepEqual([...seen].sort(), hunters(stage), `${level}, stage ${stage}`);
+      assert.deepEqual([...seen].sort(), hunters(stage, ZONES.open), `${level}, stage ${stage}`);
     }
   }
 });
@@ -196,7 +215,7 @@ test("Big swimmer takes longer to grow, and its hunters really chase you", () =>
   assert.ok(FORMS.slice(0, SHARK).every((form, stage) => goalFor("little", stage) === form.goal), "Little swimmer is the gentle game");
   assert.ok(FORMS.slice(0, SHARK).every((form, stage) => goalFor("big", stage) > goalFor("little", stage)));
   const chased = level => {
-    const world = createWorld(390, 844, undefined, 0, level);
+    const world = createWorld(390, 844, { level });
     Object.assign(world, { phase: "playing", stage: 0, invulnerable: 99, friends: [] });
     // A mackerel 150px to the right, swimming away from you.
     const hunter = { x: world.player.x + 150, y: world.player.y, tier: 2, direction: 1, wobble: 0 };
@@ -233,7 +252,7 @@ test("a bigger fish only hurts on a real bump, not a brush", () => {
 });
 
 test("drawn fish replace about half the ocean's fish, never plankton", () => {
-  const world = createWorld(390, 844, undefined, 3);
+  const world = createWorld(390, 844, { artCount: 3 });
   world.phase = "playing";
   world.stage = 1;
   world.invulnerable = 99;
@@ -256,7 +275,7 @@ test("without saved drawings every fish is a built-in fish", () => {
   const world = createWorld(390, 844);
   assert.ok(world.creatures.length > 0);
   assert.ok(world.creatures.every(creature => creature.art === null));
-  resetWorld(world, 390, 844, 2);
+  resetWorld(world, 390, 844, { artCount: 2 });
   assert.equal(world.artCount, 2);
   resetWorld(world, 390, 844);
   assert.equal(world.artCount, 2, "a restart keeps the drawings");

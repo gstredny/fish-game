@@ -4,7 +4,7 @@
 // The only test-time change is one line appended to main.js in flight (exposes `world` and `input`).
 // Same setup as tools/browser-play.mjs, then:  node tools/browser-autoplay.mjs
 import { mkdirSync, writeFileSync } from "node:fs";
-import { KINDS } from "../src/species.js";
+import { KINDS } from "../src/zones.js";
 // Every animal counts as met, so first-meeting fact cards don't pause these checks;
 // tools/browser-learn.mjs checks the cards.
 const MET_ALL = `try { localStorage.setItem("little-fish-met-v1", ${JSON.stringify(JSON.stringify(KINDS))}); } catch {}`;
@@ -63,7 +63,7 @@ await evaluate(`document.querySelector("#level-${LEVEL}").click()`);
 await evaluate(`document.querySelector("#start-button").click()`);
 await sleep(300);
 // Every swim picks a mission; this one eats tuna, which the controller below knows how to do.
-await evaluate(`Object.assign(__game.world.mission, { id: "tuna", need: ${LEVEL === "big" ? 4 : 2} })`);
+await evaluate(`Object.assign(__game.world.mission, { id: "hunt", need: ${LEVEL === "big" ? 4 : 2} })`);
 console.log("level:", await evaluate("__game.world.level"));
 // Controller: every 40 ms, steer toward the nearest edible creature (not a schoolmate of your own kind)
 // and away from nearby predators,

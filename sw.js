@@ -1,4 +1,4 @@
-const CACHE = "little-fish-v15";
+const CACHE = "little-fish-v16";
 const FILES = [
   "./",
   "./index.html",
@@ -24,7 +24,11 @@ const FILES = [
   "./src/ocean-book.js",
   "./src/missions.js",
   "./src/lines.js",
+  "./src/zones.js",
+  "./src/species-reef.js",
+  "./src/paint-reef-animals.js",
   "./art/ocean.webp",
+  "./art/ocean-reef.webp",
   "./art/animals/plankton.webp",
   "./art/animals/sardine.webp",
   "./art/animals/mackerel.webp",
@@ -58,6 +62,13 @@ const FILES = [
   "./art/animals/seacucumber.webp",
   "./art/animals/moray.webp",
   "./art/animals/horseshoecrab.webp",
+  "./art/animals/damselfish.webp",
+  "./art/animals/lionfish.webp",
+  "./art/animals/grouper.webp",
+  "./art/animals/reefshark.webp",
+  "./art/animals/tigershark.webp",
+  "./art/animals/coral.webp",
+  "./art/animals/giantclam.webp",
   "./voice/manifest.json",
   "./manifest.json",
   "./icons/fish.svg",
