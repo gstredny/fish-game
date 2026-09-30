@@ -66,3 +66,11 @@ Slice order: players (storage keys, start-screen buttons, flow test); then the g
 - Pages run 36767749636 for 6fd58eb: completed, success
   (https://github.com/gstredny/fish-game/actions/runs/36767749636). `curl` of the live `sw.js` prints
   `const CACHE = "little-fish-v21";`; live `index.html` contains `player-2` (1 match).
+- George asked for no timer: "Have them click tell me for it to begin to start speaking. Let them sit
+  there and think with it. Don't let it have a timer." Test first: the guess test now fires every
+  scheduled timer and runs 20 s of frames. It failed on the timer version (`actual: 'Plankton',
+  expected: '?'`). Removed `GUESS_WAIT` and the timer; a `guessing` flag waits for Tell me! (or Enter).
+  `sw.js` `little-fish-v22`. `npm test` 110 passed, 0 failed, 0 skipped. Muted browser check (same scratch
+  script plus a 7 s wait): 3 passed, 0 failed, card still "?" after 7 s. Committed and pushed 3cce855.
+- Pages run 36768943101 for 3cce855: completed, success. Live `sw.js` prints `const CACHE = "little-fish-v22";`;
+  live `src/main.js` has 0 matches for `GUESS_WAIT` (timer gone).

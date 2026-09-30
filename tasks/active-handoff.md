@@ -7,7 +7,8 @@ Active task: `tasks/016-players-and-guess.md`
 Live. Commits f715857 (players) and 6fd58eb (guess) pushed; Pages run 36767749636 succeeded;
 live `sw.js` is `little-fish-v21` and live `index.html` has the Player 2 button. Player 1 / Player 2
 each keep their own Ocean book, reef, level and place (Player 1 keeps the old keys). New animals met
-while swimming: photo + "What animal is this?", 5 s or "Tell me!", then the card. `npm test` 110/110.
+while swimming: photo + "What animal is this?", then it waits with NO timer until "Tell me!"
+(3cce855, Pages run 36768943101 success, live cache `little-fish-v22`). `npm test` 110/110.
 Muted browser look passed at 844x390, 568x320, 1280x800. Not yet tried on George's phone.
 Known: `mission-flow.test.js` "becoming a shark..." is flaky (~3 in 20), an old test bug; the 844x390
 start screen clips the title by 5px, also old.
