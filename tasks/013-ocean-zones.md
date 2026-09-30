@@ -1,7 +1,7 @@
 # Ocean zones: six places to swim, each with its own animals
 
 Date: 2026-09-30
-Status: in progress
+Status: slice 1 (coral reef + zone plumbing) done and pushed; slices 2–5 open
 Branch: `master`
 
 ## Intent Contract
@@ -96,17 +96,51 @@ today, so an animal is met when it is close, which in the dark is also when it b
 
 ## Done criteria
 
-- [ ] `npm test` passes; each new test seen red with its rule broken.
-- [ ] Every new animal: species entry, real licensed photo (looked at), drawing, voice clips, CREDITS line.
-- [ ] `node tools/browser-learn.mjs` and `browser-zones.mjs` (new) pass in headless Chromium with no page
-      errors: each zone starts, its chain grows, its book section shows, its picker fits at 568×320.
-- [ ] `browser-sideways`, `browser-play`, `browser-reef`, `browser-sound`, `browser-voice`, `browser-update`,
-      `browser-autoplay` still pass.
-- [ ] Screenshots of each zone inspected; the dark zones show the glow and the lights.
-- [ ] Pushed to `origin/master` and live on GitHub Pages; George tries it on the phone (his check, not a
-      criterion).
+Slice 1 (zones + coral reef, plus George's three asks):
+- [x] `npm test` → 110 passed, 0 failed, 0 skipped. New tests seen red with their rule broken: greetings
+      never wait (`GREET_GAP = 0`), the swim ignores the picked zone, floor animals where there is no floor,
+      Home forgets to reset, every zone offers the flee mission. (A sixth, "top hunter spawns where there is
+      none", was vacuous: the top tier there is your own kind. Replaced by the flee-mission check.)
+- [x] Every reef animal: species entry (facts sourced, flags in the log), real licensed photo (each looked
+      at: 600×400 WebP, CC BY / CC BY-SA from Commons), drawing, voice clips, CREDITS line.
+- [x] `browser-zones` (new) and `browser-learn` pass in headless Chrome 154, no page errors: the picker fits
+      and shows "new" counts, the reef is remembered and its water shows behind the start screen, the swim
+      says the welcome line and names reef forms in the HUD and mission card, Home works, the book is by
+      place, the fish switch works, start screen and book fit at 844×340, 667×375 and 568×320.
+- [x] `browser-sideways`, `browser-play` (desktop, phone), `browser-reef`, `browser-autoplay`, `browser-voice`
+      pass (Chrome CDP); `browser-sound`, `browser-update`, `browser-check` pass (Playwright Chromium).
+- [x] Screenshots inspected: the reef start screen, the reef swim with all seven drawings, the tiger shark as
+      player, the mission card, pause with Home, the book by place, the start screen with a saved drawing at
+      844×390 and 1280×600 (the fish switch and the zone row needed tighter mid-height styles).
+- [ ] Pushed to `origin/master` and live on GitHub Pages (sw cache `little-fish-v16`).
+
+Later slices (the deep, the bottom, kelp forest, icy sea):
+- [ ] Same checks per zone; the dark zones' screenshots show the glow and the lights.
 
 ## Attempt log
 
 - 2026-09-30: Rebased local `master` onto `origin/master` (32 commits, PR #4 harder animals). Read the game.
   Wrote this plan. Started the voice venv install in the background (Python 3.12, Kokoro model download).
+- 2026-09-30: George added three asks mid-build, folded into slice 1: a **Home** button (pause, win, game over);
+  **Swim as a real fish** once a drawing is saved (the drawing joins the other fish); calmer greetings (one known
+  animal's name tag and line every 6 s, `GREET_GAP`), since in Big swimmer the names came "penguin, starfish, man
+  o' war" all at once. Fish speed unchanged, as asked.
+- 2026-09-30: Slice 1 plumbing built: `zones.js`; tiers in `rules.js` lost their kinds; `world.js` takes an
+  options object (`{ reef, artCount, level, zone, mission, met }`); missions by role (`hunt`, `snack`, `friends`,
+  `find`, `flee`); `lines.js` covers every zone; picker, book by place, Home, fish switch in `main.js`. Reef
+  panorama rendered (`tools/render-ocean.py` now has a `ZONES` palette; `art/ocean-reef.webp`). Two helpers wrote
+  `species-reef.js` + `paint-reef-animals.js` and sourced the 7 photos. Tests updated; new `tests/zone-flow.test.js`
+  and `tools/browser-zones.mjs`. First `npm test` after the rewrite: only photo and voice-clip checks failing
+  (waiting on the photos and the recording). Voice venv set up at `.venv`; recording 199 lines.
+- 2026-09-30: Photos: the helper found all seven on Commons (licences from the API metadata; all CC BY,
+  CC BY-SA or public domain). Voice: Hugging Face download failed with `CERTIFICATE_VERIFY_FAILED` (the work
+  Mac's HTTPS inspection); fixed by building a CA bundle from the keychain and setting `SSL_CERT_FILE` (now
+  in the README). 56 clips generated, 143 reused, 2 pruned, 199 total.
+- 2026-09-30: Layout: with a saved drawing the start screen overflowed at 1280×600 and 568×320 (the zone row
+  and the fish switch add height). Fixed with mid-height styles (smaller title, tighter gaps), hiding the
+  tagline under 340px, and keeping the fish switch in the button row on sideways phones, small and unwrapped.
+- 2026-09-30: Fact flags from the species helper, kept as written: "orcas eat reef sharks" (orcas eat many
+  sharks incl. a close relative; no reef-shark-specific record), "sometimes reef sharks" eat lionfish
+  (sharks documented, not reef-shark-specific), "wider than a door" for a giant clam over a metre.
+- 2026-09-30: Commits on `master`: `4c34fc6` zones + coral reef, `fa74b85` voice, `950a5a2` Home / real
+  fish / calmer greetings, then this write-up. Pushed to `origin/master` after this entry.

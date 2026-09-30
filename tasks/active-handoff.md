@@ -1,15 +1,27 @@
-# Active handoff — living reef
+# Active handoff — ocean zones
 
-Date: 2026-09-29
+Date: 2026-09-30
 Branch: `master`
-Task: `tasks/004-living-reef.md`
+Task: `tasks/013-ocean-zones.md`
 
-The living reef gameplay is implemented locally: one coral reward per shark swim; pending rewards and planted world coordinates saved on this device; coral survives restarts/reloads; three resident clownfish per colony retreat from nearby predators; small forms can shelter inside, leaving or growing too large restores danger. Placement supports touch, mouse, Enter, cancel, and overlap rejection. Storage failure is visible rather than claiming persistence. Returning swims start beside the reef. New runtime modules are included in offline cache v4.
+Slice 1 is done: the start screen asks where to swim (Coral reef, Open ocean), each zone has its own food
+chain, sea friends, giant, missions and Blender panorama; the Ocean book is grouped by place. Plus George's
+three asks: Home button, "Swim as a real fish", greetings paced 6 s apart. 40 animals in the book.
 
-Verification: `npm test` passed 26, failed 0, skipped 0; syntax checks and `git diff --check` passed. Cache audit verified 15 asset paths, 13 runtime imports, and the existence of all app controls. Tests include the real main module with a minimal DOM/canvas fixture; this is not browser or visual verification.
+Verification: `npm test` 110 passed, 0 failed; all ten browser scripts pass (Chrome CDP on port 9444 for
+most, Playwright Chromium for sound, update and check); screenshots inspected. Details and the fact flags
+are in the task file.
 
-Remaining: Blender MCP is not exposed and Blender is absent from `/Applications`; canvas coral is a working placeholder. The art preference/connection question has not been answered. Browser QA remains open: Chrome MCP is unavailable due to its shared profile and an approval requirement forbidden by this session policy; server binding and direct CDP access fail with EPERM; direct headless Chrome exited 134. `tools/browser-reef.mjs` is ready for an environment with a local server and isolated Chrome on port 9444, but no live checks or screenshots ran here.
+Ship state: committed on `master` (`4c34fc6`, `fa74b85`, `950a5a2`, plus the task write-up) and pushed to
+`origin/master`; GitHub Pages serves master, so it is live once Pages rebuilds (check `sw.js` says
+`little-fish-v16`). Not yet tried on George's phone.
 
-Ship state: committed on `master` in `617c7ec` (browser scripts), `4bd7964` (earlier gameplay fixes), and `500c7c7` (living reef). The Claude Code session created the commits; this Codex session pushed them successfully. `git ls-remote origin refs/heads/master` matched local HEAD at `500c7c703c3cc11ed491125e2cdeb0f255d9f2e0`. Post-push `npm test` passed 26, failed 0, skipped 0. No PR, site deployment, or live-site verification occurred. Task 004 stays open for browser and artwork criteria.
+Next: slice 2, **The deep** (twilight zone): darkness overlay with the player's glow, `glow` kinds painted on
+top of the dark, no floor, 10 new animals (marine snow → shrimp → lanternfish → viperfish → giant squid →
+sperm whale; hatchetfish, barreleye, vampire squid, oarfish as giant; anglerfish moves here). Then the
+bottom, kelp forest, icy sea. Per zone: species-*.js, paint-*-animals.js, photos + CREDITS, a `ZONES`
+palette in `tools/render-ocean.py` and a render, voice re-record (`SSL_CERT_FILE` bundle on the work Mac,
+see README), sw.js cache bump, tests.
 
-Permission diagnosis: local config sets `default_permissions = ":workspace"` and `approval_policy = "never"`, but saved execution-policy rules already allow standalone `git add`, `git commit -m`, and `git push origin`. Earlier Git failures occurred inside compound shell commands, including heredocs; complex wrappers do not match the individual command rules. Standalone staging, commit `e470fea` (publication status, gitleaks passed), and its push succeeded in this session. No permission settings needed changing for these approved operations. Use separate Git tool calls. **Ask for approval** remains an option for commands that need a new exception. Earlier failed attempts remain in the append-only task log.
+Gotchas: never `cd` in a shell command (a hook blocks it); Python needs the keychain CA bundle for Hugging
+Face; `tools/__pycache__/` appears after `py_compile` and is now ignored.
