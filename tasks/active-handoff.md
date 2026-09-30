@@ -1,4 +1,13 @@
-# Active handoff — two players, and "What animal is this?"
+# Active handoff — voice pronunciation fixes
+
+Date: 2026-09-30
+Task: `tasks/017-pronunciation.md`
+
+Live (426a567, Pages run 36770779163, cache `little-fish-v23`). `SAY_AS` in `tools/make-voice.py` spells
+rattail, narwhal, amphipod, axes and man o' war in Kokoro phonemes; 31 lines re-recorded. Whisper heard
+every rattail line as "rat tail" (before: rattle, Rachel). `npm test` 110/110. Not heard on George's phone yet.
+
+## Previous — two players, and "What animal is this?"
 
 Date: 2026-09-30
 Branch: `master`
