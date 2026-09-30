@@ -57,7 +57,7 @@ Twelve harder animals teach bigger ideas:
 
 Sea friends this device has never met come first, so a child who has met everyone else soon meets the new ones.
 
-The **Ocean book** (on the start and pause screens) keeps every card met on this device, grouped by place, so a second child can hear them all again. An animal that lives in two places shows in both. **Find out more** on a card opens a Google search for "<animal> facts for kids", with SafeSearch on. It shows only when the device is online. The speaker button at the top turns the voice off; the device remembers. The facts are in `src/species.js`; photo credits are in [CREDITS.md](CREDITS.md).
+The **Ocean book** (on the start and pause screens) keeps every card this player has met, grouped by place. **Player 1** and **Player 2** on the start screen each keep their own Ocean book, reef, level and place to swim on the same phone; a save from before players is Player 1's. An animal that lives in two places shows in both. **Find out more** on a card opens a Google search for "<animal> facts for kids", with SafeSearch on. It shows only when the device is online. The speaker button at the top turns the voice off; the device remembers. The facts are in `src/species.js`; photo credits are in [CREDITS.md](CREDITS.md).
 
 ## The voice
 

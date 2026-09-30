@@ -397,6 +397,8 @@ h1 em { color: #ffdf9c; font-style: normal; }
   font-weight: 800;
 }
 .level-button[aria-pressed="true"] { border-color: #ffdd93; background: #ffdd93; color: #244c56; }
+/* Player 1 / Player 2 sit beside them, a little apart. */
+.pick-row { display: flex; flex-wrap: wrap; column-gap: 22px; }
 
 /* The mission card shows what to do in big letters; "Find out more" opens a web search. */
 .mission-goal { margin-top: 10px; color: #fff2b7; font-size: clamp(24px, 3.4vw, 32px); font-weight: 800; line-height: 1.15; }

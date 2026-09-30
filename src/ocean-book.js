@@ -1,7 +1,7 @@
 import { KINDS } from "./zones.js";
 
-// The animals met on this device. The first meeting opens a fact card; after that the
-// Ocean book lets anyone who plays here see every card again.
+// The animals this player has met. The first meeting opens a fact card; after that the
+// Ocean book lets them see every card again.
 export const MET_KEY = "little-fish-met-v1";
 
 export function loadMet(storage = globalThis.localStorage) {

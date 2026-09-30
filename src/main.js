@@ -13,6 +13,7 @@ import { swatch } from "./animal-paint.js";
 import { PHOTOS } from "./photos.js";
 import { createVoice } from "./voice.js";
 import { loadMet, saveMet } from "./ocean-book.js";
+import { PLAYER_KEY, PLAYERS, playerSaves, savedPlayer } from "./players.js";
 import { missionCount, missionDone, missionDoneLine, missionGoal, missionKind, missionLine, pickMission } from "./missions.js";
 import { FIND_THAT_ONE, VOICE_ON } from "./lines.js";
 
@@ -43,13 +44,12 @@ let reefSaved = true;
 let previousFrame = 0;
 let visualTime = 0;
 let toastTimer;
-// Learning: a fact card opens the first time this device meets each animal, at most one every
+// Learning: a fact card opens the first time this player meets each animal, at most one every
 // CARD_GAP seconds of swimming. An animal met before gets a name tag and a line, at most one every
 // GREET_GAP seconds, so a busy ocean does not rattle off names. The Ocean book shows every card met.
 const CARD_GAP = 20;
 const GREET_GAP = 6;
 const voice = createVoice();
-const met = loadMet();
 const voiceButtons = [document.querySelector("#voice-button"), document.querySelector("#intro-voice-button")];
 let cardKind = null;
 let cardFrom = null;
@@ -59,14 +59,10 @@ let lastSwim = null;
 
 let storage = null;
 try { storage = window.localStorage; } catch { /* private mode: preferences last for this visit */ }
-// Little swimmer or Big swimmer and where to swim, remembered on this device.
-let level = "little";
-let zone = DEFAULT_ZONE;
-try {
-  if (storage?.getItem(LEVEL_KEY) === "big") level = "big";
-  if (ZONE_IDS.includes(storage?.getItem(ZONE_KEY))) zone = storage.getItem(ZONE_KEY);
-} catch {}
-let world = createWorld(width, height, { reef: loadReef(), zone });
+let player = savedPlayer(storage);
+let saves, level, zone, met;
+readPlayer();
+let world = createWorld(width, height, { reef: loadReef(saves), zone });
 const sound = createSound();
 sound.setMuted(voice.muted);
 
@@ -81,10 +77,40 @@ function renderZones() {
   }).join("");
 }
 
+// Little swimmer or Big swimmer, where to swim, and the Ocean book: this player's own.
+function readPlayer() {
+  saves = playerSaves(storage, player);
+  level = "little";
+  zone = DEFAULT_ZONE;
+  try {
+    if (saves.getItem(LEVEL_KEY) === "big") level = "big";
+    if (ZONE_IDS.includes(saves.getItem(ZONE_KEY))) zone = saves.getItem(ZONE_KEY);
+  } catch {}
+  met = loadMet(saves);
+}
+
+// Picked on the start screen: the water, book, reef and buttons become this player's.
+function choosePlayer(choice) {
+  player = choice;
+  try { storage?.setItem(PLAYER_KEY, player); } catch {}
+  readPlayer();
+  resetWorld(world, width, height, { zone, met, reef: loadReef(saves) });
+  showPlayer();
+  showLevel();
+  renderZones();
+  updateHud();
+}
+
+function showPlayer() {
+  for (const choice of PLAYERS) {
+    document.querySelector(`#player-${choice}`).setAttribute("aria-pressed", String(player === choice));
+  }
+}
+
 function chooseZone(id) {
   if (!ZONE_IDS.includes(id)) return;
   zone = id;
-  try { storage?.setItem(ZONE_KEY, zone); } catch {}
+  try { saves.setItem(ZONE_KEY, zone); } catch {}
   // The water behind the start screen is the place you picked.
   resetWorld(world, width, height, { zone });
   renderZones();
@@ -151,12 +177,12 @@ function showLevel() {
 
 function chooseLevel(choice) {
   level = choice;
-  try { storage?.setItem(LEVEL_KEY, level); } catch {}
+  try { saves.setItem(LEVEL_KEY, level); } catch {}
   showLevel();
 }
 
 function rememberReef() {
-  reefSaved = saveReef(world.reef);
+  reefSaved = saveReef(world.reef, saves);
   updateHud();
 }
 
@@ -251,7 +277,7 @@ function meetAnimals() {
       if (world.time < world.nextCardAt) continue;
       world.greeted.add(kind);
       met.add(kind);
-      saveMet(met);
+      saveMet(met, saves);
       world.phase = "meeting";
       steering.clear();
       input.keys.clear();
@@ -415,7 +441,7 @@ function finishSwim(first = false) {
   const kind = { find: world.zone.giant, friends: world.mission.last }[world.mission.id];
   if (first && kind && !met.has(kind)) {
     met.add(kind);
-    saveMet(met);
+    saveMet(met, saves);
     return openCard(kind, "won");
   }
   showWon();
@@ -580,6 +606,7 @@ document.querySelector("#cancel-plant-button").addEventListener("click", stopPla
 document.querySelector("#mission-go").addEventListener("click", closeMission);
 document.querySelector("#level-little").addEventListener("click", () => chooseLevel("little"));
 document.querySelector("#level-big").addEventListener("click", () => chooseLevel("big"));
+for (const choice of PLAYERS) document.querySelector(`#player-${choice}`).addEventListener("click", () => choosePlayer(choice));
 document.querySelector("#zone-pick").addEventListener("click", event => chooseZone(event.target?.closest?.("[data-zone]")?.dataset.zone));
 for (const id of ["paused-home-button", "won-home-button", "gameover-home-button"]) {
   document.querySelector(`#${id}`).addEventListener("click", goHome);
@@ -626,6 +653,7 @@ window.addEventListener("appinstalled", () => { installPrompt = null; introFoot.
 resize();
 updateHud();
 showVoice();
+showPlayer();
 showLevel();
 showPanel("intro");
 requestAnimationFrame(frame);
