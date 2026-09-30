@@ -21,9 +21,16 @@ Browser verification remains open: no connected browser; the local HTTP server w
 runner is `node tools/browser-check.mjs screenshots/remove-drawing`; run it when a browser-capable
 environment is available, inspect screenshots, then finish the task criterion.
 
-Ship state: George has authorized committing and pushing the tested removal so he can test on
-his phone. Commit/push and Pages verification are underway. The remote preflight matches local
-HEAD bb7662576239f2c0ca00557730592bea759f7b67; Pages builds master from /. Last known release evidence below.
+Ship state: removal commit 99fac65acadd79fecd43bc3a2787d448d7b1deee is committed and pushed to
+origin/master. `git ls-remote` confirms that SHA. GitHub Pages run 36747099993 completed with
+conclusion success for that SHA: https://github.com/gstredny/fish-game/actions/runs/36747099993.
+The site is https://gstredny.github.io/fish-game/ and Pages builds master from /.
+George explicitly authorized shipping so he can test on his phone. Deployment evidence is being
+committed separately in the two task/handoff documents.
+
+Live served files remain unverified: curl returned `Could not resolve host: gstredny.github.io`,
+and the web tool also could not fetch the live home page, sw.js, main.js or paint.js. Browser and
+live-file criteria remain open; do not call phone behavior or screenshots verified.
 
 ## Previous release — ocean zones
 

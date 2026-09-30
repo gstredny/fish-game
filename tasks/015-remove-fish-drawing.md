@@ -1,7 +1,7 @@
 # Remove fish drawing
 
 Date: 2026-09-30
-Status: shipping authorized; automated verification passed; browser verification blocked
+Status: committed, pushed and deployed by Pages; browser/live-file verification remains open
 
 ## Intent contract
 
@@ -22,8 +22,8 @@ verify old saved data, growth and zone changes; inspect desktop and sideways-pho
 - [ ] `node tools/browser-check.mjs`: desktop and sideways-phone smoke checks pass; screenshots inspected.
 - [x] `git diff --check`: clean.
 - [x] Update `tasks/active-handoff.md` with exact verification and ship state.
-- [ ] `git ls-remote origin refs/heads/master`: includes the removal commit.
-- [ ] `gh api repos/gstredny/fish-game/actions/runs`: Pages deployment succeeds for the pushed commit.
+- [x] `git ls-remote origin refs/heads/master`: includes the removal commit.
+- [x] `gh api repos/gstredny/fish-game/actions/runs`: Pages deployment succeeds for the pushed commit.
 - [ ] `curl -fsS https://gstredny.github.io/fish-game/sw.js`: live cache is `little-fish-v19`;
   live HTML and renderer use built-in animals without drawing controls or overrides.
 
@@ -80,3 +80,25 @@ verify old saved data, growth and zone changes; inspect desktop and sideways-pho
   `git ls-remote origin refs/heads/master` exit 0, bb7662576239f2c0ca00557730592bea759f7b67,
   matching local HEAD. `gh api repos/gstredny/fish-game/pages` exit 0: source master at /,
   status built, https://gstredny.github.io/fish-game/.
+- Commit succeeded: 99fac65 `Remove fish drawing feature`, 24 explicit authored paths.
+  Staged paths checked before commit; gitleaks scanned 22.33 KB and found no leaks.
+  Proceeding with the authorized normal push to origin/master.
+- `git push origin master`: exit 0, `bb76625..99fac65 master -> master`.
+  Full removal SHA: 99fac65acadd79fecd43bc3a2787d448d7b1deee.
+  First deployment discovery request failed: `gh api .../actions/runs?per_page=5` exit 1,
+  `error connecting to api.github.com`. Waiting and retrying the exact pushed SHA.
+- `git ls-remote origin refs/heads/master`: exit 0, matching the full removal SHA.
+  Deployment lookup for that SHA succeeded: Pages run 36747099993 is in progress:
+  https://github.com/gstredny/fish-game/actions/runs/36747099993.
+  Live-file curl attempt failed before fetching any file: exit 6,
+  `Could not resolve host: gstredny.github.io`. Watching the Pages run and checking another
+  available read-only web surface.
+- `gh run watch 36747099993 --exit-status --interval 10`: exit 1, temporary API connection
+  failure. Web-tool fetches of the live home page, sw.js, main.js and paint.js also returned
+  inaccessible. Direct Pages status polling remains available intermittently.
+- `gh api repos/gstredny/fish-game/actions/runs/36747099993` exit 0:
+  `head_sha: 99fac65acadd79fecd43bc3a2787d448d7b1deee`, `status: completed`,
+  `conclusion: success`. GitHub Pages reports successful deployment of the removal.
+  The source/cache/UI changes are committed and pushed. Served-file checks, screenshots and
+  phone behavior remain unverified; the browser/live-file criteria stay open. Recording this
+  ship-state evidence in a separate documentation commit, then pushing that commit as authorized.
