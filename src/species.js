@@ -1,7 +1,9 @@
 // What the fact cards and the voice say. Written for five- and six-year-olds: short, true,
 // and about who eats whom. `lines` are the one-liners spoken when you meet an animal again.
-// The first animals live here; each later zone's animals live in their own species-*.js.
+// `glow: true` marks animals that make their own light; in the dark zones they show as lights
+// (paint.js). The first animals live here; each later zone's animals live in their own species-*.js.
 import { REEF_SPECIES } from "./species-reef.js";
+import { DEEP_SPECIES } from "./species-deep.js";
 import { formKind } from "./zones.js";
 
 export const SPECIES = {
@@ -221,7 +223,7 @@ export const SPECIES = {
     lines: ["A narwhal's tusk is a tooth!", "Narwhals live near the North Pole.", "Narwhals are the unicorns of the sea!"]
   },
   anglerfish: {
-    name: "Anglerfish", plural: "anglerfish", hello: "This is an anglerfish!",
+    name: "Anglerfish", plural: "anglerfish", hello: "This is an anglerfish!", glow: true,
     facts: ["An anglerfish has a fishing rod growing on its head, with a wiggly lure on the end to trick little fish.",
       "Some anglerfish live deep, deep down, where sunlight never reaches. Their lures glow! Tiny living things called bacteria make the light."],
     eats: "Fish and shrimp that swim up to its lure",
@@ -306,7 +308,8 @@ export const SPECIES = {
     lines: ["Horseshoe crabs have blue blood!", "Horseshoe crabs are older than the dinosaurs!",
       "Horseshoe crabs are cousins of spiders."]
   },
-  ...REEF_SPECIES
+  ...REEF_SPECIES,
+  ...DEEP_SPECIES
 };
 
 // Spoken when a card opens: its name, first fact, and who eats whom.

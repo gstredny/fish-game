@@ -361,7 +361,7 @@ function openCard(kind, from) {
   more.href = searchLink(kind);
   more.hidden = navigator.onLine === false;
   photo.src = PHOTOS[kind]?.file ?? "";
-  photo.alt = `Photo of a real ${animal.name.toLowerCase()}`;
+  photo.alt = `${PHOTOS[kind]?.credit.startsWith("Drawing") ? "Drawing" : "Photo"} of a real ${animal.name.toLowerCase()}`;
   photo.hidden = !PHOTOS[kind];
   document.querySelector("#card-hear").hidden = !voice.available;
   showPanel("card");

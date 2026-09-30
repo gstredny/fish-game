@@ -20,10 +20,20 @@ export const ZONES = {
     light: 1, floor: true,
     chain: ["plankton", "sardine", "mackerel", "squid", "tuna", "shark", "orca"],
     friends: ["dolphin", "turtle", "jellyfish", "pufferfish", "manta", "hammerhead", "whaleshark", "narwhal",
-      "anglerfish", "otter", "penguin", "flyingfish", "manofwar",
+      "otter", "penguin", "flyingfish", "manofwar",
       "octopus", "starfish", "crab", "lobster", "urchin", "horseshoecrab", "seacucumber"],
     giant: "bluewhale",
     backdrop: "art/ocean.webp", water: ["#137ea0", "#096681", "#073c5e"]
+  },
+  // The twilight zone: sunlight fades to nothing, there is no floor in sight, and many animals make
+  // their own light. Nothing here hunts a grown sperm whale, so the chain stops at six.
+  deep: {
+    name: "The deep", blurb: "Dark, cold and full of lights", hello: "Welcome to the deep!",
+    light: 0.3, floor: false,
+    chain: ["marinesnow", "deepshrimp", "lanternfish", "viperfish", "giantsquid", "spermwhale"],
+    friends: ["anglerfish", "hatchetfish", "vampiresquid", "combjelly", "barreleye"],
+    giant: "oarfish",
+    backdrop: "art/ocean-deep.webp", water: ["#0b2a55", "#04122b", "#010409"]
   }
 };
 for (const [id, zone] of Object.entries(ZONES)) zone.id = id;

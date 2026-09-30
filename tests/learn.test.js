@@ -41,7 +41,7 @@ test("every animal in the game has a card: a name, two facts, what it eats and w
 test("every animal has a real photo, with its credit, in the game and in CREDITS.md", () => {
   const credits = readFileSync(new URL("../CREDITS.md", import.meta.url), "utf8");
   for (const kind of KINDS) {
-    assert.ok(PHOTOS[kind]?.credit.startsWith("Photo: "), `${kind} has no photo credit`);
+    assert.match(PHOTOS[kind]?.credit ?? "", /^(Photo|Drawing): /, `${kind} has no photo credit`);
     assert.ok(existsSync(new URL(`../${PHOTOS[kind].file}`, import.meta.url)), `${PHOTOS[kind].file} is missing`);
     assert.ok(credits.includes(`- **${kind}**:`), `CREDITS.md does not credit the ${kind} photo`);
   }

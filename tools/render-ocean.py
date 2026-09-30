@@ -21,6 +21,11 @@ ZONES = {
                         ((0.28, 0.12, 0.42), (0.62, 0.4, 0.85)), ((0.08, 0.32, 0.28), (0.3, 0.72, 0.55)),
                         ((0.55, 0.5, 0.35), (0.9, 0.85, 0.7))], rock_count=52, lumpy=0.55,
                  sun=16, sun_color=(1.0, 0.98, 0.9), exposure=0.5, depth=13),
+    # The twilight zone: almost no light from above, thick dark water, and no floor in sight.
+    "deep": dict(sky=(0.05, 0.16, 0.34), sky_strength=0.9, scatter=(0.03, 0.1, 0.24), scatter_density=0.035,
+                 absorb=(0.1, 0.28, 0.5), absorb_density=0.045, sand=((0.02, 0.03, 0.05), (0.03, 0.04, 0.07)),
+                 rocks=[], rock_count=0, lumpy=0.3, sun=4, sun_color=(0.5, 0.72, 1.0), exposure=0.3,
+                 depth=40, floor=False),
 }
 
 args = sys.argv[sys.argv.index("--") + 1:]
@@ -148,6 +153,9 @@ def surface_nodes(nodes, links, bsdf):
 
 bpy.ops.mesh.primitive_grid_add(x_subdivisions=500, y_subdivisions=500, size=320)
 sand = bpy.context.object
+# A zone without a floor has no sea bed in sight: the water goes down and down.
+if not ZONE.get("floor", True):
+    sand.hide_render = True
 dunes = bpy.data.textures.new("Dunes", "CLOUDS")
 dunes.noise_scale = 14
 displace = sand.modifiers.new("Dunes", "DISPLACE")
@@ -176,6 +184,10 @@ bpy.ops.mesh.primitive_cube_add(size=1, location=(0, 0, ZONE["depth"] / 2 - 2))
 water = bpy.context.object
 water.scale = (320, 320, ZONE["depth"])
 water.data.materials.append(material("Water", water_nodes))
+# With no floor, the water goes on far below the camera, so looking down is looking into the dark.
+if not ZONE.get("floor", True):
+    water.location.z = (ZONE["depth"] - 2 - 200) / 2
+    water.scale = (320, 320, ZONE["depth"] - 2 + 200)
 
 bpy.ops.mesh.primitive_plane_add(size=400, location=(0, 0, ZONE["depth"] - 1.5))
 surface = bpy.context.object

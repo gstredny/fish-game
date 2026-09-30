@@ -99,7 +99,12 @@ export const SEA_FRIENDS = [
   { kind: "moray", size: 24, speed: 0, floor: true },
   { kind: "horseshoecrab", size: 28, speed: 6, floor: true },
   { kind: "coral", size: 38, speed: 0, floor: true },
-  { kind: "giantclam", size: 34, speed: 0, floor: true }
+  { kind: "giantclam", size: 34, speed: 0, floor: true },
+  { kind: "hatchetfish", size: 20, speed: 10, floor: false },
+  { kind: "barreleye", size: 22, speed: 6, floor: false },
+  { kind: "vampiresquid", size: 24, speed: 8, floor: false },
+  { kind: "combjelly", size: 18, speed: 5, floor: false },
+  { kind: "oarfish", size: 120, speed: 14, floor: false }
 ];
 
 export function friendTraits(kind) {

@@ -41,4 +41,16 @@ export const PHOTOS = {
   tigershark: { file: "art/animals/tigershark.webp", credit: "Photo: Albert kok, CC BY-SA 3.0", source: "https://commons.wikimedia.org/wiki/File:Tiger_shark.jpg" },
   coral: { file: "art/animals/coral.webp", credit: "Photo: Diego Delso, CC BY-SA 4.0", source: "https://commons.wikimedia.org/wiki/File:Coral_(Galaxea_fascicularis),_mar_Rojo,_Egipto,_2023-04-18,_DD_128.jpg" },
   giantclam: { file: "art/animals/giantclam.webp", credit: "Photo: Diego Delso, CC BY-SA 4.0", source: "https://commons.wikimedia.org/wiki/File:Almeja_gigante_(Tridacna_maxima),_mar_Rojo,_Egipto,_2023-04-18,_DD_103.jpg" },
+  // The deep. No free photo of a live vampire squid exists, so its card shows a 1911 scientific drawing.
+  marinesnow: { file: "art/animals/marinesnow.webp", credit: "Photo: NOAA National Ocean Service, public domain", source: "https://commons.wikimedia.org/wiki/File:Marinesnow-splash.jpg" },
+  deepshrimp: { file: "art/animals/deepshrimp.webp", credit: "Photo: NOAA, public domain", source: "https://commons.wikimedia.org/wiki/File:Acanthephyra.jpg" },
+  lanternfish: { file: "art/animals/lanternfish.webp", credit: "Photo: NOAA/OER, public domain", source: "https://commons.wikimedia.org/wiki/File:Lanternfish_by_NOAA.jpg" },
+  viperfish: { file: "art/animals/viperfish.webp", credit: "Photo: NOAA Okeanos Explorer, public domain", source: "https://commons.wikimedia.org/wiki/File:Chauliodus_(Samoa).jpg" },
+  giantsquid: { file: "art/animals/giantsquid.webp", credit: "Photo: Tim Evanson, CC BY-SA 2.0", source: "https://commons.wikimedia.org/wiki/File:Architeuthis_dux_-_Smithsonain_Museum.JPG" },
+  spermwhale: { file: "art/animals/spermwhale.webp", credit: "Photo: Gabriel Barathieu, CC BY-SA 2.0", source: "https://commons.wikimedia.org/wiki/File:Mother_and_baby_sperm_whale.jpg" },
+  hatchetfish: { file: "art/animals/hatchetfish.webp", credit: "Photo: Jan Ebr & Ivana Ebrová, CC BY 4.0", source: "https://commons.wikimedia.org/wiki/File:Argyropelecus_aculeatus_544343917.jpg" },
+  barreleye: { file: "art/animals/barreleye.webp", credit: "Photo: NOAA Ocean Exploration, public domain", source: "https://commons.wikimedia.org/wiki/File:Barreleye-fish_GoK.jpg" },
+  vampiresquid: { file: "art/animals/vampiresquid.webp", credit: "Drawing: Carl Chun, 1911, public domain", source: "https://commons.wikimedia.org/wiki/File:Vampyroteuthis_infernalis.jpg" },
+  combjelly: { file: "art/animals/combjelly.webp", credit: "Photo: Chad King (NOAA), public domain", source: "https://commons.wikimedia.org/wiki/File:Lobate_Comb_Jelly_(40164874905).jpg" },
+  oarfish: { file: "art/animals/oarfish.webp", credit: "Photo: Ryokou man, public domain", source: "https://commons.wikimedia.org/wiki/File:20100216_acaworld07.jpg" },
 };

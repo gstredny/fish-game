@@ -7,6 +7,7 @@ import assert from "node:assert/strict";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { growLine } from "../src/species.js";
 import { KINDS, ZONE_IDS, ZONES, zoneKinds } from "../src/zones.js";
+import { missionIds } from "../src/missions.js";
 import { DRAWINGS_KEY } from "../src/gallery.js";
 const CLIP_TEXT = Object.fromEntries(Object.entries(JSON.parse(readFileSync(new URL("../voice/manifest.json", import.meta.url))).clips)
   .map(([text, file]) => [file, text]));
@@ -207,7 +208,46 @@ await sleep(200);
 assert.ok(await visible("#intro-art"), "and back to the drawing");
 await evaluate(`localStorage.removeItem(${JSON.stringify(DRAWINGS_KEY)})`);
 
-// 7. The start screen and the book fit the shortest sideways phones.
+// 7. The deep: nearly dark, no floor, lights in the dark, no one to swim away from.
+await tapButton('.zone-button[data-zone="deep"]');
+await sleep(300);
+assert.equal(await evaluate("__game.world.zone.id"), "deep");
+await tapButton("#start-button");
+await sleep(500);
+assert.equal((await spoken()).at(-1), growLine(ZONES.deep, 0), "the deep's welcome line");
+assert.equal(await text("#stage-name"), "Little deep-sea shrimp");
+assert.ok(await evaluate("__game.world.friends.every(friend => !friend.floor)"), "no sea-bed animals in the deep");
+assert.ok(!missionIds(ZONES.deep).includes("flee"), "nothing hunts a sperm whale here");
+await evaluate("__game.world.invulnerable = 999");
+// Lights near the fish: a glowing friend and a school of lanternfish in view.
+await evaluate(`(() => { const w = __game.world; const x = w.player.x, y = w.player.y;
+  w.friends = [{ kind: "hatchetfish", size: 20, speed: 0, floor: false, x: x + 260, y: y - 90, direction: -1, wobble: 0 },
+    { kind: "anglerfish", size: 22, speed: 0, floor: false, x: x - 300, y: y + 60, direction: 1, wobble: 1 }];
+  w.creatures = [0, 1, 2, 3].map(i => ({ x: x + 90 + i * 70, y: y + 40 + (i % 2) * 40, tier: 2, direction: -1, wobble: i })); })()`);
+await sleep(600);
+await shot("12-deep-swim");
+// The dark layer is really painted: the far corners of the canvas are near black.
+const corner = await evaluate(`(() => { const c = document.querySelector("#ocean"); const g = c.getContext("2d");
+  const p = g.getImageData(8, 8, 1, 1).data, q = g.getImageData(c.width - 8, c.height - 8, 1, 1).data; return [p[0] + p[1] + p[2], q[0] + q[1] + q[2]]; })()`);
+console.log("7. deep corners (sum of rgb):", corner.join(" "));
+assert.ok(corner.every(sum => sum < 90), "the corners of the deep are dark");
+await evaluate(`(() => { const w = __game.world; w.mission.id = "hunt"; w.mission.need = 2; w.stage = 3; w.bites = 99;
+  w.creatures = [{ ...w.player, tier: 3, direction: 1, wobble: 0 }]; })()`);
+await waitFor("__game.world.phase === 'mission'", "the mission card opens");
+await sleep(300);
+assert.equal(await text("#mission-kicker"), "You're a sperm whale!");
+assert.equal(await text("#mission-goal"), "Eat 2 giant squid");
+await shot("13-deep-mission");
+await tapButton("#mission-go");
+await sleep(200);
+await tapButton("#pause-button");
+await sleep(200);
+await tapButton("#paused-home-button");
+await sleep(200);
+await tapButton('.zone-button[data-zone="open"]');
+await sleep(200);
+
+// 8. The start screen and the book fit the shortest sideways phones.
 for (const [width, height] of [[844, 340], [667, 375], [568, 320]]) {
   await size(width, height);
   await reload();

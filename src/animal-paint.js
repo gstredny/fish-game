@@ -1,6 +1,7 @@
 // Cartoon drawings of the real animals in the game. Each is drawn facing right around (0, 0);
 // the caller mirrors it for left. Floor animals stand on (0, 0), the sea bed.
 import { REEF_PAINTERS, REEF_SWATCHES } from "./paint-reef-animals.js";
+import { DEEP_GLOWS, DEEP_PAINTERS, DEEP_SWATCHES } from "./paint-deep-animals.js";
 
 // role: "player", "prey" (safe to eat, soft glow), "friend" (your own kind, a smile) or
 // "predator" (teeth and a frown). extra carries per-animal settings for custom painters, such as
@@ -2754,16 +2755,29 @@ function paintHorseshoeCrabShellPath(context, R, dx, dy) {
 export const SWATCHES = {
   plankton: "#ffe39a", sardine: "#9cc7e4", mackerel: "#4fb3a4", squid: "#f29a8c", tuna: "#5d8fc8", shark: "#a9bccb",
   orca: "#1f262d",
-  ...REEF_SWATCHES
+  ...REEF_SWATCHES,
+  ...DEEP_SWATCHES
 };
 
 export function swatch(kind) {
   return SWATCHES[kind] ?? "#ffffff";
 }
 
+// The colour of the light an animal makes itself, for the ones that glow in the dark zones. Each dark
+// zone's paint module adds its own; anglerfish lures glow greenish blue.
+export const GLOWS = {
+  anglerfish: "#9ff7ff",
+  ...DEEP_GLOWS
+};
+
+export function glowColor(kind) {
+  return GLOWS[kind] ?? null;
+}
+
 // Each zone's drawings live in their own paint-*-animals.js and are registered here.
 const PAINTERS = {
   ...REEF_PAINTERS,
+  ...DEEP_PAINTERS,
   squid: paintSquid,
   turtle: paintTurtle,
   seahorse: paintSeahorse,

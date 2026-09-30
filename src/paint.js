@@ -1,7 +1,8 @@
 import { canEat, CREATURES, FLOOR, FORMS, isFriend } from "./rules.js";
 import { paintOwnedReef } from "./reef-paint.js";
-import { paintAnimal, swatch } from "./animal-paint.js";
+import { glowColor, paintAnimal, swatch } from "./animal-paint.js";
 import { FRAME, paintFace, paintHalo, TAIL_JOINT } from "./art.js";
+import { SPECIES } from "./species.js";
 
 const NO_ART = { player: null, npc: [] };
 const kindAt = (world, tier) => world.zone.chain[tier];
@@ -44,7 +45,7 @@ export function paintOcean(context, world, width, height, time, art = NO_ART) {
     if (x < -margin || x > width + margin || y < -margin || y > height + margin) continue;
     const role = canEat(world.stage, creature.tier) ? "prey" : isFriend(world.stage, creature.tier) ? "friend" : "predator";
     const drawing = creature.art === null || creature.art === undefined ? null : art.npc[creature.art];
-    if (creature.tier === 0) paintPlankton(context, x, y, time + creature.wobble);
+    if (kind === "plankton") paintPlankton(context, x, y, time + creature.wobble);
     else if (drawing) paintArtFish(context, drawing, x, y, size, isShark(kind), creature.direction, time + creature.wobble, role);
     else paintAnimal(context, kind, x, y, size, creature.direction, time + creature.wobble, role);
   }
@@ -75,8 +76,54 @@ export function paintOcean(context, world, width, height, time, art = NO_ART) {
     else paintAnimal(context, kind, world.player.x - cameraX, world.player.y - cameraY, size,
       world.player.direction, time, "player");
   }
+  if (world.zone.light < 1) paintDark(context, world, width, height, time, cameraX, cameraY);
   paintLabels(context, world, width, height, cameraX, cameraY);
   paintPointer(context, world, width, height, cameraX, cameraY, time);
+}
+
+// The dark zones: the water goes black except around you (many deep animals make light, and so do
+// you), and the animals that glow show as little lights in the dark, so a child swims over to see
+// what they are. The darker the zone, the smaller the circle you can see.
+function paintDark(context, world, width, height, time, cameraX, cameraY) {
+  const px = world.player.x - cameraX, py = world.player.y - cameraY;
+  const light = world.zone.light;
+  const reach = (110 + FORMS[world.stage].size * 2.2) * (0.6 + light) + Math.sin(time * 2.2) * 4;
+  const dark = context.createRadialGradient(px, py, reach * 0.35, px, py, reach * 1.7);
+  dark.addColorStop(0, "rgba(1,6,14,0)");
+  dark.addColorStop(0.55, `rgba(1,6,14,${(1 - light) * 0.75})`);
+  dark.addColorStop(1, `rgba(1,6,14,${1 - light})`);
+  context.fillStyle = dark;
+  context.fillRect(0, 0, width, height);
+
+  const shine = (x, y, radius, color, pulse) => {
+    const glow = context.createRadialGradient(x, y, 0, x, y, radius);
+    glow.addColorStop(0, color);
+    glow.addColorStop(0.35, color.replace(/[\d.]+\)$/, `${0.45 * pulse})`));
+    glow.addColorStop(1, color.replace(/[\d.]+\)$/, "0)"));
+    context.fillStyle = glow;
+    context.beginPath();
+    context.arc(x, y, radius, 0, Math.PI * 2);
+    context.fill();
+  };
+  for (const creature of world.creatures) {
+    const kind = kindAt(world, creature.tier);
+    if (!SPECIES[kind]?.glow || creature.gone) continue;
+    const x = creature.x - cameraX, y = creature.y - cameraY;
+    if (x < -60 || x > width + 60 || y < -60 || y > height + 60) continue;
+    const size = CREATURES[creature.tier].size;
+    shine(x, y, size * 1.6 + 8, toRgba(glowColor(kind) ?? "#bff7ff", 0.9), 0.75 + Math.sin(time * 3 + creature.wobble) * 0.25);
+  }
+  for (const friend of world.friends) {
+    if (!SPECIES[friend.kind]?.glow) continue;
+    const x = friend.x - cameraX, y = friend.floor ? height * FLOOR : friend.y - cameraY;
+    if (x < -80 || x > width + 80 || y < -80 || y > height + 80) continue;
+    shine(x, y, friend.size * 1.4 + 10, toRgba(glowColor(friend.kind) ?? "#bff7ff", 0.85), 0.75 + Math.sin(time * 2 + friend.wobble) * 0.25);
+  }
+}
+
+function toRgba(hex, alpha) {
+  const value = parseInt(hex.slice(1), 16);
+  return `rgba(${value >> 16 & 255},${value >> 8 & 255},${value & 255},${alpha})`;
 }
 
 // A child's drawing gets a fin and gills when it plays a shark.
