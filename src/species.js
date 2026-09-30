@@ -185,12 +185,85 @@ export const SPECIES = {
     eatenBy: "Sea otters, lobsters, crabs and pufferfish",
     say: "Sea urchins munch on seaweed. Sea otters, lobsters and pufferfish eat sea urchins.",
     lines: ["Sea urchins are spiky!", "Sea urchins eat seaweed."]
+  },
+  penguin: {
+    name: "Penguin", plural: "penguins", hello: "This is a penguin!",
+    facts: ["Penguins are birds, but they can't fly. They use their wings like flippers to zoom through the water!",
+      "Their black and white colors help them hide from hunters above and below."],
+    eats: "Fish, squid and krill",
+    eatenBy: "Seals, orcas and sharks",
+    say: "Penguins dive down to catch fish, squid and krill. Seals and orcas eat penguins.",
+    lines: ["Penguins are birds that swim!", "Penguins fly underwater with their wings."]
+  },
+  otter: {
+    name: "Sea otter", plural: "sea otters", hello: "This is a sea otter!",
+    facts: ["Sea otters float on their backs. They hold hands while they sleep, so they don't drift apart!",
+      "They have the thickest fur of any animal, to keep warm in the cold sea."],
+    eats: "Sea urchins, crabs, clams and sea stars",
+    eatenBy: "Orcas and big sharks",
+    say: "Sea otters eat sea urchins, crabs and clams. They crack the shells open with a rock!",
+    lines: ["Sea otters hold hands while they sleep!", "Sea otters crack shells with a rock."]
+  },
+  seal: {
+    name: "Seal", plural: "seals", hello: "This is a seal!",
+    facts: ["Seals have flippers for swimming and a thick layer of fat to keep warm.",
+      "They swim in the sea, but they rest on beaches, rocks and ice."],
+    eats: "Fish, squid and crabs",
+    eatenBy: "Great white sharks and orcas",
+    say: "Seals eat fish, squid and crabs. Great white sharks and orcas eat seals.",
+    lines: ["Seals feel for fish with their whiskers.", "Seals rest on land and swim in the sea."]
+  },
+  narwhal: {
+    name: "Narwhal", plural: "narwhals", hello: "This is a narwhal! Some people call it the unicorn of the sea.",
+    facts: ["A narwhal is a whale with a long, twisty tusk. The tusk is really a giant tooth!",
+      "Narwhals live in icy seas near the North Pole."],
+    eats: "Fish, squid and shrimp",
+    eatenBy: "Orcas and polar bears",
+    say: "Narwhals eat fish, squid and shrimp. Orcas and polar bears hunt narwhals.",
+    lines: ["A narwhal's tusk is a tooth!", "Narwhals live in icy seas."]
+  },
+  whaleshark: {
+    name: "Whale shark", plural: "whale sharks", hello: "This is a whale shark!",
+    facts: ["The whale shark is the biggest fish in the world. It can be as long as a school bus!",
+      "It's a gentle giant covered in white spots."],
+    eats: "Plankton and tiny fish. It sieves them out of the water",
+    eatenBy: "Almost nothing, once it's grown up",
+    say: "Whale sharks swim with their huge mouths open to scoop up tiny plankton.",
+    lines: ["Whale sharks are the biggest fish!", "Whale sharks eat tiny plankton."]
+  },
+  stingray: {
+    name: "Stingray", plural: "stingrays", hello: "This is a stingray!",
+    facts: ["A stingray is a flat fish that glides along the sandy sea floor.",
+      "It can hide under the sand with just its eyes poking out. Its tail has a sharp spine, so look, but don't touch!"],
+    eats: "Clams, shrimp, crabs and worms from the sand",
+    eatenBy: "Sharks, like hammerhead sharks",
+    say: "Stingrays dig in the sand for clams, shrimp and crabs. Hammerhead sharks eat stingrays.",
+    lines: ["Stingrays hide under the sand!", "Stingrays are flat fish."]
+  },
+  eel: {
+    name: "Moray eel", plural: "moray eels", hello: "This is a moray eel!",
+    facts: ["A moray eel is a long fish that looks like a snake. It hides in holes in the rocks and coral.",
+      "It opens and closes its mouth all the time. That's how it breathes!"],
+    eats: "Fish, octopuses and crabs",
+    eatenBy: "Big sharks and big fish",
+    say: "Moray eels grab fish, octopuses and crabs that swim past their hiding place.",
+    lines: ["Moray eels are fish!", "Moray eels open their mouths to breathe."]
+  },
+  hermitcrab: {
+    name: "Hermit crab", plural: "hermit crabs", hello: "This is a hermit crab!",
+    facts: ["A hermit crab has a soft tummy, so it lives inside an empty sea shell.",
+      "When it grows too big for its shell, it moves into a bigger one!"],
+    eats: "Almost anything: leftovers, algae and tiny animals",
+    eatenBy: "Octopuses, fish and birds",
+    say: "Hermit crabs eat almost anything. When they grow, they find a bigger shell to live in!",
+    lines: ["Hermit crabs live in shells!", "Hermit crabs move into bigger shells."]
   }
 };
 
 export const FOOD_CHAIN = ["plankton", "sardine", "mackerel", "squid", "tuna", "shark", "orca"];
 export const SEA_FRIEND_KINDS = ["turtle", "dolphin", "jellyfish", "pufferfish", "manta", "bluewhale", "parrotfish",
-  "seahorse", "octopus", "starfish", "crab", "lobster", "urchin", "clownfish"];
+  "penguin", "otter", "seal", "narwhal", "whaleshark",
+  "seahorse", "octopus", "starfish", "crab", "hermitcrab", "lobster", "urchin", "stingray", "eel", "clownfish"];
 export const KINDS = [...FOOD_CHAIN, ...SEA_FRIEND_KINDS];
 
 // Spoken when a card opens: its name, first fact, and who eats whom.

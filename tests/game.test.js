@@ -211,6 +211,9 @@ test("Big swimmer takes longer to grow, and its hunters really chase you", () =>
   for (const level of Object.values(LEVELS)) {
     assert.ok(level.chase < 1 && level.orcaChase < 1, "every hunter is slower than you, so you can always get away");
   }
+  // George, 2026-09-30: Big swimmer was too hard; the animals should come at you slower.
+  assert.ok(LEVELS.big.chase <= 1 / 3 && LEVELS.big.orcaChase <= 0.5, "Big swimmer hunters chase slowly");
+  assert.ok(LEVELS.big.safe >= LEVELS.little.safe, "and a bump gives as much safe time as Little swimmer");
   assert.ok(swimSpeed(SHARK) > 0);
 });
 

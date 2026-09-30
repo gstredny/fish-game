@@ -26,11 +26,11 @@ export const SHARK = FORMS.length - 1;
 export const ORCA = CREATURES.length - 1;
 
 // Little swimmer is the gentle game; Big swimmer takes longer to grow, and its hunters turn and
-// chase (a little slower than you, so you can always get away). `odds` splits new fish into
-// snacks below you, snacks, your own kind, hunters, and big hunters.
+// chase, slowly (under a third of your speed; orcas under half), so a child can always get away.
+// `odds` splits new fish into snacks below you, snacks, your own kind, hunters, and big hunters.
 export const LEVELS = {
   little: { goals: [6, 7, 8, 9], chase: 0, reach: 180, orcaChase: 0.5, safe: 2.4, odds: [0.25, 0.65, 0.75, 0.95], orcas: 0.03 },
-  big: { goals: [8, 9, 11, 12], chase: 0.62, reach: 230, orcaChase: 0.8, safe: 1.5, odds: [0.22, 0.58, 0.68, 0.93], orcas: 0.06 }
+  big: { goals: [8, 9, 11, 12], chase: 0.3, reach: 180, orcaChase: 0.45, safe: 2.4, odds: [0.22, 0.58, 0.68, 0.93], orcas: 0.06 }
 };
 
 export function goalFor(level, stage) {
@@ -78,13 +78,21 @@ export const SEA_FRIENDS = [
   { kind: "pufferfish", size: 20, speed: 16, floor: false },
   { kind: "manta", size: 42, speed: 24, floor: false },
   { kind: "bluewhale", size: 150, speed: 18, floor: false, rare: true },
+  { kind: "penguin", size: 24, speed: 40, floor: false },
+  { kind: "otter", size: 26, speed: 18, floor: false },
+  { kind: "seal", size: 30, speed: 34, floor: false },
+  { kind: "narwhal", size: 48, speed: 26, floor: false },
+  { kind: "whaleshark", size: 90, speed: 16, floor: false },
   { kind: "seahorse", size: 27, speed: 0, floor: true },
   { kind: "octopus", size: 26, speed: 7, floor: true },
   { kind: "starfish", size: 18, speed: 0, floor: true },
   { kind: "crab", size: 18, speed: 14, floor: true },
   { kind: "clownfish", size: 30, speed: 0, floor: true },
   { kind: "lobster", size: 20, speed: 8, floor: true },
-  { kind: "urchin", size: 14, speed: 0, floor: true }
+  { kind: "urchin", size: 14, speed: 0, floor: true },
+  { kind: "stingray", size: 26, speed: 10, floor: true },
+  { kind: "eel", size: 24, speed: 0, floor: true },
+  { kind: "hermitcrab", size: 14, speed: 10, floor: true }
 ];
 
 // The sea bed's height on screen, as a share of the screen height.

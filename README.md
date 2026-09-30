@@ -16,19 +16,19 @@ Finishing the mission ends the swim with **Mission complete!** and earns a coral
 The start screen has two levels, and the device remembers the choice:
 
 - **Little swimmer** is the gentle game.
-- **Big swimmer** takes more snacks to grow, sends more hunters, and they turn and chase you (always a bit slower than you, so you can get away). You also get less safe time after a bump, and the missions ask for more.
+- **Big swimmer** takes more snacks to grow, sends more hunters, and they turn and chase you, slowly (under a third of your speed; orcas under half), so a child can always get away. The missions ask for more.
 
 ## Learning as you swim
 
 The first time a child meets an animal, the game pauses and a card shows a real photo of it. A voice reads out a fact, what the animal eats, and who eats it. After that, a name tag floats above the animal and the voice says one short line. Growing up and getting bumped are told as food-chain lines too, such as "You're a tuna now! Tuna eat squid. Watch out for sharks!" and "Watch out! Mackerel eat sardines!"
 
-Gentle sea friends come by as well. In open water: a sea turtle, a dolphin, a jellyfish, a pufferfish (swim close and it puffs up), a manta ray, a parrotfish and, once in a while, a huge blue whale. On the sea bed: a seahorse, an octopus, a sea star, a crab, a lobster, a sea urchin and clownfish in their anemone (swim low to meet them). They never eat you and are never eaten.
+Gentle sea friends come by as well. In open water: a sea turtle, a dolphin, a jellyfish, a pufferfish (swim close and it puffs up), a manta ray, a parrotfish, a penguin, a sea otter, a seal, a narwhal, a whale shark and, once in a while, a huge blue whale. On the sea bed: a seahorse, an octopus, a sea star, a crab, a hermit crab, a lobster, a sea urchin, a stingray, a moray eel and clownfish in their anemone (swim low to meet them). They never eat you and are never eaten.
 
-The **Ocean book** (on the start and pause screens) keeps every card met on this device, so a second child can hear them all again. **Find out more** on a card opens a Google search for "<animal> facts for kids", with SafeSearch on. It shows only when the device is online. The speaker button at the top turns the voice off; the device remembers. The facts are in `src/species.js`; photo credits are in [CREDITS.md](CREDITS.md).
+The **Ocean book** (on the start and pause screens) keeps every card met on this device, so a second child can hear them all again. **Watch a video** on a card plays a short, kid-friendly video about that animal inside the game (YouTube's privacy-enhanced player); **Back** stops it and returns to the card. The videos are listed in `src/videos.js`, each checked to be public and allowed in other sites. An animal without a video gets **Find out more** instead, a Google search for "<animal> facts for kids" with SafeSearch on. Both show only when the device is online. The speaker button at the top turns the voice off; the device remembers. The facts are in `src/species.js`; photo credits are in [CREDITS.md](CREDITS.md).
 
 ## The voice
 
-Every line the game says is recorded ahead of time in `voice/`, in a warm, natural voice. The voice is Kokoro-82M, an open, Apache-2.0 text-to-speech model. It sounds the same on every phone and works offline. On iPhone, sound wakes up with the first tap. A line with no recording falls back to the device's own voice, choosing its friendliest English voice.
+Every line the game says is recorded ahead of time in `voice/`, in a warm, natural voice. The voice is Kokoro-82M, an open, Apache-2.0 text-to-speech model. It sounds the same on every phone, on both levels, and works offline. On iPhone, sound wakes up with the first tap. If the phone won't play a recording through its audio player (iPhone can refuse outside a tap), the same recording plays through the game's sound-effects engine instead; a recorded line is never read by the device's robot voice. Only a line with no recording at all falls back to the device's own voice.
 
 After changing any spoken words (facts, lines, missions), record them again. `npm test` fails until you do:
 
@@ -98,4 +98,4 @@ node tools/browser-reef.mjs           # earn, plant, reload, shelter; desktop + 
 node tools/browser-learn.mjs          # fact cards, voice, Ocean book, mission card, sea-bed friends, fits; "zoo" screenshots
 ```
 
-`tools/browser-sound.mjs` checks that sound stays off until a tap and that each main moment plays its sound. `tools/browser-update.mjs` checks that an update shows on the first open. `tools/browser-check.mjs` checks drawing: it draws a fish, checks the saved drawing stays inside the fish shape, swims to shark form on a computer and a sideways phone, and checks the drawing screens fit. It uses [Playwright](https://playwright.dev) instead of the Chrome above: `npm i --no-save playwright && npx playwright install chromium`, then `node tools/browser-check.mjs screenshots` (or point `PLAYWRIGHT_MODULE` at an installed copy).
+`tools/browser-voice.mjs` (Playwright, like `browser-check` below) checks that the recorded voice plays online and offline, and, acting like an iPhone that refuses sound outside a tap, that later lines on both levels still play the recording and never the robot voice. `tools/browser-sound.mjs` checks that sound stays off until a tap and that each main moment plays its sound. `tools/browser-update.mjs` checks that an update shows on the first open. `tools/browser-check.mjs` checks drawing: it draws a fish, checks the saved drawing stays inside the fish shape, swims to shark form on a computer and a sideways phone, and checks the drawing screens fit. It uses [Playwright](https://playwright.dev) instead of the Chrome above: `npm i --no-save playwright && npx playwright install chromium`, then `node tools/browser-check.mjs screenshots` (or point `PLAYWRIGHT_MODULE` at an installed copy).

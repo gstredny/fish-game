@@ -122,9 +122,22 @@
         <div class="card-actions">
           <button id="card-hear" class="icon-button" type="button" aria-label="Hear it again">🔊</button>
           <button id="card-close" class="primary-button" type="button">Keep swimming</button>
+          <button id="card-video" class="card-more" type="button" hidden>Watch a video <span aria-hidden="true">▶</span></button>
           <a id="card-more" class="card-more" target="_blank" rel="noopener">Find out more <span aria-hidden="true">🔍</span></a>
         </div>
       </div>
+    </section>
+
+    <section id="video" class="panel video-panel" hidden aria-labelledby="video-title">
+      <div class="video-head">
+        <h2 id="video-title">Sardine</h2>
+        <button id="video-close" class="primary-button" type="button">Back</button>
+      </div>
+      <div class="video-frame">
+        <iframe id="video-player" title="Animal video" allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+          allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
+      </div>
+      <p id="video-credit" class="video-credit"></p>
     </section>
 
     <section id="mission" class="panel card-panel mission-panel" hidden aria-labelledby="mission-title">

@@ -12,10 +12,11 @@ import { plantCoral } from "./reef.js";
 import { loadReef, saveReef } from "./reef-save.js";
 import { cardSpeech, FOOD_CHAIN, growLine, hurtLine, KINDS, meetLine, SEA_FRIEND_KINDS, searchLink, SPECIES } from "./species.js";
 import { PHOTOS } from "./photos.js";
-import { createVoice } from "./voice.js";
+import { createClips, createVoice } from "./voice.js";
 import { loadMet, saveMet } from "./ocean-book.js";
 import { MISSIONS, missionCount, missionDoneLine, missionGoal, missionLine, pickMission } from "./missions.js";
 import { FIND_THAT_ONE, VOICE_ON } from "./lines.js";
+import { videoEmbed, VIDEOS } from "./videos.js";
 
 const canvas = document.querySelector("#ocean");
 const context = canvas.getContext("2d");
@@ -23,7 +24,7 @@ const overlay = document.querySelector("#overlay");
 const hud = document.querySelector("#hud");
 const hint = document.querySelector("#hint");
 const toast = document.querySelector("#toast");
-const panels = ["intro", "draw", "paused", "won", "gameover", "card", "book", "mission"];
+const panels = ["intro", "draw", "paused", "won", "gameover", "card", "book", "mission", "video"];
 const LEVEL_KEY = "little-fish-level-v1";
 const PORTRAIT_PHONE = "(orientation: portrait) and (max-width: 600px) and (pointer: coarse)";
 const input = { keys: new Set(), pointer: null, pad: null };
@@ -47,11 +48,13 @@ let toastTimer;
 // Learning: a fact card opens the first time this device meets each animal, at most one every
 // CARD_GAP seconds of swimming. The Ocean book shows every card met so far.
 const CARD_GAP = 20;
-const voice = createVoice();
+const sound = createSound();
+const voice = createVoice(undefined, undefined, undefined, createClips("voice/", window.Audio, window.fetch?.bind(window), () => sound.context));
 const met = loadMet();
 const voiceButtons = [document.querySelector("#voice-button"), document.querySelector("#intro-voice-button")];
 let cardKind = null;
 let cardFrom = null;
+let videoOpen = false;
 let bookFrom = null;
 let hintFrom = null;
 let artLoaded = false;
@@ -67,7 +70,6 @@ try { if (storage?.getItem(LEVEL_KEY) === "big") level = "big"; } catch {}
 const art = { player: null, npc: [] };
 const portraits = new Map();
 const sketchpad = createSketchpad(document.querySelector("#sketch"));
-const sound = createSound();
 sound.setMuted(voice.muted);
 
 async function decode(drawing) {
@@ -293,9 +295,12 @@ function openCard(kind, from) {
   document.querySelector("#card-eaten").textContent = animal.eatenBy;
   document.querySelector("#card-credit").textContent = PHOTOS[kind]?.credit ?? "";
   document.querySelector("#card-close").textContent = { meet: "Keep swimming", book: "Back to the book", won: "Next" }[from];
+  // Online, a card offers its video, or a kid-safe web search for an animal without one.
+  const online = navigator.onLine !== false;
   const more = document.querySelector("#card-more");
   more.href = searchLink(kind);
-  more.hidden = navigator.onLine === false;
+  more.hidden = !online || Boolean(VIDEOS[kind]);
+  document.querySelector("#card-video").hidden = !online || !VIDEOS[kind];
   photo.src = PHOTOS[kind]?.file ?? "";
   photo.alt = `Photo of a real ${animal.name.toLowerCase()}`;
   photo.hidden = !PHOTOS[kind];
@@ -304,8 +309,28 @@ function openCard(kind, from) {
   voice.say(cardSpeech(kind));
 }
 
+// The video plays inside the game, over the card; Back returns to the card.
+function openVideo() {
+  const video = VIDEOS[cardKind];
+  if (!cardFrom || !video || videoOpen) return;
+  voice.stop();
+  videoOpen = true;
+  document.querySelector("#video-title").textContent = SPECIES[cardKind].name;
+  document.querySelector("#video-credit").textContent = `${video.title} · ${video.channel} on YouTube`;
+  document.querySelector("#video-player").src = videoEmbed(video.id);
+  showPanel("video");
+}
+
+function closeVideo() {
+  if (!videoOpen) return;
+  videoOpen = false;
+  // A blank page stops the video, so nothing keeps playing behind the card.
+  document.querySelector("#video-player").src = "about:blank";
+  showPanel("card");
+}
+
 function closeCard() {
-  if (!cardFrom) return;
+  if (!cardFrom || videoOpen) return;
   const from = cardFrom;
   cardFrom = null;
   voice.stop();
@@ -548,6 +573,10 @@ window.addEventListener("keydown", event => {
   // Enter or Space on a focused button or link presses it, and nothing else.
   if ((event.key === "Enter" || event.key === " ") && event.target?.closest?.("button, a")) return;
   if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " "].includes(event.key)) event.preventDefault();
+  if (videoOpen) {
+    if (event.key === "Escape") closeVideo();
+    return;
+  }
   if (cardFrom) {
     if (["Enter", " ", "Escape"].includes(event.key)) {
       event.preventDefault();
@@ -619,6 +648,8 @@ document.querySelector("#mission-go").addEventListener("click", closeMission);
 document.querySelector("#level-little").addEventListener("click", () => chooseLevel("little"));
 document.querySelector("#level-big").addEventListener("click", () => chooseLevel("big"));
 document.querySelector("#card-close").addEventListener("click", closeCard);
+document.querySelector("#card-video").addEventListener("click", openVideo);
+document.querySelector("#video-close").addEventListener("click", closeVideo);
 document.querySelector("#card-hear").addEventListener("click", () => voice.say(cardSpeech(cardKind), { force: true }));
 document.querySelector("#intro-book-button").addEventListener("click", () => openBook("intro"));
 document.querySelector("#paused-book-button").addEventListener("click", () => openBook("paused"));
@@ -626,8 +657,6 @@ document.querySelector("#book-close").addEventListener("click", closeBook);
 document.querySelector("#book-chain").addEventListener("click", chooseFromBook);
 document.querySelector("#book-friends").addEventListener("click", chooseFromBook);
 for (const button of voiceButtons) button.addEventListener("click", toggleVoice);
-// iPhone speaks only after a tap has spoken; the first tap anywhere wakes the voice silently.
-window.addEventListener("click", () => voice.unlock(), true);
 
 // Full screen and a home-screen icon come from adding the game to the home screen.
 // iPhone has no install button, so the start screen points at Share and shows the steps.
@@ -667,8 +696,14 @@ showPanel("intro");
 const artReady = Promise.all(drawings.map(decode)).then(setArt).catch(() => {}).finally(() => { artLoaded = true; });
 requestAnimationFrame(frame);
 
-// Phones allow sound only after a tap (when the finger lifts), click or key press.
-for (const type of ["pointerup", "touchend", "click", "keydown"]) document.addEventListener(type, () => sound.unlock(), true);
+// Phones allow sound only after a tap (when the finger lifts), click or key press. Every tap also
+// wakes the voice silently, before the tap's own button can say anything.
+for (const type of ["pointerup", "touchend", "click", "keydown"]) {
+  document.addEventListener(type, () => {
+    sound.unlock();
+    voice.unlock();
+  }, true);
+}
 
 // When an update takes over in the background, show it straight away, but only from the start
 // screen itself: never mid-swim, mid-drawing, or with the Ocean book or a card open. Once per launch.

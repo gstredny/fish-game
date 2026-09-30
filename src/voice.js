@@ -1,7 +1,8 @@
 // Reads facts aloud. Every line the game knows ahead of time is a recording in voice/ (made with
 // tools/make-voice.py), so the voice is warm and the same on every phone, and works offline.
-// Anything without a recording falls back to the device's own voice.
-// iPhone lets a page make sound only after a tap, so the first tap wakes both up silently.
+// A recording that can't play is never read by the device's robot voice instead: it plays through
+// Web Audio, or not at all. Only a line with no recording at all falls back to the device's voice.
+// iPhone lets a page make sound only after a tap, so each tap wakes the audio element up silently.
 export const VOICE_KEY = "little-fish-voice-v1";
 
 // A tiny silent WAV, played from the first tap so later clips may play on iPhone.
@@ -19,47 +20,83 @@ export function pickVoice(voices) {
 }
 
 // Recorded clips, played one at a time through a single audio element (iPhone unlocks one element).
-export function createClips(base = "voice/", Player = globalThis.Audio, load = globalThis.fetch) {
+// If the phone refuses that element, the clip plays through `audioContext()` (the sound effects'
+// Web Audio, which stays awake once a tap has woken it) until a later tap wakes the element again.
+export function createClips(base = "voice/", Player = globalThis.Audio, load = globalThis.fetch, audioContext = () => null) {
   if (!Player || !load) return null;
   let clips = {};
+  let loaded = false;
   let playing = false;
+  let current = null;
+  let source = null;
+  let awake = false;
+  let blocked = false;
   let ticket = 0;
-  let failed = null;
-  load(`${base}manifest.json`).then(response => response.ok ? response.json() : {})
-    .then(manifest => { clips = manifest?.clips ?? {}; }).catch(() => {});
+  const ready = load(`${base}manifest.json`).then(response => response.ok ? response.json() : {})
+    .then(manifest => { clips = manifest?.clips ?? {}; }).catch(() => {}).then(() => { loaded = true; });
   const audio = new Player();
   audio.preload = "auto";
-  const fail = () => {
-    playing = false;
-    const retry = failed;
-    failed = null;
-    retry?.();
+  const finish = mine => { if (mine === ticket) playing = false; };
+  const quietSource = () => {
+    const old = source;
+    source = null;
+    try { old?.stop(); } catch {}
   };
-  audio.addEventListener?.("ended", () => { playing = false; failed = null; });
-  audio.addEventListener?.("error", () => { if (playing) fail(); });
+  const viaWebAudio = (text, mine) => {
+    const context = audioContext();
+    if (!context || context.state === "closed") return finish(mine);
+    if (context.state !== "running") context.resume?.()?.catch?.(() => {});
+    Promise.resolve(load(base + clips[text])).then(response => response.arrayBuffer())
+      .then(bytes => new Promise((resolve, reject) => context.decodeAudioData(bytes, resolve, reject)))
+      .then(buffer => {
+        if (mine !== ticket || !playing) return;
+        const node = context.createBufferSource();
+        node.buffer = buffer;
+        node.connect(context.destination);
+        node.onended = () => {
+          if (source === node) source = null;
+          finish(mine);
+        };
+        source = node;
+        node.start();
+      }).catch(() => finish(mine));
+  };
+  audio.addEventListener?.("ended", () => { if (!source) playing = false; });
+  audio.addEventListener?.("error", () => { if (playing && !source && current) viaWebAudio(current, ticket); });
   return {
     has: text => Object.prototype.hasOwnProperty.call(clips, text),
+    // False until the list of recordings has arrived (or failed to).
+    get loaded() { return loaded; },
+    ready,
     get busy() { return playing; },
-    // `fallback` runs if the clip can't play (missing file, blocked sound).
-    play(text, fallback) {
+    play(text) {
       const mine = ++ticket;
-      failed = fallback;
+      quietSource();
       playing = true;
+      current = text;
+      if (blocked) return viaWebAudio(text, mine);
       audio.src = base + clips[text];
-      Promise.resolve(audio.play?.()).catch(() => { if (mine === ticket && playing) fail(); });
+      Promise.resolve(audio.play?.()).then(() => { if (mine === ticket) awake = true; }).catch(error => {
+        // A line cut off by the next one (or by stop) just ends.
+        if (mine !== ticket || !playing) return;
+        if (error?.name === "NotAllowedError") blocked = true;
+        viaWebAudio(text, mine);
+      });
     },
     stop() {
       ticket++;
-      failed = null;
+      current = null;
+      quietSource();
       if (!playing) return;
       playing = false;
       audio.pause?.();
     },
-    // An element already playing is already unlocked; swapping in silence would cut its line off.
+    // From a tap: wakes the element, and wakes it again after the phone refused it. An element
+    // already playing a line is already awake; swapping in silence would cut its line off.
     unlock() {
-      if (playing) return;
+      if ((awake && !blocked) || playing) return;
       audio.src = SILENCE;
-      Promise.resolve(audio.play?.()).catch(() => {});
+      Promise.resolve(audio.play?.()).then(() => { awake = true; blocked = false; }).catch(() => {});
     }
   };
 }
@@ -83,6 +120,7 @@ export function createVoice(storage = globalThis.localStorage, synth = globalThi
     line.pitch = 1.1;
     synth.speak(line);
   };
+  let waiting = null;
   let unlocked = false;
   return {
     available: speaks || Boolean(clips),
@@ -90,23 +128,33 @@ export function createVoice(storage = globalThis.localStorage, synth = globalThi
     // A polite line waits its turn: it is skipped while something else is being said.
     // A forced line (the card's "hear it again" button) speaks even when the voice is off.
     say(text, { polite = false, force = false } = {}) {
+      if ((muted && !force) || (polite && busy())) return false;
+      // Just after the game opens, the list of recordings may still be on its way: the line waits
+      // for it rather than being read by the device's voice.
+      if (clips?.loaded === false) {
+        this.stop();
+        waiting = text;
+        clips.ready.then(() => { if (waiting === text) this.say(text, { force }); });
+        return true;
+      }
       const recorded = Boolean(clips?.has(text));
-      if ((muted && !force) || !(recorded || speaks) || (polite && busy())) return false;
+      if (!(recorded || speaks)) return false;
       this.stop();
-      if (recorded) clips.play(text, () => speak(text));
+      if (recorded) clips.play(text);
       else speak(text);
       return true;
     },
     stop() {
+      waiting = null;
       clips?.stop();
       if (synth?.speaking || synth?.pending) synth.cancel();
     },
-    // A silent line from the first tap, so lines said later (after a drawing is saved, say) are heard.
+    // Runs on every tap. The device's voice is woken (with one silent line) only when there are no
+    // recordings: with recordings, it stays out of the way of the audio element.
     unlock() {
-      if (unlocked) return;
-      unlocked = true;
       clips?.unlock();
-      if (!speaks) return;
+      if (unlocked || clips || !speaks) return;
+      unlocked = true;
       const line = new Utterance(" ");
       line.volume = 0;
       synth.speak(line);

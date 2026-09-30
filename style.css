@@ -490,6 +490,43 @@ h1 em { color: #ffdf9c; font-style: normal; }
 .mission-goal { margin-top: 10px; color: #fff2b7; font-size: clamp(24px, 3.4vw, 32px); font-weight: 800; line-height: 1.15; }
 .card-more { color: #f4fff6; font-size: 15px; font-weight: 700; text-decoration: underline; text-underline-offset: 4px; white-space: nowrap; }
 .card-more[hidden] { display: none; }
+button.card-more { min-height: 44px; padding: 0 4px; border: 0; background: none; font-family: inherit; cursor: pointer; }
+
+/* A card's video, as big as the screen allows, with Back always in view. */
+.video-panel {
+  display: flex;
+  flex-direction: column;
+  width: min(900px, 100%);
+  max-width: 900px;
+  max-height: 100%;
+  padding: 16px 20px;
+  border: 1px solid rgba(233, 255, 239, .24);
+  border-radius: 28px;
+  background: rgba(7, 65, 87, .96);
+  box-shadow: 0 25px 80px rgba(1, 26, 48, .3);
+}
+.video-panel[hidden] { display: none; }
+.video-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.video-head h2 { font-size: clamp(22px, 3.4vw, 32px); line-height: 1; letter-spacing: -.02em; }
+.video-head .primary-button { margin-top: 0; min-height: 44px; }
+.video-frame {
+  width: min(100%, calc((100vh - 130px) * 16 / 9));
+  width: min(100%, calc((100dvh - 130px) * 16 / 9));
+  margin: 0 auto;
+  aspect-ratio: 16 / 9;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #02202f;
+}
+.video-frame iframe { display: block; width: 100%; height: 100%; border: 0; }
+.video-credit { margin-top: 6px; color: rgba(214, 245, 233, .75); font-size: 11px; text-align: center; }
+@media (max-height: 500px) {
+  .video-panel { padding: 8px 12px; border-radius: 20px; }
+  .video-head { margin-bottom: 6px; }
+  .video-head h2 { font-size: 20px; }
+  .video-frame { width: min(100%, calc((100vh - 96px) * 16 / 9)); width: min(100%, calc((100dvh - 96px) * 16 / 9)); }
+  .video-credit { margin-top: 4px; font-size: 10px; }
+}
 
 .card-panel, .book-panel {
   width: min(760px, 100%);

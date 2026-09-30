@@ -2,9 +2,10 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { allLines } from "../src/lines.js";
 import { createMission, missionDoneLine, missionLine } from "../src/missions.js";
-import { cardSpeech, searchLink } from "../src/species.js";
+import { cardSpeech, KINDS, searchLink } from "../src/species.js";
 import { MET_KEY } from "../src/ocean-book.js";
 import { openGame } from "./app-fixture.js";
+import { VIDEOS } from "../src/videos.js";
 
 function memoryStorage(saved = {}) {
   const data = new Map(Object.entries(saved));
@@ -160,7 +161,9 @@ test("leaving the planting after the mission goes back to the win screen, not to
   } finally { app.close(); }
 });
 
-test("a fact card links to a kid-safe web search, when there is a connection", async () => {
+test("a fact card with no video links to a kid-safe web search, when there is a connection", async () => {
+  const video = VIDEOS.crab;
+  delete VIDEOS.crab;
   for (const onLine of [true, false]) {
     const app = await openGame(memoryStorage({ [MET_KEY]: '["crab"]' }), { navigator: { onLine } });
     try {
@@ -170,7 +173,51 @@ test("a fact card links to a kid-safe web search, when there is a connection", a
       assert.equal(more.href, searchLink("crab"));
       assert.match(more.href, /^https:\/\/www\.google\.com\/search\?safe=active&q=Crab%20facts%20for%20kids$/);
       assert.equal(more.hidden, !onLine);
+      assert.equal(app.nodes.get("card-video").hidden, true, "no video button without a video");
     } finally { app.close(); }
+  }
+  if (video) VIDEOS.crab = video;
+});
+
+test("a fact card's video plays inside the game, and Back stops it and returns to the card", async () => {
+  const saved = VIDEOS.crab;
+  VIDEOS.crab = { id: "abcdefghijk", title: "Crabs for kids", channel: "Sea School" };
+  try {
+    for (const onLine of [true, false]) {
+      const synth = { speaking: false, pending: false, speak() { synth.speaking = true; }, cancel() { synth.speaking = false; },
+        getVoices: () => [], addEventListener() {} };
+      const SpeechSynthesisUtterance = class { constructor(text) { this.text = text; } };
+      const app = await openGame(memoryStorage({ [MET_KEY]: '["crab"]' }), { navigator: { onLine }, speechSynthesis: synth, SpeechSynthesisUtterance });
+      try {
+        app.click("intro-book-button");
+        app.nodes.get("book-friends").emit("click", { target: { closest: () => ({ dataset: { kind: "crab" } }) } });
+        assert.equal(app.nodes.get("card-more").hidden, true, "the video replaces the web search");
+        assert.equal(app.nodes.get("card-video").hidden, !onLine, "and needs a connection");
+        if (!onLine) continue;
+        assert.equal(synth.speaking, true, "the card is being read");
+        app.click("card-video");
+        const player = app.nodes.get("video-player");
+        assert.equal(app.nodes.get("video").hidden, false);
+        assert.equal(app.nodes.get("card").hidden, true);
+        assert.equal(player.src, "https://www.youtube-nocookie.com/embed/abcdefghijk?autoplay=1&rel=0&playsinline=1&modestbranding=1&iv_load_policy=3");
+        assert.equal(app.nodes.get("video-title").textContent, "Crab");
+        assert.match(app.nodes.get("video-credit").textContent, /Crabs for kids · Sea School/);
+        assert.equal(synth.speaking, false, "the card's voice stops for the video");
+        app.key("Enter");
+        assert.equal(app.nodes.get("video").hidden, false, "Enter doesn't close the card behind the video");
+        app.key("Escape");
+        assert.equal(app.nodes.get("video").hidden, true);
+        assert.equal(app.nodes.get("card").hidden, false, "back on the card");
+        assert.equal(player.src, "about:blank", "the video stopped");
+        app.click("card-video");
+        app.click("video-close");
+        assert.equal(app.nodes.get("card").hidden, false);
+        assert.equal(player.src, "about:blank");
+      } finally { app.close(); }
+    }
+  } finally {
+    if (saved) VIDEOS.crab = saved;
+    else delete VIDEOS.crab;
   }
 });
 
@@ -203,4 +250,12 @@ test("everything the game says is a line with a recording", async () => {
     assert.ok(speech.spoken.length > 12);
     for (const line of speech.spoken) assert.ok(lines.has(line), `no recording for: ${line}`);
   } finally { app.close(); }
+});
+
+test("every animal has a video with a real-looking YouTube ID", () => {
+  for (const kind of KINDS) {
+    assert.match(VIDEOS[kind]?.id ?? "", /^[\w-]{11}$/, `${kind} has no video`);
+    assert.ok(VIDEOS[kind].title && VIDEOS[kind].channel, `${kind}'s video has a title and channel for its credit`);
+  }
+  assert.deepEqual(Object.keys(VIDEOS).filter(kind => !KINDS.includes(kind)), [], "no video for an animal the game doesn't have");
 });

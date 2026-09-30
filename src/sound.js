@@ -75,6 +75,8 @@ export function createSound(AudioContextClass = globalThis.AudioContext || globa
   return {
     get available() { return Boolean(AudioContextClass); },
     get ready() { return context?.state === "running"; },
+    // The voice plays a recording through this when the phone won't play its audio element.
+    get context() { return context; },
     get muted() { return muted; },
     // The game's speaker button turns these sounds and the voice off together.
     setMuted(value) { muted = Boolean(value); },
