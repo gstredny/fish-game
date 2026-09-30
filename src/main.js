@@ -48,6 +48,9 @@ let toastTimer;
 // Learning: a fact card opens the first time this device meets each animal, at most one every
 // CARD_GAP seconds of swimming. The Ocean book shows every card met so far.
 const CARD_GAP = 20;
+// The iPhone's silent switch would mute the sounds and some of the voice but not the rest, so the
+// game plays through it (iOS 17 and later); the game's speaker button is its mute.
+try { if (navigator.audioSession) navigator.audioSession.type = "playback"; } catch { /* older phones */ }
 const sound = createSound();
 const voice = createVoice(undefined, undefined, undefined, createClips("voice/", window.Audio, window.fetch?.bind(window), () => sound.context));
 const met = loadMet();

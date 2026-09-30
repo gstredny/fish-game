@@ -1,6 +1,6 @@
 // Little sound effects, made on the fly with the Web Audio API: no sound files, works offline.
 // Phones only allow sound after a tap, so unlock() runs on the first touch, click or key.
-// On iPhone the ring/silent switch and the volume buttons control these sounds.
+// On iPhone the volume buttons control these sounds; the silent switch doesn't (see main.js).
 
 const NOTES = { C5: 523.25, E5: 659.25, G5: 783.99, C6: 1046.5, E6: 1318.5, G4: 392, E4: 329.63, C4: 261.63 };
 

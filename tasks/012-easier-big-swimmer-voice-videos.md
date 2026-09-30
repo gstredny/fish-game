@@ -38,7 +38,7 @@ George, 2026-09-30:
 
 ## Open
 
-- George's ruling: should the game ignore the iPhone silent switch (`navigator.audioSession.type = "playback"`, iOS 17+)? Today the switch silences Web Audio (sound effects and the voice's fallback) but not the audio element, so on a silenced phone some lines are heard and some are not.
+- Silent switch, George's ruling 2026-09-30: "Ignore silent switch". The game sets `navigator.audioSession.type = "playback"` where the phone has it (iOS 17 and later), so the silent switch no longer mutes the sound effects or the voice's Web Audio fallback; the game's speaker button is the mute. Older iPhones keep the old behaviour.
 
 - George to try on his iPhone: Little swimmer from a fresh open, tap Dive in first, and listen for the recorded voice on the grow lines ("You're a mackerel now!").
 - Real iPhone Safari was not available here; the iPhone behaviour was emulated in Chromium (stricter than iPhone: the audio player plays only while a tap is being handled).

@@ -12,6 +12,16 @@ const CHROME_IPHONE = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) Ap
 const SAFARI_26 = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Mobile/15E148 Safari/604.1";
 const SAFARI_18 = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.6 Mobile/15E148 Safari/604.1";
 
+test("the game plays through the iPhone's silent switch, so no line is muted while others play", async () => {
+  const audioSession = { type: "auto" };
+  const app = await openGame(memoryStorage(), { navigator: { audioSession } });
+  try {
+    assert.equal(audioSession.type, "playback");
+  } finally { app.close(); }
+  const older = await openGame(memoryStorage(), { navigator: {} });
+  older.close();
+});
+
 test("Dive in is always the big button; drawing is the smaller one", async () => {
   for (const [saved, drawText] of [[{}, "Draw my fish"], [{ [DRAWINGS_KEY]: '["data:image/png;base64,AAAA"]' }, "Draw a new fish"]]) {
     const app = await openGame(memoryStorage(saved));

@@ -60,7 +60,7 @@ Choose **Draw my fish** to colour a fish-shaped page with eight crayons. Paint o
 
 ## Sound
 
-Snacks go "nom", growing chimes, a bump goes "bonk", becoming the shark and finishing its mission play a fanfare, and game over plays a gentle tune. The sounds are made by the game itself, so they work offline. They start after the first tap. The speaker button turns them off along with the voice; on iPhone the silent switch and volume buttons control them too.
+Snacks go "nom", growing chimes, a bump goes "bonk", becoming the shark and finishing its mission play a fanfare, and game over plays a gentle tune. The sounds are made by the game itself, so they work offline. They start after the first tap. The speaker button turns them off along with the voice. On iPhone the volume buttons control them; the silent switch does not mute the game (iOS 17 and later), so the voice and sounds are always heard together.
 
 ## Play on a phone
 
