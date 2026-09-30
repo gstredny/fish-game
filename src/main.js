@@ -480,6 +480,8 @@ async function finishDrawing() {
       const drawing = sketchpad.save();
       await artReady;
       drawings = saveDrawing(storage, drawing, drawings);
+      plainFish = false;
+      try { storage?.setItem(PLAIN_FISH_KEY, "off"); } catch {}
       setArt([await decode(drawing), art.player, ...art.npc].slice(0, drawings.length));
     }
   } finally {
