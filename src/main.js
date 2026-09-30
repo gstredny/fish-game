@@ -49,13 +49,11 @@ let toastTimer;
 // GREET_GAP seconds, so a busy ocean does not rattle off names. The Ocean book shows every card met.
 const CARD_GAP = 20;
 const GREET_GAP = 6;
-// A new animal's card asks who it is and waits this long (ms) for the child to answer.
-const GUESS_WAIT = 5000;
 const voice = createVoice();
 const voiceButtons = [document.querySelector("#voice-button"), document.querySelector("#intro-voice-button")];
 let cardKind = null;
 let cardFrom = null;
-let guessTimer = null;
+let guessing = false;
 let bookFrom = null;
 let hintFrom = null;
 let lastSwim = null;
@@ -320,19 +318,18 @@ function openCard(kind, from) {
 }
 
 // An animal met while swimming: the photo shows first, and the child gets to say who it is
-// before the card names it and reads it. "Tell me!" skips the wait.
+// before the card names it and reads it. It waits, with no timer, until they tap "Tell me!".
 function askGuess() {
+  guessing = true;
   document.querySelector("#card").classList.add("guessing");
   document.querySelector("#card-kicker").textContent = WHAT_ANIMAL;
   document.querySelector("#card-name").textContent = "?";
   document.querySelector("#card-close").textContent = "Tell me!";
   voice.say(WHAT_ANIMAL);
-  guessTimer = setTimeout(revealCard, GUESS_WAIT);
 }
 
 function revealCard() {
-  clearTimeout(guessTimer);
-  guessTimer = null;
+  guessing = false;
   document.querySelector("#card").classList.remove("guessing");
   document.querySelector("#card-kicker").textContent = "You met a new animal!";
   document.querySelector("#card-name").textContent = SPECIES[cardKind].name;
@@ -342,7 +339,7 @@ function revealCard() {
 
 function closeCard() {
   if (!cardFrom) return;
-  if (guessTimer !== null) return revealCard();
+  if (guessing) return revealCard();
   const from = cardFrom;
   cardFrom = null;
   voice.stop();
