@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { cardSpeech, growLine, hurtLine } from "../src/species.js";
+import { cardSpeech, growLine, hurtLine, SEA_FRIEND_KINDS } from "../src/species.js";
 import { MET_KEY } from "../src/ocean-book.js";
 import { VOICE_KEY } from "../src/voice.js";
 import { openGame } from "./app-fixture.js";
@@ -113,6 +113,17 @@ test("a bump and a growth say the food chain out loud", async () => {
     assert.equal(app.world.stage, 2);
     assert.equal(app.nodes.get("toast").textContent, "You're a squid now! Squid eat mackerel. Watch out for tuna!");
     assert.equal(speech.spoken.at(-1), growLine(2));
+  } finally { app.close(); }
+});
+
+test("a swim sees the Ocean book, so a sea friend never met on this device comes first", async () => {
+  const known = SEA_FRIEND_KINDS.filter(kind => kind !== "moray");
+  const app = await openGame(memoryStorage({ [MET_KEY]: JSON.stringify(known) }), fakeSpeech().globals);
+  try {
+    app.click("start-button");
+    assert.deepEqual([...app.world.met].sort(), [...known].sort());
+    // This narrow screen has room for one sea-bed animal, so it must be the one not met yet.
+    assert.deepEqual(app.world.friends.filter(friend => friend.floor).map(friend => friend.kind), ["moray"]);
   } finally { app.close(); }
 });
 

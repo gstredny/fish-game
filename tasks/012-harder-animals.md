@@ -34,7 +34,25 @@ George, 2026-09-30: "The animals are basic… we need some new harder ones so my
 
 ## Verification
 
-(see below)
+- `npm test`: 104 passed, 0 failed, and the same in 5 runs in a row.
+- Controls: each new test was checked by breaking the rule it guards, seeing it go red, and reverting.
+  - Never-met first: drop the `unmet` pool in `makeFriend`.
+  - The real game passes the Ocean book into each swim: drop `met` from `startSwim`.
+  - Every sea friend has a drawing: remove the moray from `PAINTERS`.
+- Browser, headless Chromium 141, no page errors:
+  - `browser-learn`: 33 photos load. The book and the wordiest card (anglerfish) fit at five sizes down to 568×320, and so does the card with the longest name (Portuguese man o' war). The last tile (horseshoe crab) can be reached above Back. The zoo shows every animal.
+  - `browser-sideways`, `browser-play` (desktop and phone), `browser-reef` (desktop and phone), `browser-sound`, `browser-voice` (online and offline), `browser-update`, `browser-autoplay` (shark and mission in 17.6 s), `browser-check`.
+- Photos: the licence of each was read on its own Commons page: NOAA public domain, CC BY 2.0, or CC BY-SA 2.0/3.0/4.0. Three were checked again by hand.
+- An independent read-only review found no must-fix issues. It found:
+  - one fact that was too broad: "hammerheads love stingrays" is true of great hammerheads;
+  - one test gap: nothing checked that the real game passes the Ocean book into a swim;
+  - some small wording points, about mantis shrimp that punch and narwhal tusks, which mostly males grow.
+
+  All are fixed and re-recorded. Left as they are:
+  - the anglerfish's needle teeth (they are what it's known for);
+  - the penguin drawing's gold neck patch next to a gentoo photo;
+  - card alt text that lowercases "Portuguese".
+- Not tested: real Safari or WebKit.
 
 ## Open
 

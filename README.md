@@ -24,7 +24,7 @@ The first time a child meets an animal, the game pauses and a card shows a real 
 
 Gentle sea friends come by as well. In open water: a sea turtle, a dolphin, a jellyfish, a pufferfish (swim close and it puffs up), a manta ray, a parrotfish and, once in a while, a huge blue whale. On the sea bed: a seahorse, an octopus, a sea star, a crab, a lobster, a sea urchin and clownfish in their anemone (swim low to meet them). They never eat you and are never eaten.
 
-Twelve harder animals are for a child who knows those by heart. Each one teaches a bigger idea:
+Twelve harder animals teach bigger ideas:
 
 - In open water:
   - a hammerhead shark, which feels the electricity animals make;

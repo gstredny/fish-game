@@ -84,7 +84,7 @@ export const SPECIES = {
     facts: ["An octopus has eight arms covered in suckers.",
       "It can change color to hide. It has three hearts and blue blood!"],
     eats: "Crabs, clams and shrimp",
-    eatenBy: "Sharks, seals and big fish",
+    eatenBy: "Sharks, seals, moray eels and big fish",
     say: "Octopuses love to eat crabs.",
     lines: ["An octopus has eight arms!", "Octopuses can change color."]
   },
@@ -192,11 +192,11 @@ export const SPECIES = {
     name: "Hammerhead shark", plural: "hammerhead sharks", hello: "This is a hammerhead shark!",
     facts: ["A hammerhead's head is wide and flat, like a hammer, with an eye at each end. It can see above and below at the same time!",
       "Every living animal makes a tiny bit of electricity. Hammerheads can feel it, even from animals hiding under the sand."],
-    eats: "Stingrays most of all, plus fish, squid and crabs",
+    eats: "Fish, squid, crabs and stingrays",
     eatenBy: "Bigger sharks and orcas",
-    say: "Hammerheads love to eat stingrays. They find them hiding under the sand by feeling their electricity!",
+    say: "Great hammerheads love to eat stingrays. They find them hiding under the sand by feeling their electricity!",
     lines: ["Hammerheads have an eye at each end of their head!", "Hammerheads can feel electricity!",
-      "Hammerheads love to eat stingrays."]
+      "Great hammerheads love to eat stingrays."]
   },
   whaleshark: {
     name: "Whale shark", plural: "whale sharks", hello: "This is a whale shark!",
@@ -209,8 +209,8 @@ export const SPECIES = {
   },
   narwhal: {
     name: "Narwhal", plural: "narwhals", hello: "This is a narwhal! Some people call it the unicorn of the sea.",
-    facts: ["A narwhal is a small whale that lives in the icy Arctic Ocean, near the North Pole.",
-      "Its long, twisty tusk is really a tooth! It grows right out through the narwhal's lip."],
+    facts: ["A narwhal is a whale that lives in the icy Arctic Ocean, near the North Pole.",
+      "Boy narwhals grow a long, twisty tusk. It's really a tooth, growing right out through the lip!"],
     eats: "Fish, squid and shrimp, under the Arctic ice",
     eatenBy: "Orcas and polar bears",
     say: "A narwhal's tusk is a tooth that can grow longer than a grown-up is tall! Narwhals breathe air, so they come up through cracks in the ice.",
@@ -266,12 +266,12 @@ export const SPECIES = {
   },
   mantisshrimp: {
     name: "Mantis shrimp", plural: "mantis shrimp", hello: "This is a mantis shrimp!",
-    facts: ["A mantis shrimp punches faster than you can blink! Its punch can crack a crab's shell.",
+    facts: ["Some mantis shrimp punch faster than you can blink! One punch can crack a crab's shell.",
       "Its eyes can see colors that people can't see at all."],
-    eats: "Crabs, snails and clams. It smashes their shells open",
+    eats: "Crabs, snails, clams and little fish",
     eatenBy: "Octopuses, big fish and sharks",
-    say: "Mantis shrimp have one of the fastest punches of any animal. Smash! They crack open crabs and snails to eat what's inside.",
-    lines: ["Mantis shrimp punch super fast!", "Mantis shrimp see colors we can't!", "Mantis shrimp smash shells."]
+    say: "This one is a peacock mantis shrimp. Smash! It cracks open crabs and snails to eat what's inside.",
+    lines: ["Some mantis shrimp punch super fast!", "Mantis shrimp see colors we can't!", "Peacock mantis shrimp smash shells."]
   },
   seacucumber: {
     name: "Sea cucumber", plural: "sea cucumbers", hello: "This is a sea cucumber!",
