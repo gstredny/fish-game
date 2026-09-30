@@ -93,10 +93,10 @@ export const SEA_FRIENDS = [
   { kind: "penguin", size: 24, speed: 50, floor: false },
   { kind: "flyingfish", size: 18, speed: 64, floor: false },
   { kind: "manofwar", size: 22, speed: 5, floor: false },
-  { kind: "mantisshrimp", size: 16, speed: 6, floor: true },
-  { kind: "seacucumber", size: 20, speed: 2, floor: true },
+  { kind: "mantisshrimp", size: 22, speed: 6, floor: true },
+  { kind: "seacucumber", size: 26, speed: 2, floor: true },
   { kind: "moray", size: 24, speed: 0, floor: true },
-  { kind: "horseshoecrab", size: 22, speed: 6, floor: true }
+  { kind: "horseshoecrab", size: 28, speed: 6, floor: true }
 ];
 
 // The sea bed's height on screen, as a share of the screen height.
