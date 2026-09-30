@@ -205,8 +205,9 @@ for (const [width, height] of [[844, 390], [844, 340], [844, 330], [667, 375], [
   await shot(`06-book-${width}x${height}`);
   await tapButton(`.book-tile[data-kind="${WORDIEST}"]`);
   await sleep(400);
+  // "Watch a video", or "Find out more" for an animal without one.
   const cardFits = await fitsOnScreen("#card-close") && await fitsOnScreen("#card-hear") && await fitsOnScreen("#card-name") &&
-    await fitsOnScreen("#card-more");
+    await fitsOnScreen(await visible("#card-video") ? "#card-video" : "#card-more");
   await shot(`07-card-${width}x${height}`);
   console.log(`7. ${width}x${height}: book fits: ${bookFits}; card fits: ${cardFits}`);
   assert.ok(bookFits && cardFits, `${width}x${height}: the book or card does not fit`);

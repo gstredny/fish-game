@@ -21,4 +21,12 @@ export const PHOTOS = {
   manta: { file: "art/animals/manta.webp", credit: "Photo: Rickard Zerpe, CC BY 2.0", source: "https://commons.wikimedia.org/wiki/File:Reef_manta_ray_(Manta_alfredi)_-_49877611423.jpg" },
   lobster: { file: "art/animals/lobster.webp", credit: "Photo: Bart Braun, public domain", source: "https://commons.wikimedia.org/wiki/File:KreeftbijDenOsse.jpg" },
   urchin: { file: "art/animals/urchin.webp", credit: "Photo: Dwayne Meadows (NOAA), public domain", source: "https://commons.wikimedia.org/wiki/File:Fish4641_-_Flickr_-_NOAA_Photo_Library.jpg" },
+  penguin: { file: "art/animals/penguin.webp", credit: "Photo: Ken FUNAKOSHI, CC BY-SA 2.0", source: "https://commons.wikimedia.org/wiki/File:Pygoscelis_papua_-Nagasaki_Penguin_Aquarium_-swimming_underwater-8a.jpg" },
+  otter: { file: "art/animals/otter.webp", credit: "Photo: Marshal Hedin, CC BY-SA 2.0", source: "https://commons.wikimedia.org/wiki/File:Sea_Otter_(Enhydra_lutris)_(25705188901).jpg" },
+  seal: { file: "art/animals/seal.webp", credit: "Photo: Jerome Paillet (Ifremer), CC BY 4.0", source: "https://commons.wikimedia.org/wiki/File:Phoques_gris_(Halichoerus_grypus)_(Ifremer_00791-90313_-_51056).jpg" },
+  narwhal: { file: "art/animals/narwhal.webp", credit: "Photo: Kristin Laidre (NOAA), public domain", source: "https://commons.wikimedia.org/wiki/File:Pod_Monodon_monoceros.jpg" },
+  whaleshark: { file: "art/animals/whaleshark.webp", credit: "Photo: Eckert (NOAA FGBNMS), public domain", source: "https://commons.wikimedia.org/wiki/File:Rhincodon_typus_fgbnms.jpg" },
+  stingray: { file: "art/animals/stingray.webp", credit: "Photo: Matthew Hoelscher, CC BY-SA 2.0", source: "https://commons.wikimedia.org/wiki/File:Southern_stingray_miami.jpg" },
+  eel: { file: "art/animals/eel.webp", credit: "Photo: Diego Delso, CC BY-SA 4.0", source: "https://commons.wikimedia.org/wiki/File:Morena_gigante_(Gymnothorax_javanicus),_mar_Rojo,_Egipto,_2023-04-15,_DD_43.jpg" },
+  hermitcrab: { file: "art/animals/hermitcrab.webp", credit: "Photo: Diego Delso, CC BY-SA 4.0", source: "https://commons.wikimedia.org/wiki/File:Cangrejo_ermita%C3%B1o_(Dardanus_megistos),_Anilao,_Filipinas,_2023-08-23,_DD_198.jpg" },
 };

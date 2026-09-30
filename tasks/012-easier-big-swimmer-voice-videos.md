@@ -25,11 +25,20 @@ George, 2026-09-30:
 - **8 new sea friends** (29 animals in the Ocean book): penguin, sea otter, seal, narwhal and whale shark in open water; stingray, moray eel and hermit crab on the sea bed. Each has a fact card, a free photo (see CREDITS.md), a drawing, name-tag lines and recordings in the same Kokoro voice. The 97 earlier clips are unchanged; 24 were added.
 - **Watch a video.** A fact card shows **Watch a video**, which plays a short kid-friendly video about that animal inside the game (YouTube's privacy-enhanced player). **Back** (or Escape) stops it and returns to the card. Each video ID was checked to be public, allowed in other sites, and not age-restricted. An animal without a video keeps the kid-safe Google search. Both are hidden offline.
 
+- **Photos**: all 8 from Wikimedia Commons, licenses read from Commons' metadata (see CREDITS.md). The narwhal is NOAA's public-domain pod photo; a sharper single-narwhal photo was rejected because its CC BY-SA claim (an oil company's press office) could not be traced to its source.
+
 ## Verification
 
-See the session report for the final numbers; recorded here once the branch was done.
+- `npm test`: 112 passed, 0 failed.
+- Controls (break it, see red, restore): the slow-chase test; 5 voice guards (no Web Audio fallback, no "refused" shortcut, no wait for the recordings list, silent robot unlock, robot reading a recorded line); 5 review regressions (tap silence ending a loading line, double fallback, starting on a sleeping engine, polite line replacing a waiting one, device voice never woken when the list fails); 4 video guards (player not removed, keys reaching the card, voice not stopped, search link shown with a video); a missing painter. All went red.
+- Browser, headless Chromium 141, no page errors: `browser-voice` (online, offline, and iPhone-strict for both levels; the old voice code fails it), `browser-learn` (29 photos load; book and card fit at 5 sizes), `browser-check`, `browser-sideways`, `browser-reef`, `browser-play` (desktop, phone), `browser-sound`, `browser-update`, `browser-autoplay` (Little and Big both won with 3 hearts).
+- Video panel at 844×390, 568×320 and 1280×800: player and Back in view; Back removes the player; browser history stays at the same length over repeated videos.
+- Independent read-only review: 1 must-fix (a tap's silent sound ending cut off the line that tap was loading), 3 should-fix (video history, double fallback echo, sleeping Web Audio keeping the voice busy), 3 nits. All fixed except the silent switch (below). The reviewer's own reproduction went from 3/3 lines lost to 3/3 heard.
+- Not checked here: real iPhone Safari, and real YouTube playback (this sandbox's browser can't reach YouTube). All 29 video IDs pass YouTube's oEmbed and embed-page checks; a garbage ID fails them.
 
 ## Open
+
+- George's ruling: should the game ignore the iPhone silent switch (`navigator.audioSession.type = "playback"`, iOS 17+)? Today the switch silences Web Audio (sound effects and the voice's fallback) but not the audio element, so on a silenced phone some lines are heard and some are not.
 
 - George to try on his iPhone: Little swimmer from a fresh open, tap Dive in first, and listen for the recorded voice on the grow lines ("You're a mackerel now!").
 - Real iPhone Safari was not available here; the iPhone behaviour was emulated in Chromium (stricter than iPhone: the audio player plays only while a tap is being handled).
