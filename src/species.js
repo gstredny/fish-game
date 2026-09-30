@@ -218,12 +218,12 @@ export const SPECIES = {
   },
   anglerfish: {
     name: "Anglerfish", plural: "anglerfish", hello: "This is an anglerfish!",
-    facts: ["Anglerfish live deep, deep down, where sunlight never reaches. It's always dark down there!",
-      "Its glowing lure works like a fishing rod. Tiny living things called bacteria make the light."],
-    eats: "Fish and shrimp that swim up to its light",
-    eatenBy: "Hardly anything! Not many animals live that deep",
-    say: "An anglerfish dangles a glowing light over its big mouth. When a little fish swims up to see it, gulp! Light made by living things is called bioluminescence.",
-    lines: ["Anglerfish have a glowing lure!", "Anglerfish live where it's always dark.",
+    facts: ["An anglerfish has a fishing rod growing on its head, with a wiggly lure on the end to trick little fish.",
+      "Some anglerfish live deep, deep down, where sunlight never reaches. Their lures glow! Tiny living things called bacteria make the light."],
+    eats: "Fish and shrimp that swim up to its lure",
+    eatenBy: "Sharks and other big fish. Deep down, hardly anything",
+    say: "When a little fish swims up to the lure, gulp! Deep-sea anglerfish have lures that glow in the dark. Light made by living things is called bioluminescence.",
+    lines: ["Anglerfish have a fishing rod on their head!", "Deep-sea anglerfish have glowing lures.",
       "Light made by living things is called bioluminescence."]
   },
   otter: {
