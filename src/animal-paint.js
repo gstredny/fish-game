@@ -1246,6 +1246,924 @@ function paintUrchin(context, size, time) {
   context.stroke();
 }
 
+// The hammerhead's tail (the whale shark uses it too), from the tail stock at (0, 0): the upper lobe is longer.
+function paintHammerheadTail(context, size, upper, lower) {
+  context.beginPath();
+  context.moveTo(size * 0.06, -size * 0.07);
+  context.quadraticCurveTo(-size * upper * 0.35, -size * upper * 0.35, -size * upper * 0.82, -size * upper);
+  context.quadraticCurveTo(-size * upper * 0.5, -size * upper * 0.35, -size * 0.2, -size * 0.01);
+  context.quadraticCurveTo(-size * lower * 0.7, size * lower * 0.45, -size * lower * 0.72, size * lower);
+  context.quadraticCurveTo(-size * lower * 0.2, size * lower * 0.5, size * 0.06, size * 0.07);
+  context.closePath();
+  context.fill();
+}
+
+// Hammerhead shark: grey-brown with a tall curved fin; its flat hammer head, seen a little from above,
+// has an eye at each end so it can see above and below at the same time.
+function paintHammerhead(context, size, time) {
+  const back = "#8a8474", belly = "#f1ede3", dark = "#716b5c";
+  const beat = Math.sin(time * 5);
+  const tailY = beat * size * 0.04;
+
+  context.fillStyle = dark;
+  context.save();
+  context.translate(-size * 0.86, tailY);
+  context.rotate(Math.sin(time * 5 - 0.7) * 0.16);
+  paintHammerheadTail(context, size, 0.62, 0.34);
+  context.restore();
+
+  // The tall sickle-shaped fin, a small second fin and the fin underneath.
+  context.beginPath();
+  context.moveTo(size * 0.2, -size * 0.24);
+  context.quadraticCurveTo(size * 0.08, -size * 0.62, -size * 0.14, -size * 0.9);
+  context.quadraticCurveTo(-size * 0.1, -size * 0.52, -size * 0.28, -size * 0.22);
+  context.closePath();
+  context.moveTo(-size * 0.5, -size * 0.14);
+  context.lineTo(-size * 0.64, -size * 0.28);
+  context.lineTo(-size * 0.66, -size * 0.1);
+  context.closePath();
+  context.moveTo(-size * 0.42, size * 0.14);
+  context.lineTo(-size * 0.6, size * 0.26);
+  context.lineTo(-size * 0.62, size * 0.08);
+  context.closePath();
+  context.fill();
+
+  context.beginPath();
+  context.moveTo(size * 0.86, 0);
+  context.bezierCurveTo(size * 0.82, -size * 0.18, size * 0.55, -size * 0.28, size * 0.2, -size * 0.28);
+  context.bezierCurveTo(-size * 0.2, -size * 0.28, -size * 0.6, -size * 0.15, -size * 0.9, tailY - size * 0.04);
+  context.lineTo(-size * 0.9, tailY + size * 0.04);
+  context.bezierCurveTo(-size * 0.6, size * 0.14, -size * 0.2, size * 0.24, size * 0.2, size * 0.23);
+  context.bezierCurveTo(size * 0.55, size * 0.22, size * 0.82, size * 0.16, size * 0.86, 0);
+  context.closePath();
+  context.fillStyle = belly;
+  context.fill();
+  context.save();
+  context.clip();
+  context.fillStyle = back;
+  context.beginPath();
+  context.moveTo(size, size * 0.06);
+  context.quadraticCurveTo(size * 0.3, size * 0.12, -size * 0.3, size * 0.04);
+  context.quadraticCurveTo(-size * 0.7, 0, -size, tailY + size * 0.01);
+  context.lineTo(-size, -size * 0.5);
+  context.lineTo(size, -size * 0.5);
+  context.fill();
+  context.restore();
+
+  context.strokeStyle = "rgba(70,64,52,.55)";
+  context.lineWidth = Math.max(1, size * 0.025);
+  context.lineCap = "round";
+  context.beginPath();
+  for (let slit = 0; slit < 4; slit++) {
+    const x = size * (0.46 + slit * 0.06);
+    context.moveTo(x, -size * 0.12);
+    context.quadraticCurveTo(x - size * 0.03, size * 0.02, x, size * 0.13);
+  }
+  context.stroke();
+  paintFlipper(context, size * 0.34, size * 0.14, size * 0.34, size * 0.08, 0.95 + beat * 0.1, dark, true);
+
+  // The hammer: a wide flat bar across the front, swinging a little as it scans the sand.
+  context.save();
+  context.translate(size * 0.8, 0);
+  context.rotate(Math.sin(time * 1.7) * 0.07);
+  // A darker copy just behind shows the hammer's thickness, like a flat plate seen from above.
+  for (const [color, shift] of [[dark, -size * 0.035], [back, 0]]) {
+    context.fillStyle = color;
+    context.beginPath();
+    context.moveTo(size * 0.18 + shift, 0);
+    context.quadraticCurveTo(size * 0.18 + shift, -size * 0.34, size * 0.1 + shift, -size * 0.56);
+    context.quadraticCurveTo(size * 0.04 + shift, -size * 0.68, -size * 0.06 + shift, -size * 0.61);
+    context.quadraticCurveTo(-size * 0.1 + shift, -size * 0.54, -size * 0.05 + shift, -size * 0.44);
+    context.quadraticCurveTo(-size * 0.02 + shift, -size * 0.2, -size * 0.1 + shift, -size * 0.1);
+    context.lineTo(-size * 0.1 + shift, size * 0.1);
+    context.quadraticCurveTo(-size * 0.02 + shift, size * 0.2, -size * 0.05 + shift, size * 0.44);
+    context.quadraticCurveTo(-size * 0.1 + shift, size * 0.54, -size * 0.06 + shift, size * 0.61);
+    context.quadraticCurveTo(size * 0.04 + shift, size * 0.68, size * 0.1 + shift, size * 0.56);
+    context.quadraticCurveTo(size * 0.18 + shift, size * 0.34, size * 0.18 + shift, 0);
+    context.fill();
+  }
+  const eye = Math.max(2.5, size * 0.085);
+  paintEye(context, size * 0.03, -size * 0.56, eye);
+  paintEye(context, size * 0.03, size * 0.56, eye);
+  context.strokeStyle = "#4d4839";
+  context.lineWidth = Math.max(1, size * 0.03);
+  context.beginPath();
+  context.arc(size * 0.02, size * 0.02, size * 0.1, 0.5, 1.9);
+  context.stroke();
+  context.restore();
+}
+
+// Whale shark: the biggest fish, a gentle giant with a wide flat head, a huge mouth for sieving
+// plankton, and a dark back covered in white spots and pale stripes like a checkerboard.
+function paintWhaleShark(context, size, time) {
+  const back = "#46607e", belly = "#dde6ec", dark = "#3a5169";
+  const beat = Math.sin(time * 1.8);
+  const tailY = beat * size * 0.04;
+  const open = 0.5 + 0.5 * Math.sin(time * 1.3);
+
+  context.fillStyle = dark;
+  context.save();
+  context.translate(-size * 0.86, tailY);
+  context.rotate(Math.sin(time * 1.8 - 0.7) * 0.12);
+  paintHammerheadTail(context, size, 0.66, 0.36);
+  context.restore();
+
+  context.beginPath();
+  context.moveTo(-size * 0.08, -size * 0.32);
+  context.quadraticCurveTo(-size * 0.22, -size * 0.54, -size * 0.4, -size * 0.7);
+  context.quadraticCurveTo(-size * 0.38, -size * 0.46, -size * 0.46, -size * 0.27);
+  context.closePath();
+  context.moveTo(-size * 0.62, -size * 0.16);
+  context.lineTo(-size * 0.74, -size * 0.28);
+  context.lineTo(-size * 0.76, -size * 0.1);
+  context.closePath();
+  context.fill();
+
+  // A broad flat head with a blunt front, and a big heavy body.
+  context.beginPath();
+  context.moveTo(size * 1.02, -size * 0.08);
+  context.bezierCurveTo(size, -size * 0.2, size * 0.85, -size * 0.27, size * 0.55, -size * 0.31);
+  context.bezierCurveTo(size * 0.1, -size * 0.37, -size * 0.5, -size * 0.24, -size * 0.9, tailY - size * 0.05);
+  context.lineTo(-size * 0.9, tailY + size * 0.05);
+  context.bezierCurveTo(-size * 0.5, size * 0.2, size * 0.1, size * 0.33, size * 0.55, size * 0.28);
+  context.bezierCurveTo(size * 0.85, size * 0.25, size * 1.02, size * 0.2, size * 1.02, size * 0.1);
+  context.closePath();
+  context.fillStyle = belly;
+  context.fill();
+  context.save();
+  context.clip();
+  context.fillStyle = back;
+  context.beginPath();
+  context.moveTo(size * 1.1, size * 0.08);
+  context.quadraticCurveTo(size * 0.4, size * 0.14, -size * 0.2, size * 0.12);
+  context.quadraticCurveTo(-size * 0.6, size * 0.06, -size, tailY + size * 0.02);
+  context.lineTo(-size, -size * 0.5);
+  context.lineTo(size * 1.1, -size * 0.5);
+  context.fill();
+  // Pale stripes down the sides, and ridges running along them, make a checkerboard.
+  context.strokeStyle = "rgba(225,236,245,.35)";
+  context.lineWidth = Math.max(1, size * 0.014);
+  context.beginPath();
+  for (let stripe = 0; stripe < 13; stripe++) {
+    const x = size * (0.52 - stripe * 0.11);
+    context.moveTo(x, -size * 0.4);
+    context.quadraticCurveTo(x - size * 0.03, 0, x - size * 0.01, size * 0.14);
+  }
+  context.stroke();
+  context.strokeStyle = "rgba(200,218,232,.55)";
+  context.lineWidth = Math.max(1, size * 0.02);
+  context.beginPath();
+  for (const y of [-0.2, -0.09, 0.02]) {
+    context.moveTo(size * 0.6, size * y);
+    context.quadraticCurveTo(-size * 0.2, size * (y - 0.03), -size * 0.9, tailY + size * y * 0.25);
+  }
+  context.stroke();
+  context.fillStyle = "rgba(244,249,252,.92)";
+  context.beginPath();
+  for (let column = 0; column < 13; column++) {
+    for (let row = 0; row < 4; row++) {
+      const x = size * (0.465 - column * 0.11 + (row % 2) * 0.02);
+      const y = size * (-0.255 + row * 0.11 + (column % 2) * 0.01);
+      const r = Math.max(1, size * (0.022 - column * 0.0008));
+      context.moveTo(x + r, y);
+      context.arc(x, y, r, 0, Math.PI * 2);
+    }
+  }
+  for (const [x, y] of [[0.92, -0.13], [0.86, -0.2], [0.78, -0.16], [0.71, -0.22], [0.7, -0.09], [0.63, -0.15],
+    [0.58, -0.23], [0.66, -0.02]]) {
+    const r = Math.max(1, size * 0.016);
+    context.moveTo(size * x + r, size * y);
+    context.arc(size * x, size * y, r, 0, Math.PI * 2);
+  }
+  context.fill();
+  context.restore();
+
+  // The wide mouth right at the front of the flat head, gently opening and closing to sieve plankton.
+  const gape = size * (0.012 + 0.058 * open);
+  context.fillStyle = "#b9c9d6";
+  traceWhaleSharkMouth(context, size, gape, size * 0.018);
+  context.fill();
+  context.fillStyle = "#1d2a40";
+  traceWhaleSharkMouth(context, size, gape, 0);
+  context.fill();
+  context.fillStyle = "rgba(214,245,200,.85)";
+  context.beginPath();
+  for (let speck = 0; speck < 4; speck++) {
+    const drift = (time * 0.35 + speck / 4) % 1;
+    const x = size * (1.36 - drift * 0.3), y = size * (0.035 + Math.sin(time * 2 + speck * 2.1) * 0.05 * (1 - drift));
+    const r = Math.max(1.2, size * 0.014) * (1 - drift * 0.5);
+    context.moveTo(x + r, y);
+    context.arc(x, y, r, 0, Math.PI * 2);
+  }
+  context.fill();
+
+  context.strokeStyle = "rgba(34,49,73,.6)";
+  context.lineWidth = Math.max(1, size * 0.015);
+  context.beginPath();
+  for (let slit = 0; slit < 5; slit++) {
+    const x = size * (0.5 + slit * 0.045);
+    context.moveTo(x, -size * 0.12);
+    context.quadraticCurveTo(x - size * 0.02, size * 0.02, x, size * 0.16);
+  }
+  context.stroke();
+  paintFlipper(context, size * 0.36, size * 0.16, size * 0.36, size * 0.08, 1.0 + beat * 0.1, dark, true);
+  paintEye(context, size * 0.8, -size * 0.07, Math.max(2.5, size * 0.04));
+}
+
+// The whale shark's mouth: a long flat opening across the front with rounded corners; grow widens it for the lips.
+function traceWhaleSharkMouth(context, size, gape, grow) {
+  const mid = size * 0.035, front = size * 1.05 + grow * 0.5, back = size * 0.8 - grow;
+  const top = mid - gape - grow, bottom = mid + gape + grow;
+  context.beginPath();
+  context.moveTo(front, top);
+  context.quadraticCurveTo(size * 0.95, top + size * 0.004, back + size * 0.06, top + gape * 0.25);
+  context.bezierCurveTo(back, top + gape * 0.3, back, bottom - gape * 0.3, back + size * 0.06, bottom - gape * 0.25);
+  context.quadraticCurveTo(size * 0.95, bottom - size * 0.004, front, bottom);
+  context.quadraticCurveTo(front + size * 0.035, mid, front, top);
+}
+
+// Narwhal: a small Arctic whale, mottled grey on top and pale below, with a round head, no back fin
+// (just a low ridge) and a long spiral tusk, the unicorn of the sea.
+function paintNarwhal(context, size, time) {
+  const back = "#7f8b95", belly = "#eef1ef", dark = "#5a6671", mottle = "#4d5963";
+  const beat = Math.sin(time * 3);
+  const tailY = beat * size * 0.06;
+
+  context.save();
+  context.translate(-size * 0.78, tailY);
+  paintFlukes(context, size * 0.4, Math.sin(time * 3 - 0.9) * 0.38, back, dark);
+  context.restore();
+  paintNarwhalTusk(context, size, size * 0.52, size * 0.03, size * 0.88, -0.1);
+
+  context.beginPath();
+  context.moveTo(size * 0.68, size * 0.04);
+  context.bezierCurveTo(size * 0.7, -size * 0.22, size * 0.5, -size * 0.35, size * 0.2, -size * 0.35);
+  context.bezierCurveTo(-size * 0.14, -size * 0.35, -size * 0.52, -size * 0.2, -size * 0.8, tailY - size * 0.04);
+  context.lineTo(-size * 0.8, tailY + size * 0.04);
+  context.bezierCurveTo(-size * 0.52, size * 0.19, -size * 0.14, size * 0.33, size * 0.2, size * 0.31);
+  context.bezierCurveTo(size * 0.5, size * 0.29, size * 0.68, size * 0.22, size * 0.68, size * 0.04);
+  context.closePath();
+  context.fillStyle = belly;
+  context.fill();
+  context.save();
+  context.clip();
+  context.fillStyle = back;
+  context.beginPath();
+  context.moveTo(size * 0.8, size * 0.06);
+  context.quadraticCurveTo(size * 0.5, size * 0.02, size * 0.2, size * 0.08);
+  context.quadraticCurveTo(-size * 0.3, size * 0.1, -size * 0.9, tailY);
+  context.lineTo(-size * 0.9, -size * 0.5);
+  context.lineTo(size * 0.8, -size * 0.5);
+  context.fill();
+  context.fillStyle = mottle;
+  context.beginPath();
+  for (const [x, y, r] of [[0.3, -0.24, 0.05], [0.12, -0.16, 0.04], [-0.04, -0.26, 0.05], [-0.2, -0.14, 0.045],
+    [-0.36, -0.22, 0.04], [-0.5, -0.1, 0.035], [0.44, -0.12, 0.03], [-0.62, -0.08, 0.03], [0.02, -0.06, 0.03]]) {
+    context.moveTo(size * (x + r * 1.3), size * y);
+    context.ellipse(size * x, size * y, size * r * 1.3, size * r, 0.3, 0, Math.PI * 2);
+  }
+  context.fill();
+  context.fillStyle = "rgba(127,139,149,.6)";
+  context.beginPath();
+  for (const [x, y, r] of [[0.28, 0.12, 0.03], [0.04, 0.16, 0.035], [-0.18, 0.12, 0.03], [-0.4, 0.08, 0.025], [0.16, 0.06, 0.025]]) {
+    context.moveTo(size * (x + r * 1.3), size * y);
+    context.ellipse(size * x, size * y, size * r * 1.3, size * r, 0.3, 0, Math.PI * 2);
+  }
+  context.fill();
+  context.restore();
+
+  // No back fin, just a low bumpy ridge.
+  context.fillStyle = dark;
+  context.beginPath();
+  for (let bump = 0; bump < 4; bump++) {
+    const x = -size * (0.1 + bump * 0.1);
+    const y = -size * (0.325 - bump * 0.04);
+    context.moveTo(x + size * 0.045, y + size * 0.02);
+    context.ellipse(x, y + size * 0.02, size * 0.045, size * 0.035, 0, Math.PI, Math.PI * 2);
+  }
+  context.fill();
+
+  paintFlipper(context, size * 0.32, size * 0.2, size * 0.3, size * 0.07, 0.8 + beat * 0.15, dark);
+  paintEye(context, size * 0.42, -size * 0.04, Math.max(2.5, size * 0.085));
+  context.strokeStyle = "#3d4852";
+  context.lineWidth = Math.max(1, size * 0.03);
+  context.lineCap = "round";
+  context.beginPath();
+  context.moveTo(size * 0.62, size * 0.12);
+  context.quadraticCurveTo(size * 0.52, size * 0.17, size * 0.44, size * 0.11);
+  context.stroke();
+}
+
+// The narwhal's tusk: a long straight tooth from its upper lip, twisted in a spiral.
+function paintNarwhalTusk(context, size, x, y, length, angle) {
+  const width = size * 0.065;
+  context.save();
+  context.translate(x, y);
+  context.rotate(angle);
+  context.beginPath();
+  context.moveTo(0, -width);
+  context.lineTo(length, -width * 0.2);
+  context.quadraticCurveTo(length + width * 0.5, 0, length, width * 0.2);
+  context.lineTo(0, width);
+  context.closePath();
+  context.fillStyle = "#f4ecd2";
+  context.fill();
+  context.clip();
+  context.strokeStyle = "#b9a57c";
+  context.lineWidth = Math.max(1, size * 0.026);
+  context.beginPath();
+  for (let along = 0; along < length; along += size * 0.08) {
+    context.moveTo(along, width * 1.2);
+    context.lineTo(along + width * 1.4, -width * 1.2);
+  }
+  context.stroke();
+  context.restore();
+}
+
+// Anglerfish: a lumpy deep-sea fish with a huge goofy toothy grin and a glowing lure on a rod from its forehead.
+function paintAnglerfish(context, size, time) {
+  const skin = "#553a34", dark = "#3a2622", light = "#76544a";
+  const wag = Math.sin(time * 6);
+  const bob = Math.sin(time * 1.9);
+  const pulse = 0.5 + 0.5 * Math.sin(time * 3.4);
+  const lureX = size * (0.96 + bob * 0.04), lureY = -size * (0.94 + bob * 0.05);
+
+  context.fillStyle = dark;
+  context.save();
+  context.translate(-size * 0.74, 0);
+  context.rotate(wag * 0.25);
+  context.beginPath();
+  context.moveTo(size * 0.05, 0);
+  context.quadraticCurveTo(-size * 0.2, -size * 0.42, -size * 0.46, -size * 0.36);
+  context.quadraticCurveTo(-size * 0.36, 0, -size * 0.46, size * 0.36);
+  context.quadraticCurveTo(-size * 0.2, size * 0.42, size * 0.05, 0);
+  context.fill();
+  context.restore();
+  context.beginPath();
+  context.moveTo(-size * 0.1, -size * 0.6);
+  context.lineTo(-size * 0.3, -size * 0.88);
+  context.lineTo(-size * 0.36, -size * 0.66);
+  context.lineTo(-size * 0.5, -size * 0.76);
+  context.lineTo(-size * 0.54, -size * 0.46);
+  context.fill();
+
+  // A round lumpy body, and the big lower jaw jutting forward and up.
+  context.fillStyle = skin;
+  context.beginPath();
+  for (let bump = 0; bump <= 16; bump++) {
+    const angle = bump / 16 * Math.PI * 2;
+    const reach = 1 + (bump % 2 ? 0.06 : -0.02);
+    const x = -size * 0.05 + Math.cos(angle) * size * 0.78 * reach, y = size * 0.02 + Math.sin(angle) * size * 0.7 * reach;
+    const mid = (bump - 0.5) / 16 * Math.PI * 2;
+    if (bump === 0) context.moveTo(x, y);
+    else context.quadraticCurveTo(-size * 0.05 + Math.cos(mid) * size * 0.84, size * 0.02 + Math.sin(mid) * size * 0.76, x, y);
+  }
+  context.fill();
+  context.beginPath();
+  context.moveTo(-size * 0.3, size * 0.7);
+  context.quadraticCurveTo(size * 0.82, size * 0.86, size * 1.06, -size * 0.3);
+  context.lineTo(size * 0.6, -size * 0.2);
+  context.fill();
+  context.fillStyle = light;
+  context.beginPath();
+  for (const [x, y, r] of [[-0.3, -0.36, 0.1], [-0.52, 0.12, 0.07], [-0.1, -0.54, 0.06], [-0.46, -0.16, 0.05], [0.02, 0.56, 0.05]]) {
+    context.moveTo(size * (x + r), size * y);
+    context.arc(size * x, size * y, size * r, 0, Math.PI * 2);
+  }
+  context.fill();
+
+  // The huge upturned mouth with little needle teeth.
+  const corner = [-size * 0.1, size * 0.1];
+  const lower = [[size * 0.48, size * 0.7], [size * 0.99, -size * 0.27]];
+  const upper = [[size * 0.36, -size * 0.14], [size * 0.76, -size * 0.28]];
+  context.fillStyle = "#1c0f12";
+  context.beginPath();
+  context.moveTo(...corner);
+  context.quadraticCurveTo(...lower[0], ...lower[1]);
+  context.lineTo(...upper[1]);
+  context.quadraticCurveTo(...upper[0], ...corner);
+  context.fill();
+  context.save();
+  context.clip();
+  context.fillStyle = "#b8515f";
+  context.beginPath();
+  context.ellipse(size * 0.44, size * 0.3, size * 0.32, size * 0.15, -0.45, 0, Math.PI * 2);
+  context.fill();
+  context.restore();
+  context.fillStyle = "#f4f1e6";
+  context.beginPath();
+  for (const [[control, end], from, to, count, side, long] of [[lower, 0.3, 0.92, 5, 1, 0.15], [upper, 0.35, 0.9, 4, -1, 0.11]]) {
+    for (let tooth = 0; tooth < count; tooth++) {
+      const t = from + (to - from) * tooth / (count - 1);
+      const x = (1 - t) * (1 - t) * corner[0] + 2 * (1 - t) * t * control[0] + t * t * end[0];
+      const y = (1 - t) * (1 - t) * corner[1] + 2 * (1 - t) * t * control[1] + t * t * end[1];
+      let dx = 2 * (1 - t) * (control[0] - corner[0]) + 2 * t * (end[0] - control[0]);
+      let dy = 2 * (1 - t) * (control[1] - corner[1]) + 2 * t * (end[1] - control[1]);
+      const length = Math.hypot(dx, dy);
+      dx /= length;
+      dy /= length;
+      const half = size * 0.032, reach = size * long;
+      context.moveTo(x - dx * half, y - dy * half);
+      context.lineTo(x + dy * side * reach, y - dx * side * reach);
+      context.lineTo(x + dx * half, y + dy * half);
+    }
+  }
+  context.fill();
+
+  context.save();
+  context.translate(-size * 0.2, size * 0.26);
+  context.rotate(wag * 0.3);
+  context.fillStyle = dark;
+  context.beginPath();
+  context.moveTo(size * 0.04, 0);
+  context.quadraticCurveTo(-size * 0.08, size * 0.24, -size * 0.28, size * 0.26);
+  context.quadraticCurveTo(-size * 0.24, size * 0.08, -size * 0.3, -size * 0.08);
+  context.quadraticCurveTo(-size * 0.12, -size * 0.1, size * 0.04, 0);
+  context.fill();
+  context.restore();
+  paintEye(context, size * 0.26, -size * 0.42, Math.max(2, size * 0.12));
+
+  // The rod grows from the forehead; its lure glows to lure little fish in the dark.
+  context.strokeStyle = "#8a6a5e";
+  context.lineWidth = Math.max(1.2, size * 0.07);
+  context.lineCap = "round";
+  context.beginPath();
+  context.moveTo(size * 0.12, -size * 0.64);
+  context.quadraticCurveTo(size * 0.26, -size * 1.4, lureX, lureY);
+  context.stroke();
+  const glow = size * (0.62 + pulse * 0.22);
+  const halo = context.createRadialGradient(lureX, lureY, 0, lureX, lureY, glow);
+  halo.addColorStop(0, `rgba(225,255,255,${0.8 + pulse * 0.2})`);
+  halo.addColorStop(0.3, `rgba(120,240,255,${0.35 + pulse * 0.2})`);
+  halo.addColorStop(1, "rgba(120,240,255,0)");
+  context.fillStyle = halo;
+  context.beginPath();
+  context.arc(lureX, lureY, glow, 0, Math.PI * 2);
+  context.fill();
+  context.fillStyle = "#a6f6ff";
+  context.beginPath();
+  context.arc(lureX, lureY, Math.max(2.2, size * (0.13 + pulse * 0.02)), 0, Math.PI * 2);
+  context.fill();
+  context.fillStyle = "#ffffff";
+  context.beginPath();
+  context.arc(lureX - size * 0.025, lureY - size * 0.025, Math.max(1.1, size * 0.065), 0, Math.PI * 2);
+  context.fill();
+}
+
+// Sea otter: floats on its back with a rock on its tummy, banging a clam on it to crack it open.
+function paintOtter(context, size, time) {
+  const s = size;
+  const fur = "#86573a", dark = "#5c3923", belly = "#a87653", cream = "#e8ddcc", paw = "#4a2e1d";
+  const bob = Math.sin(time * 1.6);
+  const lift = 0.5 + 0.5 * Math.sin(time * 3.2);
+  context.save();
+  context.rotate(bob * 0.05);
+  context.lineCap = "round";
+  context.lineJoin = "round";
+
+  // A flat tail trailing behind.
+  context.fillStyle = dark;
+  context.beginPath();
+  context.moveTo(-s * 0.6, -s * 0.1);
+  context.quadraticCurveTo(-s * 1.0, -s * 0.2, -s * 1.32, -s * 0.16 + bob * s * 0.04);
+  context.quadraticCurveTo(-s * 1.4, -s * 0.06, -s * 1.3, -s * 0.02 + bob * s * 0.03);
+  context.quadraticCurveTo(-s * 1.0, s * 0.08, -s * 0.6, s * 0.14);
+  context.fill();
+
+  // Big webbed back feet sticking up.
+  for (const [x, lean, color] of [[-0.74, -0.55, dark], [-0.56, -0.12, paw]]) {
+    context.save();
+    context.translate(s * x, -s * 0.14);
+    context.rotate(lean + Math.sin(time * 2.2 + x * 4) * 0.1);
+    context.fillStyle = color;
+    context.beginPath();
+    context.moveTo(-s * 0.06, s * 0.04);
+    context.lineTo(-s * 0.17, -s * 0.28);
+    for (let toe = 0; toe < 4; toe++) {
+      const from = -0.17 + toe * 0.085;
+      context.quadraticCurveTo(s * (from + 0.01), -s * 0.4, s * (from + 0.085), -s * 0.3);
+    }
+    context.lineTo(s * 0.06, s * 0.04);
+    context.fill();
+    context.restore();
+  }
+
+  // Body lying on its back, the paler tummy facing up.
+  context.fillStyle = fur;
+  context.beginPath();
+  context.ellipse(-s * 0.12, 0, s * 0.72, s * 0.3, 0, 0, Math.PI * 2);
+  context.fill();
+  context.fillStyle = belly;
+  context.beginPath();
+  context.ellipse(-s * 0.14, -s * 0.09, s * 0.6, s * 0.19, 0, 0, Math.PI * 2);
+  context.fill();
+
+  // The rock resting on the tummy, used like an anvil.
+  const rockX = s * 0.08, rockY = -s * 0.3;
+  context.fillStyle = "#8e959b";
+  context.beginPath();
+  context.ellipse(rockX, rockY, s * 0.23, s * 0.12, 0, 0, Math.PI * 2);
+  context.fill();
+  context.fillStyle = "#b9c0c5";
+  context.beginPath();
+  context.ellipse(rockX - s * 0.05, rockY - s * 0.04, s * 0.08, s * 0.035, -0.1, 0, Math.PI * 2);
+  context.fill();
+
+  // Short arms from the chest, the paws holding a clam just over the rock.
+  const clamX = s * 0.22, clamY = -s * (0.46 + lift * 0.08);
+  context.strokeStyle = dark;
+  context.lineWidth = Math.max(2, s * 0.13);
+  context.beginPath();
+  context.moveTo(s * 0.5, -s * 0.26);
+  context.lineTo(clamX + s * 0.15, clamY + s * 0.02);
+  context.stroke();
+
+  // Head raised at the front, pale face looking at you.
+  const headX = s * 0.8, headY = -s * 0.3, head = s * 0.35;
+  context.fillStyle = fur;
+  for (const side of [-1, 1]) {
+    context.beginPath();
+    context.arc(headX + side * head * 0.7, headY - head * 0.7, s * 0.085, 0, Math.PI * 2);
+    context.fill();
+  }
+  context.beginPath();
+  context.arc(headX, headY, head, 0, Math.PI * 2);
+  context.fill();
+  context.fillStyle = cream;
+  context.beginPath();
+  context.ellipse(headX, headY + head * 0.12, head * 0.86, head * 0.76, 0, 0, Math.PI * 2);
+  context.fill();
+
+  context.strokeStyle = fur;
+  context.beginPath();
+  context.moveTo(s * 0.46, -s * 0.18);
+  context.lineTo(clamX - s * 0.15, clamY + s * 0.03);
+  context.stroke();
+  context.fillStyle = "#f2c9a8";
+  context.beginPath();
+  context.moveTo(clamX - s * 0.06, clamY + s * 0.07);
+  context.lineTo(clamX - s * 0.17, clamY);
+  context.quadraticCurveTo(clamX, clamY - s * 0.3, clamX + s * 0.17, clamY);
+  context.lineTo(clamX + s * 0.06, clamY + s * 0.07);
+  context.closePath();
+  context.fill();
+  context.strokeStyle = "#c9876a";
+  context.lineWidth = Math.max(1, s * 0.025);
+  context.beginPath();
+  for (const spread of [-0.08, 0, 0.08]) {
+    context.moveTo(clamX, clamY + s * 0.05);
+    context.lineTo(clamX + s * spread, clamY - s * 0.1);
+  }
+  context.stroke();
+  context.fillStyle = paw;
+  for (const side of [-1, 1]) {
+    context.beginPath();
+    context.arc(clamX + side * s * 0.15, clamY + s * 0.02, Math.max(1.5, s * 0.07), 0, Math.PI * 2);
+    context.fill();
+  }
+
+  // Face: little dark eyes, a white muzzle with a black nose and whiskers.
+  const eye = Math.max(1.6, s * 0.058);
+  context.fillStyle = "#23160e";
+  for (const side of [-1, 1]) {
+    context.beginPath();
+    context.arc(headX + side * head * 0.38, headY - head * 0.12, eye, 0, Math.PI * 2);
+    context.fill();
+  }
+  context.fillStyle = "#ffffff";
+  for (const side of [-1, 1]) {
+    context.beginPath();
+    context.arc(headX + side * head * 0.38 + eye * 0.35, headY - head * 0.12 - eye * 0.35, eye * 0.38, 0, Math.PI * 2);
+    context.fill();
+  }
+  context.fillStyle = "#fbf7f0";
+  for (const side of [-1, 1]) {
+    context.beginPath();
+    context.arc(headX + side * head * 0.15, headY + head * 0.32, head * 0.2, 0, Math.PI * 2);
+    context.fill();
+  }
+  context.strokeStyle = "rgba(70,45,30,.55)";
+  context.lineWidth = Math.max(1, s * 0.02);
+  context.beginPath();
+  for (const side of [-1, 1]) {
+    for (const drop of [-0.06, 0.08]) {
+      context.moveTo(headX + side * head * 0.3, headY + head * 0.32);
+      context.lineTo(headX + side * head * 0.95, headY + head * (0.32 + drop * 2));
+    }
+  }
+  context.stroke();
+  context.fillStyle = "#23160e";
+  context.beginPath();
+  context.ellipse(headX, headY + head * 0.16, head * 0.17, head * 0.12, 0, 0, Math.PI * 2);
+  context.fill();
+  context.restore();
+}
+
+// Penguin: "flies" underwater, a black-and-white torpedo flapping its flipper wings.
+function paintPenguin(context, size, time) {
+  const s = size, black = "#1c2430", white = "#f6f7f2", gold = "#f6b53a";
+  const flap = Math.sin(time * 5);
+  context.lineCap = "round";
+  context.lineJoin = "round";
+
+  // A few bubbles trailing behind.
+  context.strokeStyle = "rgba(225,246,255,.75)";
+  context.lineWidth = Math.max(1, s * 0.05);
+  for (let bubble = 0; bubble < 3; bubble++) {
+    const phase = ((time * 0.7 + bubble / 3) % 1 + 1) % 1;
+    context.beginPath();
+    context.arc(-s * (1.05 + phase * 0.25), -s * (0.2 + phase * 0.7) + Math.sin(time * 3 + bubble * 2) * s * 0.04,
+      s * (0.05 + bubble * 0.02) * (0.6 + phase * 0.6), 0, Math.PI * 2);
+    context.stroke();
+  }
+
+  // Pink feet trailing at the back.
+  context.fillStyle = "#f2946a";
+  for (const [drop, phase] of [[0, 0], [0.09, 1.6]]) {
+    const kick = Math.sin(time * 5 + phase) * s * 0.05;
+    context.beginPath();
+    context.moveTo(-s * 0.8, s * (0.1 + drop));
+    context.lineTo(-s * 1.2, s * (0.08 + drop) + kick);
+    context.lineTo(-s * 1.13, s * (0.24 + drop) + kick);
+    context.closePath();
+    context.fill();
+  }
+
+  context.beginPath();
+  context.moveTo(s * 0.98, -s * 0.06);
+  context.bezierCurveTo(s * 0.9, -s * 0.38, s * 0.55, -s * 0.46, s * 0.15, -s * 0.44);
+  context.bezierCurveTo(-s * 0.35, -s * 0.42, -s * 0.8, -s * 0.22, -s * 1.12, -s * 0.02);
+  context.bezierCurveTo(-s * 0.8, s * 0.26, -s * 0.3, s * 0.46, s * 0.2, s * 0.42);
+  context.bezierCurveTo(s * 0.6, s * 0.38, s * 0.9, s * 0.22, s * 0.98, s * 0.05);
+  context.closePath();
+  context.fillStyle = black;
+  context.fill();
+  context.save();
+  context.clip();
+  context.fillStyle = white;
+  context.beginPath();
+  context.moveTo(s * 1.1, s * 0.3);
+  context.lineTo(s * 0.74, s * 0.2);
+  context.quadraticCurveTo(s * 0.5, -s * 0.02, s * 0.12, s * 0.04);
+  context.quadraticCurveTo(-s * 0.6, s * 0.06, -s * 1.15, s * 0.02);
+  context.lineTo(-s * 1.15, s * 0.6);
+  context.lineTo(s * 1.1, s * 0.6);
+  context.fill();
+  context.fillStyle = "rgba(252,226,140,.75)";
+  context.beginPath();
+  context.ellipse(s * 0.56, s * 0.2, s * 0.22, s * 0.09, -0.3, 0, Math.PI * 2);
+  context.fill();
+  context.restore();
+
+  // The golden patch down the side of the neck.
+  context.fillStyle = gold;
+  context.beginPath();
+  context.ellipse(s * 0.52, s * 0.03, s * 0.09, s * 0.17, -0.45, 0, Math.PI * 2);
+  context.fill();
+
+  // Long beak: black on top, orange underneath.
+  context.fillStyle = black;
+  context.beginPath();
+  context.moveTo(s * 0.92, -s * 0.1);
+  context.quadraticCurveTo(s * 1.2, -s * 0.06, s * 1.38, s * 0.03);
+  context.lineTo(s * 0.92, s * 0.03);
+  context.fill();
+  context.fillStyle = "#f28a3a";
+  context.beginPath();
+  context.moveTo(s * 0.92, s * 0.02);
+  context.lineTo(s * 1.34, s * 0.03);
+  context.quadraticCurveTo(s * 1.1, s * 0.1, s * 0.92, s * 0.08);
+  context.fill();
+
+  // The flipper wing beats up and down across the white belly.
+  paintFlipper(context, s * 0.3, s * 0.08, s * 0.66, s * 0.12, 1.1 + flap * 0.45, black, true);
+  paintEye(context, s * 0.72, -s * 0.16, Math.max(2.2, s * 0.1));
+}
+
+// Flying fish: a slim shiny fish with huge see-through wing fins for gliding over the waves.
+function paintFlyingFish(context, size, time) {
+  const s = size, back = "#2a62b6", belly = "#e3ecf3";
+  const flutter = Math.sin(time * 7) * 0.06;
+
+  // The far wings spread up behind the body.
+  paintFlyingFishWing(context, s * 0.36, -s * 0.08, s * 1.25, -1, flutter, s);
+  paintFlyingFishWing(context, -s * 0.34, -s * 0.06, s * 0.6, -1, flutter * 0.7, s);
+
+  // Forked tail with a longer lower lobe.
+  context.save();
+  context.translate(-s * 0.84, 0);
+  context.rotate(Math.sin(time * 9) * 0.12);
+  context.fillStyle = "#3a78c8";
+  context.beginPath();
+  context.moveTo(s * 0.05, -s * 0.05);
+  context.quadraticCurveTo(-s * 0.2, -s * 0.2, -s * 0.42, -s * 0.4);
+  context.quadraticCurveTo(-s * 0.26, -s * 0.06, -s * 0.28, s * 0.02);
+  context.quadraticCurveTo(-s * 0.35, s * 0.22, -s * 0.6, s * 0.5);
+  context.quadraticCurveTo(-s * 0.24, s * 0.26, s * 0.05, s * 0.06);
+  context.fill();
+  context.restore();
+
+  context.beginPath();
+  context.moveTo(s * 1.02, s * 0.02);
+  context.bezierCurveTo(s * 0.95, -s * 0.18, s * 0.5, -s * 0.26, 0, -s * 0.24);
+  context.bezierCurveTo(-s * 0.4, -s * 0.22, -s * 0.7, -s * 0.1, -s * 0.86, -s * 0.04);
+  context.lineTo(-s * 0.86, s * 0.05);
+  context.bezierCurveTo(-s * 0.7, s * 0.12, -s * 0.4, s * 0.22, 0, s * 0.23);
+  context.bezierCurveTo(s * 0.5, s * 0.24, s * 0.95, s * 0.18, s * 1.02, s * 0.02);
+  context.closePath();
+  context.fillStyle = belly;
+  context.fill();
+  context.save();
+  context.clip();
+  context.fillStyle = back;
+  context.beginPath();
+  context.moveTo(s * 1.1, -s * 0.02);
+  context.quadraticCurveTo(s * 0.3, s * 0.06, -s * 0.9, s * 0.02);
+  context.lineTo(-s * 0.9, -s * 0.4);
+  context.lineTo(s * 1.1, -s * 0.4);
+  context.fill();
+  context.fillStyle = "rgba(140,200,250,.7)";
+  context.beginPath();
+  context.ellipse(-s * 0.05, -s * 0.02, s * 0.75, s * 0.04, 0.02, 0, Math.PI * 2);
+  context.fill();
+  context.restore();
+
+  // The near wings spread down in front.
+  paintFlyingFishWing(context, -s * 0.34, s * 0.08, s * 0.6, 1, flutter * 0.7, s);
+  paintFlyingFishWing(context, s * 0.36, s * 0.06, s * 1.25, 1, flutter, s);
+
+  paintEye(context, s * 0.68, -s * 0.05, Math.max(2.5, s * 0.15));
+  context.strokeStyle = "rgba(20,55,70,.6)";
+  context.lineWidth = Math.max(1, s * 0.03);
+  context.lineCap = "round";
+  context.beginPath();
+  context.arc(s * 0.88, s * 0.02, s * 0.1, 0.4, 1.6);
+  context.stroke();
+}
+
+// A flying fish's wing: a rounded fan of fin rays from (x, y) sweeping back, up (side -1) or down (side 1).
+function paintFlyingFishWing(context, x, y, length, side, flutter, size) {
+  const rays = 7, tips = [];
+  for (let ray = 0; ray < rays; ray++) {
+    const t = ray / (rays - 1);
+    const angle = Math.PI - side * (1.05 + flutter - t * 0.72);
+    const reach = length * (0.96 - 0.4 * t * t + (ray === 1 ? 0.04 : 0));
+    tips.push([x + Math.cos(angle) * reach, y + Math.sin(angle) * reach]);
+  }
+  context.fillStyle = "rgba(165,222,255,.66)";
+  context.beginPath();
+  context.moveTo(x, y);
+  context.lineTo(...tips[0]);
+  for (let ray = 1; ray < rays; ray++) {
+    const [fromX, fromY] = tips[ray - 1], [toX, toY] = tips[ray];
+    const midX = (fromX + toX) / 2, midY = (fromY + toY) / 2;
+    context.quadraticCurveTo(midX + (midX - x) * 0.05, midY + (midY - y) * 0.05, toX, toY);
+  }
+  context.closePath();
+  context.fill();
+  context.strokeStyle = "rgba(50,120,200,.5)";
+  context.lineWidth = Math.max(1, size * 0.03);
+  context.beginPath();
+  for (let ray = 1; ray < rays; ray++) {
+    context.moveTo(x, y);
+    context.lineTo(...tips[ray]);
+  }
+  context.stroke();
+  context.strokeStyle = "#2f78c8";
+  context.lineWidth = Math.max(1.2, size * 0.07);
+  context.lineCap = "round";
+  context.beginPath();
+  context.moveTo(x, y);
+  context.lineTo(...tips[0]);
+  context.stroke();
+}
+
+// Portuguese man o' war: a see-through blue gas float with a pink sail on top and long stinging
+// tentacles hanging below. It is not a jellyfish but a whole team of tiny animals living together.
+function paintManOfWar(context, size, time) {
+  const s = size;
+  context.save();
+  context.rotate(Math.sin(time * 1.3) * 0.05);
+  context.lineCap = "round";
+  context.lineJoin = "round";
+
+  // Long tentacles streaming back as it drifts; some beaded with stinging cells, some coiled up.
+  const strands = [[-0.3, 1.3, 0], [-0.14, 1.75, 1], [0.02, 1.45, 2], [0.18, 1.95, 1], [0.32, 1.5, 0],
+    [0.46, 1.8, 2], [0.6, 1.35, 1]];
+  const beads = [];
+  for (const [color, pick] of [["rgba(112,150,255,.85)", 0], ["rgba(170,124,238,.85)", 1]]) {
+    context.strokeStyle = color;
+    context.lineWidth = Math.max(1, s * 0.045);
+    context.beginPath();
+    strands.forEach(([rootX, length, style], index) => {
+      if (index % 2 !== pick) return;
+      const steps = style === 2 ? 40 : 12;
+      for (let step = 0; step <= steps; step++) {
+        const d = step / steps;
+        let px = s * rootX - d * d * s * 0.45 + Math.sin(time * 1.7 + index * 1.1 - d * 3) * s * 0.1 * d;
+        let py = -s * 0.08 + d * length * s;
+        if (style === 2 && d > 0.4) {
+          // Coiled up: little loops, growing in from nothing so the strand stays joined.
+          const turn = (d - 0.4) * 26 + time * 2;
+          const loop = s * 0.075 * Math.min(1, (d - 0.4) * 8);
+          px += Math.cos(turn) * loop;
+          py += Math.sin(turn) * loop;
+        }
+        if (step === 0) context.moveTo(px, py);
+        else context.lineTo(px, py);
+        if (style === 1 && step % 3 === 0 && step > 0) beads.push(px, py);
+      }
+    });
+    context.stroke();
+  }
+  context.fillStyle = "rgba(214,228,255,.95)";
+  context.beginPath();
+  const bead = Math.max(1, s * 0.05);
+  for (let index = 0; index < beads.length; index += 2) {
+    context.moveTo(beads[index] + bead, beads[index + 1]);
+    context.arc(beads[index], beads[index + 1], bead, 0, Math.PI * 2);
+  }
+  context.fill();
+
+  // The sail: a ruffled pink crest standing along the top of the float, a ripple running along it.
+  const crest = [];
+  for (let point = 0; point <= 18; point++) {
+    const t = point / 18;
+    const height = 0.06 + 0.36 * Math.pow(Math.sin(Math.PI * t), 0.7);
+    const ripple = Math.sin(t * Math.PI * 6 - time * 2.4) * 0.07 * (height / 0.42);
+    crest.push([s * (-0.74 + t * 1.36), -s * (0.64 + height + ripple)]);
+  }
+  context.fillStyle = "rgba(236,128,212,.9)";
+  context.beginPath();
+  context.moveTo(s * 0.62, -s * 0.56);
+  context.lineTo(-s * 0.74, -s * 0.56);
+  for (const [x, y] of crest) context.lineTo(x, y);
+  context.closePath();
+  context.fill();
+  context.strokeStyle = "rgba(160,60,160,.4)";
+  context.lineWidth = Math.max(1, s * 0.03);
+  context.beginPath();
+  for (let point = 3; point < crest.length - 1; point += 3) {
+    context.moveTo(crest[point][0] + s * 0.05, -s * 0.6);
+    context.lineTo(crest[point][0], crest[point][1] + s * 0.03);
+  }
+  context.stroke();
+  context.strokeStyle = "#d955b6";
+  context.lineWidth = Math.max(1.2, s * 0.05);
+  context.beginPath();
+  crest.forEach(([x, y], point) => point ? context.lineTo(x, y) : context.moveTo(x, y));
+  context.stroke();
+
+  // The float: a lopsided see-through balloon full of gas, fat at the front and pointed at the back.
+  context.beginPath();
+  context.moveTo(-s * 1.02, -s * 0.5);
+  context.bezierCurveTo(-s * 0.8, -s * 0.72, s * 0.45, -s * 0.86, s * 0.82, -s * 0.62);
+  context.bezierCurveTo(s * 1.08, -s * 0.45, s * 1.02, -s * 0.06, s * 0.62, -s * 0.04);
+  context.bezierCurveTo(s * 0.1, -s * 0.02, -s * 0.5, -s * 0.1, -s * 0.82, -s * 0.3);
+  context.quadraticCurveTo(-s * 0.98, -s * 0.38, -s * 1.02, -s * 0.5);
+  context.fillStyle = "rgba(118,160,255,.84)";
+  context.fill();
+  context.save();
+  context.clip();
+  context.fillStyle = "rgba(204,180,255,.6)";
+  context.beginPath();
+  context.ellipse(0, -s * 0.86, s * 1.1, s * 0.3, 0, 0, Math.PI * 2);
+  context.fill();
+  context.fillStyle = "rgba(70,110,230,.45)";
+  context.beginPath();
+  context.ellipse(s * 0.05, -s * 0.02, s * 1.0, s * 0.16, 0, 0, Math.PI * 2);
+  context.fill();
+  context.restore();
+  context.fillStyle = "rgba(255,255,255,.6)";
+  context.beginPath();
+  context.ellipse(-s * 0.28, -s * 0.56, s * 0.34, s * 0.06, -0.1, 0, Math.PI * 2);
+  context.fill();
+  context.beginPath();
+  context.arc(s * 0.84, -s * 0.5, s * 0.05, 0, Math.PI * 2);
+  context.fill();
+
+  // A tiny friendly face on the front of the float.
+  const eye = Math.max(1.6, s * 0.08);
+  context.fillStyle = "#173b52";
+  for (const x of [0.46, 0.72]) {
+    context.beginPath();
+    context.arc(s * x, -s * 0.36, eye, 0, Math.PI * 2);
+    context.fill();
+  }
+  context.fillStyle = "#ffffff";
+  for (const x of [0.46, 0.72]) {
+    context.beginPath();
+    context.arc(s * x + eye * 0.35, -s * 0.36 - eye * 0.35, eye * 0.35, 0, Math.PI * 2);
+    context.fill();
+  }
+  context.strokeStyle = "#2c3f8a";
+  context.lineWidth = Math.max(1, s * 0.05);
+  context.beginPath();
+  context.arc(s * 0.59, -s * 0.32, s * 0.1, 0.5, Math.PI - 0.5);
+  context.stroke();
+  context.restore();
+}
+
 const PAINTERS = {
   squid: paintSquid,
   turtle: paintTurtle,
@@ -1261,5 +2179,13 @@ const PAINTERS = {
   bluewhale: paintBlueWhale,
   manta: paintManta,
   lobster: paintLobster,
-  urchin: paintUrchin
+  urchin: paintUrchin,
+  hammerhead: paintHammerhead,
+  whaleshark: paintWhaleShark,
+  narwhal: paintNarwhal,
+  anglerfish: paintAnglerfish,
+  otter: paintOtter,
+  penguin: paintPenguin,
+  flyingfish: paintFlyingFish,
+  manofwar: paintManOfWar
 };
