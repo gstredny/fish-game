@@ -1,4 +1,19 @@
-# Active handoff — Big swimmer gentler, the question before the name, a coral trophy case
+# Active handoff — pick the answer: a star and a size up
+
+Date: 2026-10-01
+Task: `tasks/021-pick-the-answer.md`
+
+LIVE (05d77c8, Pages run 36929872388 success, live cache `little-fish-v27`). The "What animal is this?" card
+shows three names (the right one + two from the same place, shuffled fresh each time, `src/choices.js`).
+Right pick: ⭐ +1 (top bar, `little-fish-stars-v1` per spot, Erase clears it), the grow chime, and closing the
+card grows the fish one size (`growUp` in `src/world.js`; one size before the biggest starts the mission).
+Wrong pick: "Good try!" + the right name. Tell me! stays as a small no-star link. `npm test` 116/116;
+`tools/browser-quiz.mjs` passed (844x390, 568x320, 1280x800, muted); coral and levels checks passed.
+Not on George's phone yet. Known: `tools/browser-learn.mjs` fails at line 138 (expects the open ocean
+start; stale since levels, fails the same on 6178918). Assumptions George may veto: quiz only on first
+meeting; no stars on the start screen; Tell me! kept.
+
+## Previous — Big swimmer gentler, the question before the name, a coral trophy case
 
 Date: 2026-10-01
 Task: `tasks/020-easier-big-guess-first-coral-case.md`

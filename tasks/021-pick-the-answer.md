@@ -1,7 +1,7 @@
 # Pick the answer: stars and a size up for a right guess
 
 Date: 2026-10-01
-Status: in progress
+Status: LIVE on GitHub Pages (05d77c8, Pages run 36929872388, cache `little-fish-v27`). George's phone try is his to do
 Branch: `master`
 
 George's asks: "whenever they encounter a fish or an animal and ask you what it is? They should get
@@ -41,7 +41,8 @@ first time a player meets each animal; already-met animals keep their name tag. 
 - [x] Muted headless browser: question card with three choices and the revealed card fit at 844x390,
       568x320 and 1280x800; screenshots looked at.
 - [x] `git diff --check` clean; `sw.js` bumped and caches `src/choices.js`.
-- [ ] Pushed, Pages deploy success, live `sw.js` shows the new cache (only once George says ship).
+- [x] Pushed 05d77c8; Pages run 36929872388 "completed success"; live `sw.js` = `little-fish-v27`, live
+      `src/choices.js` and `index.html` with `#card-choices` served.
 
 ## Attempt log (append-only)
 - 2026-10-01: red first: `node --test tests/choices.test.js tests/quiz-flow.test.js` failed (no `src/choices.js`,
@@ -61,3 +62,5 @@ first time a player meets each animal; already-met animals keep their name tag. 
   HEAD 6178918 served from `git archive` on port 8779, so it is old, not from this change. Left as is.
 - 2026-10-01: README updated (the pick, stars per spot, `browser-quiz`, `--mute-audio` in the Chrome line).
   `npm test`: 116 passed, 0 failed, 0 cancelled, 0 skipped. `git diff --check` clean.
+- 2026-10-01: committed 05d77c8 and pushed. Pages run 36929872388 completed success. `curl` live `sw.js`:
+  `const CACHE = "little-fish-v27";`; live `src/choices.js` served; live `index.html` has `id="card-choices"` (1).
