@@ -32,7 +32,7 @@ export const SHARK = FORMS.length - 1;
 // share of the biggest form's ocean.
 export const LEVELS = {
   little: { goals: [6, 7, 8, 9], chase: 0, reach: 180, orcaChase: 0.5, safe: 2.4, odds: [0.25, 0.65, 0.75, 0.95], orcas: 0.03 },
-  big: { goals: [8, 9, 11, 12], chase: 0.62, reach: 230, orcaChase: 0.8, safe: 1.5, odds: [0.22, 0.58, 0.68, 0.93], orcas: 0.06 }
+  big: { goals: [8, 9, 11, 12], chase: 0.5, reach: 230, orcaChase: 0.65, safe: 2, odds: [0.22, 0.58, 0.68, 0.93], orcas: 0.06 }
 };
 
 export function goalFor(level, stage) {
