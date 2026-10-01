@@ -15,8 +15,11 @@ const noopContext = new Proxy({}, { get: (target, key) => target[key] ?? (String
 
 function element() {
   const listeners = new Map(), classes = new Set(), children = [];
+  let html = "";
   return {
     hidden: false, style: { setProperty() {} }, textContent: "", children,
+    // Setting innerHTML empties the children, as in a browser.
+    get innerHTML() { return html; }, set innerHTML(value) { html = value; children.length = 0; },
     append: child => children.push(child), prepend: child => children.unshift(child),
     getContext: () => noopContext, toDataURL: () => "data:,",
     getBoundingClientRect: () => ({ left: 0, top: 0, right: 0, bottom: 0, width: 0, height: 0 }),

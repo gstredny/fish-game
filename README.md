@@ -24,12 +24,16 @@ say to finish the one before it. Finishing a mission in a place finishes that le
 finished level can be swum again for a new mission. The order is the order of `src/zones.js`; the rules
 are in `src/levels.js`.
 
-**Who's swimming?** on the start screen has three save spots. Each keeps its own name, Ocean book, reef,
+**Who's swimming?** on the start screen has three save spots. Each keeps its own name, Ocean book, coral,
 levels finished, Little/Big swimmer and place to swim on the same phone, and shows the level it is on
 ("Level 2 of 4", or "Finished! ★"). Picking a spot nobody has swum asks for a name; **Change name** renames
 the spot, and **Erase** empties it after a second tap on the page (no browser pop-up). A spot without a
 name is called Player 1, 2 or 3. A save from before spots and levels is the first spot's: it keeps its
-Ocean book and reef, and starts on level 1. The sound switch stays one per phone.
+Ocean book and starts on level 1. The sound switch stays one per phone.
+
+**Your coral** (on the start, win and end screens) is the trophy case: a shelf with one coral for every
+level, grey with a "?" until that level is finished. Finishing a level earns its coral; the win screen
+says so and offers **See your coral**. There is nothing to plant or place.
 
 ## Missions
 
@@ -40,18 +44,18 @@ Once you reach the biggest form (the great white shark in the open ocean, the ti
 - find the place's giant (an arrow at the screen edge points to it);
 - swim away from the top hunter for a while, in places that have one. Orcas are the only animals that hunt great whites, and a bump starts the count over.
 
-Finishing the mission ends the swim with **Mission complete!** and earns a coral colony. The top hunter also turns up now and then once you are big.
+Finishing the mission ends the swim with **Mission complete!** (or **Level complete!** the first time in a place). The top hunter also turns up now and then once you are big.
 
 The start screen has two ways to play, and each spot remembers its choice:
 
 - **Little swimmer** is the gentle game.
-- **Big swimmer** takes more snacks to grow, sends more hunters, and they turn and chase you (always a bit slower than you, so you can get away). You also get less safe time after a bump, and the missions ask for more.
+- **Big swimmer** takes more snacks to grow, sends more hunters, and they turn and chase you (at half your speed, the orca a little faster, so you can get away). You also get less safe time after a bump, and the missions ask for more.
 
 **Home** on the pause, win and game-over screens goes back to the start screen, to pick another place, level or fish.
 
 ## Learning as you swim
 
-The first time a child meets an animal, the game pauses and a card shows a real photo of it. First the voice asks "What animal is this?" and the card waits, with no timer, while the child thinks. **Tell me!** then names the animal and the voice reads out a fact, what the animal eats, and who eats it. After that, a name tag floats above the animal and the voice says one short line, one animal at a time with a few seconds between, so a busy ocean does not rattle off names. Growing up and getting bumped are told as food-chain lines too, such as "You're a tuna now! Tuna eat squid. Watch out for sharks!" and "Watch out! Mackerel eat sardines!" The first line of a swim starts with a welcome to the place.
+The first time a child meets an animal, the game pauses and a card shows a real photo of it. First the voice asks "What animal is this?" and the card waits, with no timer, while the child thinks. **Tell me!** then names the animal and the voice reads out a fact, what the animal eats, and who eats it. The question always comes before the name: a mission about an animal never met (the orca to swim away from, the tuna to eat) shows that card before the mission card, and a bump by a hunter never met opens its card instead of the "Watch out!" line. After that, a name tag floats above the animal and the voice says one short line, one animal at a time with a few seconds between, so a busy ocean does not rattle off names. Growing up and getting bumped are told as food-chain lines too, such as "You're a tuna now! Tuna eat squid. Watch out for sharks!" and "Watch out! Mackerel eat sardines!" The first line of a swim starts with a welcome to the place.
 
 Gentle sea friends come by as well. In open water: a sea turtle, a dolphin, a jellyfish, a pufferfish (swim close and it puffs up), a manta ray, a parrotfish and, once in a while, a huge blue whale. On the sea bed: a seahorse, an octopus, a sea star, a crab, a lobster, a sea urchin and clownfish in their anemone (swim low to meet them). They never eat you and are never eaten.
 
@@ -97,8 +101,6 @@ SSL_CERT_FILE=/tmp/ca-bundle.pem .venv/bin/python tools/make-voice.py /tmp/lines
 ``` The voice is `af_heart` at speed 0.9; `--voice` and `--speed` change them. Bump the cache name in `sw.js` afterwards.
 
 If the voice says a word wrong, add it to `SAY_AS` at the top of `tools/make-voice.py`, spelled in Kokoro's own phonemes (misaki's US set). The next run records every line with that word again. Fixed so far: rattail, narwhal, amphipod, axes, man o' war.
-
-Every finished mission earns one coral colony. Choose **Plant your coral**, then tap or click open water (or press Enter to plant ahead). The coral and any unplanted rewards are saved on this device across new swims and reloads. Three clownfish live around each colony and retreat when predators approach. Sardines and mackerel can shelter inside the marked circle; larger forms cannot. Each new swim starts beside your reef. If browser storage is unavailable, the reef lasts for the current visit and the game says so.
 
 The idea was inspired by memories of school computer games. [*Odell Down Under*](https://www.computinghistory.org.uk/det/62803/Odell-Down-Under/) is a likely match: it lets players take different roles in an ocean food chain, including a shark. [*Fishy*](https://www.jayisgames.com/review/fishy.php) and [*Feeding Frenzy*](https://www.ea.com/games/feeding-frenzy/feeding-frenzy) have a similar eat-and-grow loop. This game uses original code and drawn graphics.
 
@@ -154,10 +156,10 @@ node tools/browser-play.mjs desktop   # real keyboard input, box-pattern swim
 node tools/browser-play.mjs phone     # 844×390 sideways touch input
 node tools/browser-sideways.mjs       # sideways phone: arrow pad steers, finger on water doesn't, snacks, turn prompt, panels fit
 node tools/browser-autoplay.mjs       # seek-food controller plays to the shark and an eat-tuna mission (LEVEL=big for Big swimmer)
-node tools/browser-reef.mjs           # earn, plant, reload, shelter; desktop + phone
 node tools/browser-learn.mjs          # fact cards, voice, Ocean book, mission card, sea-bed friends, fits; "zoo" screenshots
 node tools/browser-zones.mjs          # picking a place, the reef swim and mission, Home, the book by place, built-in species, fits
 node tools/browser-levels.mjs         # locked places, a typed name, Level complete and Next, the end screen, Erase asks first, fits
+node tools/browser-coral.mjs          # the question before the mission names its animal, a bump by a stranger, the coral shelf, fits
 ```
 
 `tools/browser-sound.mjs` checks that sound stays off until a tap and that each main moment plays its sound. `tools/browser-update.mjs` checks that an update shows on the first open. `tools/browser-check.mjs` checks that old saved drawings never replace species artwork, that growing changes the swimming animal, and that the start screen fits on a computer and sideways phones. Run `node tools/browser-check.mjs screenshots` with Playwright installed (or set `PLAYWRIGHT_MODULE` to an installed copy). Its browser is muted.

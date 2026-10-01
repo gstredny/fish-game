@@ -28,11 +28,10 @@ test("becoming the shark plays the fanfare instead of the grow chime, and the la
   assert.deepEqual(cuesFor([], "mission", "mission"), [], "a win sounds once, not every frame");
 });
 
-test("the mission card and the finished mission play the fanfare; planting coral after it does not", () => {
+test("the mission card and the finished mission play the fanfare, once", () => {
   assert.deepEqual(cuesFor([{ type: "eat" }, { type: "done" }], "playing", "won"), ["eat", "won"], "the mission's last tuna");
   assert.deepEqual(cuesFor([{ type: "eat" }, { type: "done" }], "mission", "won"), ["eat", "won"],
     "even in the first moment after the mission card");
-  assert.deepEqual(cuesFor([], "planting", "won"), [], "back to the win screen after planting");
   assert.deepEqual(cuesFor([], "mission", "playing"), []);
 });
 

@@ -3,10 +3,8 @@ import { paintOcean } from "./paint.js";
 import { createSound } from "./sound.js";
 import { createSteering } from "./steering.js";
 import { padDirection } from "./pad.js";
-import { toWorld } from "./camera.js";
 import { createWorld, dangerBehind, nearbyAnimals, resetWorld, swim } from "./world.js";
-import { plantCoral } from "./reef.js";
-import { loadReef, REEF_KEY, saveReef } from "./reef-save.js";
+import { paintColony } from "./coral-paint.js";
 import { cardSpeech, growLine, hurtLine, meetLine, searchLink, SPECIES } from "./species.js";
 import { formKind, KINDS, ZONE_IDS, ZONES, zoneKinds } from "./zones.js";
 import { swatch } from "./animal-paint.js";
@@ -25,7 +23,7 @@ const overlay = document.querySelector("#overlay");
 const hud = document.querySelector("#hud");
 const hint = document.querySelector("#hint");
 const toast = document.querySelector("#toast");
-const panels = ["intro", "paused", "won", "gameover", "card", "book", "mission", "finished"];
+const panels = ["intro", "paused", "won", "gameover", "card", "book", "mission", "finished", "coral"];
 const LEVEL_KEY = "little-fish-level-v1";
 const ZONE_KEY = "little-fish-zone-v1";
 const PORTRAIT_PHONE = "(orientation: portrait) and (max-width: 600px) and (pointer: coarse)";
@@ -42,7 +40,6 @@ let padOwner = null;
 let installPrompt = null;
 let width = window.innerWidth;
 let height = window.innerHeight;
-let reefSaved = true;
 let previousFrame = 0;
 let visualTime = 0;
 let toastTimer;
@@ -57,6 +54,7 @@ let cardKind = null;
 let cardFrom = null;
 let guessing = false;
 let bookFrom = null;
+let coralFrom = null;
 let hintFrom = null;
 let lastSwim = null;
 
@@ -67,7 +65,7 @@ let saves, level, zone, met, beaten;
 // The level this swim finished for the first time, until the next swim.
 let cleared = null;
 readPlayer();
-let world = createWorld(width, height, { reef: loadReef(saves), zone });
+let world = createWorld(width, height, { zone });
 const sound = createSound();
 sound.setMuted(voice.muted);
 
@@ -110,10 +108,10 @@ function choosePlayer(choice) {
   else askName();
 }
 
-// The water, book, reef and buttons become this player's.
+// The water, book, coral and buttons become this player's.
 function loadPlayer() {
   readPlayer();
-  resetWorld(world, width, height, { zone, met, reef: loadReef(saves) });
+  resetWorld(world, width, height, { zone, met });
   renderPlayers();
   showLevel();
   renderZones();
@@ -176,13 +174,13 @@ function closeName() {
 // Erasing asks first, on the page itself: no browser pop-up.
 function askErase() {
   document.querySelector("#erase-text").textContent =
-    `Really erase ${describePlayer(player).name}? Their book and levels go too.`;
+    `Really erase ${describePlayer(player).name}? Their book, levels and coral go too.`;
   document.querySelector("#erase-ask").hidden = false;
   closeName();
 }
 
 function erasePlayer() {
-  for (const key of [NAME_KEY, MET_KEY, REEF_KEY, LEVEL_KEY, ZONE_KEY, LEVELS_KEY]) {
+  for (const key of [NAME_KEY, MET_KEY, LEVEL_KEY, ZONE_KEY, LEVELS_KEY]) {
     try { saves.removeItem(key); } catch {}
   }
   loadPlayer();
@@ -219,7 +217,6 @@ function showPanel(name) {
     renderZones();
     renderPlayers();
   }
-  document.querySelector("#reef-bar").hidden = Boolean(name) || (!world.reef.pending && !world.reef.corals.length);
 }
 
 // "Little sardine", then the animal's own name as you grow.
@@ -236,12 +233,6 @@ function updateHud() {
   const hearts = document.querySelector("#hearts");
   hearts.textContent = `${"♥ ".repeat(world.hearts)}${"♡ ".repeat(3 - world.hearts)}`.trim();
   hearts.setAttribute("aria-label", `${world.hearts} hearts left`);
-  document.querySelector("#plant-button").hidden = !world.reef.pending || world.phase === "planting";
-  document.querySelector("#cancel-plant-button").hidden = world.phase !== "planting";
-  document.querySelector("#reef-status").textContent = world.phase === "planting" ?
-    "Tap the ocean to plant · Enter plants ahead" : !reefSaved ? "Reef stays for this visit" :
-    world.sheltered ? "Safe in your coral" : world.reef.pending ? `${world.reef.pending} coral to plant` :
-    `${world.reef.corals.length} coral · hide inside when small`;
 }
 
 // Growing: snacks eaten so far. A shark: how far along the mission is.
@@ -264,11 +255,6 @@ function chooseLevel(choice) {
   level = choice;
   try { saves.setItem(LEVEL_KEY, level); } catch {}
   showLevel();
-}
-
-function rememberReef() {
-  reefSaved = saveReef(world.reef, saves);
-  updateHud();
 }
 
 // Phones steer with the arrow pad, so a finger never sits on top of the fish.
@@ -296,32 +282,6 @@ function releasePad() {
   padOwner = null;
   input.pad = null;
   pad.setAttribute("data-dir", "");
-}
-
-function startPlanting() {
-  if (!world.reef.pending) return;
-  steering.clear();
-  input.keys.clear();
-  world.phase = "planting";
-  world.plantSpot = { x: world.player.x + Math.min(120, width / 4), y: world.player.y + 80 };
-  showPanel(null);
-  showPad(false);
-  hint.hidden = true;
-  updateHud();
-}
-
-function placeCoral(x, y) {
-  if (!plantCoral(world.reef, x, y)) return flash("Choose a little more space");
-  rememberReef();
-  stopPlanting();
-  flash(reefSaved ? "Your reef will be here next time!" : "Your coral is planted!");
-}
-
-// After the mission, planting goes back to the win screen; during a swim, back to swimming.
-function stopPlanting() {
-  if (!world.mission.done) return resume();
-  world.phase = "won";
-  showWon();
 }
 
 function flash(message, duration = 1400) {
@@ -360,13 +320,7 @@ function meetAnimals() {
   for (const { kind, target, lift } of nearbyAnimals(world, width, height)) {
     if (!met.has(kind)) {
       if (world.time < world.nextCardAt) continue;
-      world.greeted.add(kind);
-      met.add(kind);
-      saveMet(met, saves);
-      world.phase = "meeting";
-      steering.clear();
-      input.keys.clear();
-      openCard(kind, "meet");
+      meetNew(kind);
       return;
     }
     if (world.time < world.nextGreetAt) continue;
@@ -375,6 +329,25 @@ function meetAnimals() {
     world.labels.push({ target, text: SPECIES[kind].name, life: 3.5, lift });
     voice.say(meetLine(kind), { polite: true });
   }
+}
+
+// The card asks "What animal is this?" before it names the animal, so a child never hears a
+// name first: not from a greeting, not from a bump, and not from the mission.
+function meetNew(kind) {
+  world.greeted.add(kind);
+  met.add(kind);
+  saveMet(met, saves);
+  world.phase = "meeting";
+  steering.clear();
+  input.keys.clear();
+  openCard(kind, "meet");
+}
+
+// Bumped by a hunter never met: its card asks who it is instead of a line naming it. The bump
+// that ends the swim tells the line, since no card can follow.
+function hurtBy(kind) {
+  if (met.has(kind) || world.phase !== "playing") return tell(hurtLine(world.zone, kind, world.stage), 2400);
+  meetNew(kind);
 }
 
 function openCard(kind, from) {
@@ -388,7 +361,7 @@ function openCard(kind, from) {
   document.querySelector("#card-eats").textContent = animal.eats;
   document.querySelector("#card-eaten").textContent = animal.eatenBy;
   document.querySelector("#card-credit").textContent = PHOTOS[kind]?.credit ?? "";
-  document.querySelector("#card-close").textContent = { meet: "Keep swimming", book: "Back to the book", won: "Next" }[from];
+  document.querySelector("#card-close").textContent = closeLabel(from);
   const more = document.querySelector("#card-more");
   more.href = searchLink(kind);
   more.hidden = navigator.onLine === false;
@@ -397,8 +370,12 @@ function openCard(kind, from) {
   photo.hidden = !PHOTOS[kind];
   document.querySelector("#card-hear").hidden = !voice.available;
   showPanel("card");
-  if (from === "meet") return askGuess();
+  if (from === "meet" || from === "mission") return askGuess();
   voice.say(cardSpeech(kind));
+}
+
+function closeLabel(from) {
+  return { meet: "Keep swimming", mission: "Your mission", book: "Back to the book", won: "Next" }[from];
 }
 
 // An animal met while swimming: the photo shows first, and the child gets to say who it is
@@ -417,7 +394,7 @@ function revealCard() {
   document.querySelector("#card").classList.remove("guessing");
   document.querySelector("#card-kicker").textContent = "You met a new animal!";
   document.querySelector("#card-name").textContent = SPECIES[cardKind].name;
-  document.querySelector("#card-close").textContent = "Keep swimming";
+  document.querySelector("#card-close").textContent = closeLabel(cardFrom);
   voice.say(cardSpeech(cardKind));
 }
 
@@ -428,6 +405,7 @@ function closeCard() {
   cardFrom = null;
   voice.stop();
   if (from === "book") return openBook(bookFrom);
+  if (from === "mission") return showMission();
   if (from === "won") return finishSwim();
   world.nextCardAt = world.time + CARD_GAP;
   resume();
@@ -464,6 +442,50 @@ function closeBook() {
   showPanel(back);
 }
 
+// Your coral: a shelf with one coral for every level finished, like a trophy case.
+function openCoral(from) {
+  coralFrom = from;
+  const shelf = document.querySelector("#coral-shelf");
+  shelf.innerHTML = "";
+  for (const id of ZONE_IDS) {
+    const earned = beaten.has(id);
+    const tile = document.createElement("div");
+    tile.className = `coral-tile${earned ? "" : " locked"}`;
+    tile.append(earned ? coralPicture(levelNumber(id)) : unknownCoral());
+    const label = document.createElement("span");
+    label.textContent = `Level ${levelNumber(id)} · ${ZONES[id].name}`;
+    tile.append(label);
+    shelf.append(tile);
+  }
+  document.querySelector("#coral-count").textContent =
+    `${beaten.size} of ${ZONE_IDS.length} corals · one for every level you finish`;
+  showPanel("coral");
+}
+
+function coralPicture(seed) {
+  const picture = document.createElement("canvas");
+  picture.width = picture.height = 200;
+  const brush = picture.getContext("2d");
+  brush.translate(100, 100);
+  brush.scale(0.85, 0.85);
+  paintColony(brush, seed);
+  return picture;
+}
+
+function unknownCoral() {
+  const unknown = document.createElement("span");
+  unknown.className = "book-q";
+  unknown.textContent = "?";
+  return unknown;
+}
+
+function closeCoral() {
+  if (!coralFrom) return;
+  const back = coralFrom;
+  coralFrom = null;
+  showPanel(back);
+}
+
 function chooseFromBook(event) {
   const kind = event.target?.closest?.("[data-kind]")?.dataset.kind;
   if (!kind) return;
@@ -482,7 +504,7 @@ function goFullScreen() {
 }
 
 function begin() {
-  cardFrom = bookFrom = null;
+  cardFrom = bookFrom = coralFrom = null;
   goFullScreen();
   startSwim();
 }
@@ -505,7 +527,7 @@ function startSwim() {
 
 // Back to the start screen, to pick another place or level. The swim is over.
 function goHome() {
-  cardFrom = bookFrom = null;
+  cardFrom = bookFrom = coralFrom = null;
   cleared = null;
   voice.stop();
   steering.clear();
@@ -522,8 +544,19 @@ function watchBehindHud() {
   hud.classList.toggle("see-through", hidden);
 }
 
-// Reaching the biggest form: the game waits while the mission is shown and said.
+// Reaching the biggest form: the game waits while the mission is shown and said. A mission
+// animal never met gets its card first, so "What animal is this?" comes before its name.
 function openMission() {
+  const kind = missionKind(world.mission);
+  steering.clear();
+  input.keys.clear();
+  if (met.has(kind)) return showMission();
+  met.add(kind);
+  saveMet(met, saves);
+  openCard(kind, "mission");
+}
+
+function showMission() {
   const { mission } = world;
   const kind = missionKind(mission);
   const photo = PHOTOS[kind];
@@ -533,8 +566,6 @@ function openMission() {
   image.alt = photo ? `Photo of a real ${SPECIES[kind].name.toLowerCase()}` : "";
   document.querySelector("#mission-kicker").textContent = `You're a ${SPECIES[formKind(world.zone, SHARK)].name.toLowerCase()}!`;
   document.querySelector("#mission-goal").textContent = missionGoal(mission);
-  steering.clear();
-  input.keys.clear();
   showPanel("mission");
   voice.say(missionLine(mission));
 }
@@ -568,22 +599,21 @@ function clearLevel() {
   return id;
 }
 
-// The big button: the level just opened, else the coral to plant, else another swim here.
+// The big button: the level just opened, else another swim here. A finished level earns a coral.
 function showWon() {
   const { mission } = world;
   const next = nextLevel(world.zone.id);
   const onward = document.querySelector("#won-next-button");
-  const plant = document.querySelector("#win-plant-button");
   const again = document.querySelector("#win-restart-button");
   onward.hidden = !next;
   onward.innerHTML = next ? `Next: ${ZONES[next].name} <span aria-hidden="true">↗</span>` : "";
-  plant.hidden = !world.reef.pending;
-  const main = cleared ? onward : !plant.hidden ? plant : again;
-  for (const button of [onward, plant, again]) button.className = button === main ? "primary-button" : "text-button";
+  onward.className = cleared ? "primary-button" : "text-button";
+  again.className = cleared ? "text-button" : "primary-button";
+  document.querySelector("#won-coral-button").hidden = !cleared;
   document.querySelector("#won-title").textContent = cleared ? "Level complete!" : "Mission complete!";
   document.querySelector("#won-text").textContent = `${missionDone(mission)} ` +
-    (cleared ? `You finished ${placeName(cleared)}! Next stop: ${placeName(next)}.` :
-      plant.hidden ? "Every swim has a new mission." : "You earned a coral colony! Plant a home for little fish.");
+    (cleared ? `You finished ${placeName(cleared)} and earned a coral! Next stop: ${placeName(next)}.` :
+      "Every swim has a new mission.");
   showPanel("won");
 }
 
@@ -610,7 +640,7 @@ function pause() {
 }
 
 function resume() {
-  cardFrom = bookFrom = null;
+  cardFrom = bookFrom = coralFrom = null;
   world.phase = "playing";
   world.invulnerable = Math.max(world.invulnerable, 1.2);
   showPanel(null);
@@ -633,8 +663,7 @@ function frame(timestamp) {
   if (world.events.length) {
     for (const event of world.events.splice(0)) {
       if (event.type === "grow" && world.stage < SHARK) tell(growLine(world.zone, world.stage), 3200);
-      if (event.type === "hurt") tell(hurtLine(world.zone, event.by, world.stage), 2400);
-      if (event.type === "reef") rememberReef();
+      if (event.type === "hurt") hurtBy(event.by);
       if (event.type === "mission") openMission();
       if (event.type === "mission-count") flash(missionCount(world.mission));
       if (event.type === "done") finishSwim(true);
@@ -648,16 +677,10 @@ function frame(timestamp) {
 }
 
 canvas.addEventListener("pointerdown", event => {
-  if (world.phase === "planting") {
-    const spot = toWorld(world.camera, { x: event.clientX, y: event.clientY }, width, height);
-    placeCoral(spot.x, spot.y);
-    return;
-  }
   if (!touchFirst && event.pointerType === "mouse" && steering.down(event)) canvas.setPointerCapture(event.pointerId);
 });
 canvas.addEventListener("pointermove", event => {
-  if (world.phase === "planting") world.plantSpot = toWorld(world.camera, { x: event.clientX, y: event.clientY }, width, height);
-  else if (!touchFirst) steering.move(event);
+  if (!touchFirst) steering.move(event);
 });
 canvas.addEventListener("pointerup", event => steering.up(event));
 canvas.addEventListener("pointercancel", event => steering.up(event));
@@ -713,16 +736,15 @@ window.addEventListener("keydown", event => {
     if (event.key === "Escape") closeBook();
     return;
   }
+  if (coralFrom) {
+    if (event.key === "Escape") closeCoral();
+    return;
+  }
   if (world.phase === "mission") {
     if (["Enter", " ", "Escape"].includes(event.key)) {
       event.preventDefault();
       closeMission();
     }
-    return;
-  }
-  if (world.phase === "planting") {
-    if (event.key === "Enter" || event.key === " ") placeCoral(world.plantSpot.x, world.plantSpot.y);
-    if (event.key === "Escape") stopPlanting();
     return;
   }
   if (event.key === "Escape" || event.key.toLowerCase() === "p") {
@@ -749,9 +771,6 @@ document.querySelector("#won-next-button").addEventListener("click", goNext);
 document.querySelector("#finished-restart-button").addEventListener("click", begin);
 document.querySelector("#resume-button").addEventListener("click", resume);
 document.querySelector("#pause-button").addEventListener("click", pause);
-document.querySelector("#plant-button").addEventListener("click", startPlanting);
-document.querySelector("#win-plant-button").addEventListener("click", startPlanting);
-document.querySelector("#cancel-plant-button").addEventListener("click", stopPlanting);
 document.querySelector("#mission-go").addEventListener("click", closeMission);
 document.querySelector("#level-little").addEventListener("click", () => chooseLevel("little"));
 document.querySelector("#level-big").addEventListener("click", () => chooseLevel("big"));
@@ -774,6 +793,10 @@ document.querySelector("#card-hear").addEventListener("click", () => voice.say(c
 document.querySelector("#intro-book-button").addEventListener("click", () => openBook("intro"));
 document.querySelector("#paused-book-button").addEventListener("click", () => openBook("paused"));
 document.querySelector("#finished-book-button").addEventListener("click", () => openBook("finished"));
+document.querySelector("#intro-coral-button").addEventListener("click", () => openCoral("intro"));
+document.querySelector("#won-coral-button").addEventListener("click", () => openCoral("won"));
+document.querySelector("#finished-coral-button").addEventListener("click", () => openCoral("finished"));
+document.querySelector("#coral-close").addEventListener("click", closeCoral);
 document.querySelector("#book-close").addEventListener("click", closeBook);
 document.querySelector("#book-zones").addEventListener("click", chooseFromBook);
 for (const button of voiceButtons) button.addEventListener("click", toggleVoice);

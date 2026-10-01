@@ -1,7 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { MET_KEY } from "../src/ocean-book.js";
-import { REEF_KEY } from "../src/reef-save.js";
 import { LEVELS_KEY } from "../src/levels.js";
 import { NAME_KEY, PLAYER_KEY } from "../src/players.js";
 import { openGame } from "./app-fixture.js";
@@ -33,7 +32,6 @@ test("three save spots on one phone keep their own name, Ocean book, reef, level
   // A save from before there were spots: it stays the first spot's, called Player 1 until it is named.
   const before = {
     [MET_KEY]: JSON.stringify(["sardine", "tuna"]),
-    [REEF_KEY]: JSON.stringify({ pending: 1, corals: [{ x: 10, y: 20 }] }),
     "little-fish-level-v1": "big",
     "little-fish-zone-v1": "deep",
     [LEVELS_KEY]: '["reef","open"]'
@@ -57,7 +55,6 @@ test("three save spots on one phone keep their own name, Ocean book, reef, level
     assert.equal(app.nodes.get("player-erase").textContent, "Erase Dora");
     assert.match(bookCount(app), /^You've met 0 of/, "Dora starts with an empty Ocean book");
     assert.equal(app.world.zone.id, "reef", "and the first level");
-    assert.deepEqual(app.world.reef, { pending: 0, corals: [] }, "and no coral");
     pickZone(app, "reef");
     app.click("start-button");
     assert.equal(app.world.level, "little", "and Little swimmer");
@@ -76,7 +73,6 @@ test("three save spots on one phone keep their own name, Ocean book, reef, level
     assert.ok(app.nodes.get("name-box").hidden, "a spot with a save does not ask for a name");
     assert.match(bookCount(app), /^You've met 2 of/);
     assert.equal(app.world.zone.id, "deep");
-    assert.deepEqual(app.world.reef.corals, [{ x: 10, y: 20 }]);
     app.click("start-button");
     assert.equal(app.world.level, "big");
   } finally { app.close(); }

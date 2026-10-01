@@ -1,5 +1,4 @@
 import { canEat, CREATURES, FLOOR, FORMS, isFriend } from "./rules.js";
-import { paintOwnedReef } from "./reef-paint.js";
 import { glowColor, paintAnimal, swatch } from "./animal-paint.js";
 import { SPECIES } from "./species.js";
 
@@ -23,7 +22,6 @@ export function paintOcean(context, world, width, height, time) {
   const backdrop = backdropFor(world.zone);
   paintWater(context, world.zone, backdrop, width, height, time, cameraX);
   if (world.zone.floor) paintReef(context, world.zone, backdrop, width, height, time, cameraX);
-  paintOwnedReef(context, world, width, height, time);
 
   for (const friend of world.friends) {
     const x = friend.x - cameraX;

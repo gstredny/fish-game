@@ -54,7 +54,6 @@ test("the blue whale comes from ahead with an arrow to it, and meeting it finish
   swim(world, 0.016, idle, 844, 390);
   assert.equal(world.phase, "won");
   assert.equal(world.mission.done, true);
-  assert.equal(world.reef.pending, 1);
 });
 
 test("the orca chases the shark; staying away long enough finishes the mission, a bump starts it over", () => {

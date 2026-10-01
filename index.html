@@ -45,11 +45,6 @@
       <path class="left" d="M9 50 27 36V64Z"/>
     </svg>
   </div>
-  <div id="reef-bar" class="reef-bar" hidden>
-    <span id="reef-status" role="status" aria-live="polite"></span>
-    <button id="plant-button" class="reef-button" type="button" hidden>Plant coral</button>
-    <button id="cancel-plant-button" class="reef-button" type="button" hidden>Keep for later</button>
-  </div>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
   <main id="overlay" class="overlay">
@@ -87,6 +82,7 @@
       </div>
       <div class="intro-extras">
         <button id="intro-book-button" class="book-button" type="button">Ocean book</button>
+        <button id="intro-coral-button" class="book-button" type="button">Your coral</button>
         <button id="intro-voice-button" class="book-button voice-toggle" type="button" aria-label="Turn the voice off">🔊</button>
       </div>
       <div id="intro-foot" class="intro-foot">A little ocean adventure for curious swimmers</div>
@@ -164,9 +160,9 @@
       <h2 id="won-title">Mission complete!</h2>
       <p id="won-text"></p>
       <button id="won-next-button" class="primary-button" type="button" hidden>Next</button>
-      <button id="win-plant-button" class="primary-button" type="button">Plant your coral</button>
       <div class="result-links">
         <button id="win-restart-button" class="text-button" type="button">Swim again</button>
+        <button id="won-coral-button" class="text-button" type="button" hidden>See your coral</button>
         <button id="won-home-button" class="text-button" type="button">Home</button>
       </div>
     </section>
@@ -178,8 +174,16 @@
       <button id="finished-home-button" class="primary-button" type="button">Back to the ocean <span aria-hidden="true">↗</span></button>
       <div class="result-links">
         <button id="finished-restart-button" class="text-button" type="button">Swim again</button>
+        <button id="finished-coral-button" class="text-button" type="button">Your coral</button>
         <button id="finished-book-button" class="text-button" type="button">Ocean book</button>
       </div>
+    </section>
+
+    <section id="coral" class="panel book-panel" hidden aria-labelledby="coral-title">
+      <h2 id="coral-title">Your coral</h2>
+      <p id="coral-count" class="book-count"></p>
+      <div id="coral-shelf" class="coral-shelf"></div>
+      <button id="coral-close" class="primary-button" type="button">Back</button>
     </section>
 
     <section id="gameover" class="panel result-panel" hidden>

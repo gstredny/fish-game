@@ -22,7 +22,8 @@ function fakeSpeech() {
 const pickZone = (app, id) => app.nodes.get("zone-pick").emit("click", { target: { closest: () => ({ dataset: { zone: id } }) } });
 
 test("where to swim is chosen on the start screen, remembered, and fills the swim with that place's animals", async () => {
-  const storage = memoryStorage();
+  // The reef shark is met already: a mission about a stranger asks What animal is this? first.
+  const storage = memoryStorage({ [MET_KEY]: '["reefshark"]' });
   const speech = fakeSpeech();
   let app = await openGame(storage, speech.globals);
   try {
@@ -64,6 +65,9 @@ test("finding the reef's giant, the whale shark, shows its card and ends the swi
     Object.assign(app.world, { stage: 3, bites: 99, friends: [], creatures: [{ ...app.world.player, tier: 3, wobble: 0 }] });
     app.world.mission = createMission("find", "little", ZONES.reef);
     app.frame(16);
+    assert.equal(app.nodes.get("card-name").textContent, "?", "the whale shark, never met, is asked about first");
+    app.click("card-close");
+    app.click("card-close");
     assert.equal(app.nodes.get("mission-goal").textContent, "Find the whale shark");
     app.click("mission-go");
     app.frame(32);
@@ -72,8 +76,6 @@ test("finding the reef's giant, the whale shark, shows its card and ends the swi
     Object.assign(app.world.player, { x: giant.x - 100, y: giant.y });
     app.frame(48);
     assert.equal(app.world.phase, "won");
-    assert.equal(app.nodes.get("card-name").textContent, "Whale shark");
-    app.click("card-close");
     assert.match(app.nodes.get("won-text").textContent, /^You found the whale shark! Whale sharks are the biggest fish!/);
   } finally { app.close(); }
 });
@@ -113,7 +115,6 @@ test("Home goes back to the start screen from the pause, win and game-over scree
     assert.equal(app.world.phase, "won");
     app.click("won-home-button");
     assert.equal(app.nodes.get("intro").hidden, false);
-    assert.equal(app.world.reef.pending, 1, "the coral earned is kept for later");
     pickZone(app, "deep");
     app.click("start-button");
     assert.equal(app.world.zone.id, "deep", "and another place can be picked");

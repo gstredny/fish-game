@@ -135,7 +135,8 @@ test("an animal met before gets a name tag and one short line, once per swim", a
 
 test("a bump and a growth say the food chain out loud", async () => {
   const speech = fakeSpeech();
-  const app = await openGame(memoryStorage(), speech.globals);
+  // The mackerel is met already: a bump by a stranger opens its card instead (tests/guess-first.test.js).
+  const app = await openGame(memoryStorage({ [MET_KEY]: '["mackerel"]' }), speech.globals);
   try {
     app.click("start-button");
     Object.assign(app.world, { invulnerable: 0, friends: [],

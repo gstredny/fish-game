@@ -57,14 +57,25 @@ test("the places open in order, a finished level opens the next, and the last on
     assert.equal(app.world.phase, "won");
     assert.ok(!app.nodes.get("won").hidden);
     assert.equal(app.nodes.get("won-title").textContent, "Level complete!");
-    assert.match(app.nodes.get("won-text").textContent, /^You ate 2 reef sharks! You finished the coral reef! Next stop: the open ocean\.$/);
+    assert.match(app.nodes.get("won-text").textContent, /^You ate 2 reef sharks! You finished the coral reef and earned a coral! Next stop: the open ocean\.$/);
     assert.equal(speech.spoken.at(-1), levelDoneLine("reef"));
     assert.equal(storage.getItem(LEVELS_KEY), JSON.stringify(["reef"]));
     const next = app.nodes.get("won-next-button");
     assert.ok(!next.hidden);
     assert.match(next.innerHTML, /^Next: Open ocean/);
     assert.equal(next.className, "primary-button");
-    assert.equal(app.nodes.get("win-plant-button").className, "text-button", "the coral waits; the next level is the big button");
+    assert.equal(app.nodes.get("win-restart-button").className, "text-button", "the next level is the big button");
+    assert.ok(!app.nodes.get("won-coral-button").hidden, "and the coral can be seen");
+    app.click("won-coral-button");
+    assert.ok(!app.nodes.get("coral").hidden, "the coral shelf");
+    assert.equal(app.nodes.get("coral-count").textContent, "1 of 4 corals · one for every level you finish");
+    const tiles = app.nodes.get("coral-shelf").children;
+    assert.deepEqual(tiles.map(tile => tile.className), ["coral-tile", "coral-tile locked", "coral-tile locked", "coral-tile locked"]);
+    assert.deepEqual(tiles.map(tile => tile.children.at(-1).textContent),
+      ["Level 1 · Coral reef", "Level 2 · Open ocean", "Level 3 · The deep", "Level 4 · The bottom"]);
+    assert.equal(tiles[1].children[0].textContent, "?", "an unearned coral is a question mark");
+    app.click("coral-close");
+    assert.ok(!app.nodes.get("won").hidden, "Back goes to the win screen");
 
     app.click("won-next-button");
     assert.equal(app.world.phase, "playing");
@@ -83,9 +94,10 @@ test("the places open in order, a finished level opens the next, and the last on
     app.click("start-button");
     winSwim(app);
     assert.equal(app.nodes.get("won-title").textContent, "Mission complete!");
-    assert.match(app.nodes.get("won-text").textContent, /^You ate 3 squid! You earned a coral colony!/);
+    assert.match(app.nodes.get("won-text").textContent, /^You ate 3 squid! Every swim has a new mission\./);
     assert.equal(app.nodes.get("won-next-button").className, "text-button");
-    assert.equal(app.nodes.get("win-plant-button").className, "primary-button");
+    assert.equal(app.nodes.get("win-restart-button").className, "primary-button");
+    assert.ok(app.nodes.get("won-coral-button").hidden, "no new coral for a level finished before");
 
     app.click("won-next-button");
     assert.equal(app.world.zone.id, "deep");
@@ -97,7 +109,17 @@ test("the places open in order, a finished level opens the next, and the last on
     assert.ok(!app.nodes.get("finished").hidden, "it gets the end of the ocean");
     assert.equal(speech.spoken.at(-1), OCEAN_DONE_LINE);
     assert.equal(storage.getItem(LEVELS_KEY), JSON.stringify(["reef", "open", "deep", "bottom"]));
+    app.click("finished-coral-button");
+    assert.ok(!app.nodes.get("coral").hidden);
+    assert.equal(app.nodes.get("coral-count").textContent, "4 of 4 corals · one for every level you finish");
+    assert.ok(app.nodes.get("coral-shelf").children.every(tile => tile.className === "coral-tile"), "every coral earned");
+    app.click("coral-close");
+    assert.ok(!app.nodes.get("finished").hidden);
     app.click("finished-home-button");
+    assert.ok(!app.nodes.get("intro").hidden);
+    app.click("intro-coral-button");
+    assert.ok(!app.nodes.get("coral").hidden, "Your coral opens from the start screen");
+    app.click("coral-close");
     assert.ok(!app.nodes.get("intro").hidden);
     assert.match(zoneButton(app, "bottom"), /zone-number">4<\/span>The bottom<\/span><span class="zone-blurb">Done!</);
     app.close();

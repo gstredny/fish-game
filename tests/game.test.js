@@ -94,7 +94,6 @@ test("growing into a shark starts the swim's mission instead of ending the swim"
   assert.equal(world.stage, 4);
   assert.equal(world.phase, "mission", "the game waits while the mission is shown");
   assert.equal(world.mission.active, true);
-  assert.equal(world.reef.pending, 0);
   world.phase = "playing";
   world.creatures = [{ x: 0, y: 0, tier: 4, direction: 1, wobble: 0 }];
   swim(world, 0.016, idleInput, 390, 844);
@@ -104,7 +103,6 @@ test("growing into a shark starts the swim's mission instead of ending the swim"
   world.creatures = [{ x: 0, y: 0, tier: 4, direction: 1, wobble: 0 }];
   swim(world, 0.016, idleInput, 390, 844);
   assert.equal(world.phase, "won");
-  assert.equal(world.reef.pending, 1, "finishing the mission earns the coral");
   assert.ok(world.events.some(event => event.type === "done"));
 });
 

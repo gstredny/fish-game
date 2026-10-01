@@ -236,15 +236,9 @@ for (const height of [390, 340, 330]) {
   await tapButton("#mission-go");
   await evaluate(`(() => { const w = __game.world; w.invulnerable = 999; w.creatures = [{ ...w.player, tier: 4, wobble: 0 }]; })()`);
   await sleep(300);
-  const wonFits = missionFits && await fitsOnScreen("#win-plant-button") && await fitsOnScreen("#win-restart-button");
+  const wonFits = missionFits && await fitsOnScreen("#won-next-button") && await fitsOnScreen("#win-restart-button");
   await shot(`08-won-844x${height}`);
   assert.equal(await padVisible(), false, "arrow pad should hide on the win screen");
-  if (height === 390) {
-    await tapButton("#win-plant-button");
-    await sleep(300);
-    assert.equal(await evaluate("__game.world.phase"), "planting");
-    assert.equal(await padVisible(), false, "arrow pad should hide while planting coral");
-  }
   console.log(`8. 844x${height}: whole start screen fits: ${introFits}; mission card fits: ${missionFits}; win panel buttons fit: ${wonFits}`);
   assert.ok(introFits && wonFits, `844x${height}: start or win screen does not fit`);
 }

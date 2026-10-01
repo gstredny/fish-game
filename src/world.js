@@ -1,6 +1,5 @@
 import { canEat, CREATURES, FLOOR, FORMS, friendTraits, goalFor, isDanger, isFriend, LEVELS, nextGrowth, SHARK,
   swimSpeed } from "./rules.js";
-import { createReef, isSheltered } from "./reef.js";
 import { followPlayer, toWorld } from "./camera.js";
 import { createMission, MISSIONS, pickMission } from "./missions.js";
 import { DEFAULT_ZONE, hasTopHunter, topTier, ZONES } from "./zones.js";
@@ -8,17 +7,12 @@ import { DEFAULT_ZONE, hasTopHunter, topTier, ZONES } from "./zones.js";
 // `zone` is where this swim happens (zones.js): its food chain fills the tiers and its list of sea
 // friends fills the water and the sea bed. `met` is the device's Ocean book: sea friends it has
 // never met come first (see makeFriend).
-export function createWorld(width, height, { reef = createReef(), level = "little", zone = DEFAULT_ZONE,
-  mission, met = new Set() } = {}) {
+export function createWorld(width, height, { level = "little", zone = DEFAULT_ZONE, mission, met = new Set() } = {}) {
   const place = typeof zone === "string" ? ZONES[zone] : zone;
-  const home = reef.corals[0];
-  const start = { x: home ? home.x - 100 : 0, y: home ? home.y : 0 };
   const world = {
-    player: { ...start, direction: 1 },
-    camera: { ...start },
-    reef,
+    player: { x: 0, y: 0, direction: 1 },
+    camera: { x: 0, y: 0 },
     zone: place,
-    sheltered: false,
     stage: 0,
     bites: 0,
     hearts: 3,
@@ -45,13 +39,13 @@ export function createWorld(width, height, { reef = createReef(), level = "littl
   return world;
 }
 
-// A new swim in the same place (or another): the reef, level and Ocean book carry over,
+// A new swim in the same place (or another): the level and Ocean book carry over,
 // and the mission differs from the last one.
 export function resetWorld(world, width, height, options = {}) {
   const zone = options.zone ?? world.zone;
   const place = typeof zone === "string" ? ZONES[zone] : zone;
   const mission = options.mission ?? pickMission(place === world.zone ? world.mission.id : null, place);
-  Object.assign(world, createWorld(width, height, { reef: world.reef, level: world.level,
+  Object.assign(world, createWorld(width, height, { level: world.level,
     met: world.met, ...options, zone: place, mission }));
 }
 
@@ -70,14 +64,11 @@ export function swim(world, seconds, input, width, height) {
   movePlayer(world, input, step, width, height);
   followPlayer(world.camera, world.player, width, height,
     world.keepOut && { ...world.keepOut, r: world.keepOut.r + FORMS[world.stage].size * 1.4 });
-  const wasSheltered = world.sheltered;
-  world.sheltered = isSheltered(world);
-
   const level = LEVELS[world.level] ?? LEVELS.little;
   const top = topTier(world.zone);
   for (const creature of world.creatures) {
     const gap = distance(world.player, creature);
-    const danger = !world.sheltered && isDanger(world.stage, creature.tier);
+    const danger = isDanger(world.stage, creature.tier);
     const pace = creature.tier === top && hasTopHunter(world.zone) ? level.orcaChase : level.chase;
     if (danger && pace && gap > 1 && (creature.hunt || gap < level.reach)) {
       // A hunter turns and chases, a little slower than you, so you can always get away.
@@ -104,9 +95,6 @@ export function swim(world, seconds, input, width, height) {
     meetCreature(world, creature);
     if (world.phase !== "playing") break;
   }
-
-  world.sheltered = isSheltered(world);
-  if (wasSheltered !== world.sheltered) world.events.push({ type: "shelter" });
 
   world.creatures = world.creatures.filter(creature =>
     !creature.gone && Math.abs(creature.x - world.camera.x) < width * 1.4 + 160 &&
@@ -158,7 +146,6 @@ export function nearbyAnimals(world, width, height, skip = world.greeted) {
       consider(friend.kind, friend, distance(world.player, friend), 110 + friend.size, friend.size + 16);
     }
   }
-  for (const coral of world.reef.corals) consider("clownfish", coral, distance(world.player, coral), 170, 100);
   return [...found.values()].sort((first, second) => first.gap - second.gap);
 }
 
@@ -213,7 +200,7 @@ function meetCreature(world, creature) {
     return;
   }
 
-  if (world.invulnerable > 0 || isSheltered(world)) return;
+  if (world.invulnerable > 0) return;
   creature.gone = true;
   world.hearts -= 1;
   world.invulnerable = (LEVELS[world.level] ?? LEVELS.little).safe;
@@ -237,8 +224,7 @@ function advanceMission(world, amount) {
   mission.done = true;
   mission.target = null;
   world.phase = "won";
-  world.reef.pending += 1;
-  world.events.push({ type: "reef" }, { type: "done" });
+  world.events.push({ type: "done" });
 }
 
 // The giant and the top hunter come from ahead, where the player is looking; an arrow on screen

@@ -96,6 +96,11 @@ const winSwim = async zone => {
     w.mission = { id: "hunt", zone: ${JSON.stringify(zone)}, need: 2, have: 0, active: false, done: false, seen: new Set(), target: null, wait: 0 };
     Object.assign(w, { stage: 3, bites: 99, friends: [], creatures: [{ ...w.player, tier: 3, wobble: 0 }] }); })()`);
   await waitFor("__game.world.phase === 'mission'", "the mission card");
+  // A mission animal never met is asked about first: "What animal is this?", "Tell me!", "Your mission".
+  if (await visible("#card")) {
+    await tapButton("#card-close");
+    await tapButton("#card-close");
+  }
   await tapButton("#mission-go");
   await evaluate("__game.world.creatures = [0, 1].map(() => ({ ...__game.world.player, tier: 4, wobble: 0 }))");
   await waitFor("['won', 'meeting'].includes(__game.world.phase) || !document.querySelector('#finished').hidden", "the swim ends");
@@ -153,9 +158,9 @@ await sleep(500);
 await winSwim("reef");
 assert.ok(await visible("#won"), "the win screen");
 assert.equal(await text("#won-title"), "Level complete!");
-assert.match(await text("#won-text"), /You finished the coral reef! Next stop: the open ocean\./);
+assert.match(await text("#won-text"), /You finished the coral reef and earned a coral! Next stop: the open ocean\./);
 assert.equal(await evaluate("document.querySelector('#won-next-button').className"), "primary-button");
-assert.ok(await fitsOnScreen("#won-next-button") && await fitsOnScreen("#won-home-button"), "win buttons fit");
+assert.ok(await fitsOnScreen("#won-next-button") && await fitsOnScreen("#won-home-button") && await fitsOnScreen("#won-coral-button"), "win buttons fit");
 assert.equal((await spoken()).at(-1), levelDoneLine("reef"));
 assert.equal(await evaluate("localStorage.getItem('little-fish-levels-v1')"), '["reef"]');
 await shot("03-level-complete");

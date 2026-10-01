@@ -47,7 +47,8 @@ test("Little or Big swimmer is chosen on the start screen, remembered, and used 
 
 test("becoming a shark shows and says the mission; finishing it ends the swim", async () => {
   const speech = fakeSpeech();
-  const app = await openGame(memoryStorage(), speech.globals);
+  // The tuna is met already: a mission about a stranger asks What animal is this? first (guess-first.test.js).
+  const app = await openGame(memoryStorage({ [MET_KEY]: '["tuna"]' }), speech.globals);
   try {
     app.click("start-button");
     becomeShark(app, "hunt");
@@ -75,7 +76,7 @@ test("becoming a shark shows and says the mission; finishing it ends the swim", 
     app.frame(64);
     assert.equal(app.world.phase, "won");
     assert.equal(app.nodes.get("won").hidden, false);
-    assert.match(app.nodes.get("won-text").textContent, /^You ate 2 tuna! You earned a coral colony/);
+    assert.match(app.nodes.get("won-text").textContent, /^You ate 2 tuna! Every swim has a new mission\./);
     assert.equal(speech.spoken.at(-1), missionDoneLine(app.world.mission));
     assert.equal(app.nodes.get("continue-button"), undefined, "no endless swimming after the mission");
 
@@ -87,7 +88,7 @@ test("becoming a shark shows and says the mission; finishing it ends the swim", 
   } finally { app.close(); }
 });
 
-test("finding the blue whale for the first time shows its card before the win screen", async () => {
+test("the blue whale to find gets its card before the mission names it; found, it is the win screen", async () => {
   for (const known of [false, true]) {
     const speech = fakeSpeech();
     const storage = memoryStorage(known ? { [MET_KEY]: '["bluewhale"]' } : {});
@@ -95,22 +96,26 @@ test("finding the blue whale for the first time shows its card before the win sc
     try {
       app.click("start-button");
       becomeShark(app, "find");
+      if (known) {
+        assert.equal(app.nodes.get("mission").hidden, false, "a whale met before goes straight to the mission card");
+      } else {
+        assert.equal(app.nodes.get("card").hidden, false);
+        assert.equal(app.nodes.get("card-name").textContent, "?");
+        app.key("Enter");
+        assert.equal(app.nodes.get("card-name").textContent, "Blue whale");
+        assert.equal(app.nodes.get("card-close").textContent, "Your mission");
+        assert.ok(JSON.parse(storage.getItem(MET_KEY)).includes("bluewhale"), "it goes in the Ocean book");
+        assert.equal(speech.spoken.at(-1), cardSpeech("bluewhale"));
+        app.key("Enter");
+        assert.equal(app.nodes.get("card").hidden, true);
+        assert.equal(app.nodes.get("mission").hidden, false);
+      }
       app.click("mission-go");
       app.frame(32);
       const whale = app.world.friends.find(friend => friend.kind === "bluewhale");
       Object.assign(app.world.player, { x: whale.x - 100, y: whale.y });
       app.frame(48);
       assert.equal(app.world.phase, "won");
-      if (known) {
-        assert.equal(app.nodes.get("won").hidden, false, "a whale met before goes straight to the win screen");
-        continue;
-      }
-      assert.equal(app.nodes.get("card").hidden, false);
-      assert.equal(app.nodes.get("card-name").textContent, "Blue whale");
-      assert.equal(app.nodes.get("card-close").textContent, "Next");
-      assert.ok(JSON.parse(storage.getItem(MET_KEY)).includes("bluewhale"), "it goes in the Ocean book");
-      assert.equal(speech.spoken.at(-1), cardSpeech("bluewhale"));
-      app.key("Enter");
       assert.equal(app.nodes.get("card").hidden, true);
       assert.equal(app.nodes.get("won").hidden, false);
       assert.equal(speech.spoken.at(-1), missionDoneLine(app.world.mission));
@@ -138,25 +143,6 @@ test("the sea friend that finishes the mission gets its card and a place in the 
     app.click("card-close");
     assert.equal(app.nodes.get("won").hidden, false);
     assert.equal(speech.spoken.at(-1), missionDoneLine(app.world.mission));
-  } finally { app.close(); }
-});
-
-test("leaving the planting after the mission goes back to the win screen, not to more swimming", async () => {
-  const app = await openGame(memoryStorage());
-  try {
-    app.click("start-button");
-    becomeShark(app, "hunt");
-    app.click("mission-go");
-    app.world.creatures = [0, 1].map(() => ({ ...app.world.player, tier: 4, wobble: 0 }));
-    app.frame(32);
-    for (const leave of [() => app.key("Escape"), () => app.click("cancel-plant-button")]) {
-      app.click("win-plant-button");
-      assert.equal(app.world.phase, "planting");
-      leave();
-      assert.equal(app.world.phase, "won");
-      assert.equal(app.nodes.get("won").hidden, false);
-      assert.equal(app.world.reef.pending, 1, "the coral is kept for later");
-    }
   } finally { app.close(); }
 });
 
