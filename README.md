@@ -14,7 +14,24 @@ The start screen asks **Where will you swim?** Each place has its own water, its
 
 More places are on the way (see `tasks/013-ocean-zones.md`): a kelp forest and an icy sea.
 
-## Missions and levels
+## Levels, save spots and the end
+
+The places are levels, in order, like an old Super Nintendo game: 1 Coral reef, 2 Open ocean, 3 The deep,
+4 The bottom. A new swimmer has only the reef open; the others show a lock, and tapping one makes the voice
+say to finish the one before it. Finishing a mission in a place finishes that level: the win screen says
+**Level complete!**, names the next place, and **Next** swims there. Finishing the last level shows the end,
+**You did it!**, and the voice says you swam the whole ocean. Every place stays open after that, and a
+finished level can be swum again for a new mission. The order is the order of `src/zones.js`; the rules
+are in `src/levels.js`.
+
+**Who's swimming?** on the start screen has three save spots. Each keeps its own name, Ocean book, reef,
+levels finished, Little/Big swimmer and place to swim on the same phone, and shows the level it is on
+("Level 2 of 4", or "Finished! ★"). Picking a spot nobody has swum asks for a name; **Change name** renames
+the spot, and **Erase** empties it after a second tap on the page (no browser pop-up). A spot without a
+name is called Player 1, 2 or 3. A save from before spots and levels is the first spot's: it keeps its
+Ocean book and reef, and starts on level 1. The sound switch stays one per phone.
+
+## Missions
 
 Once you reach the biggest form (the great white shark in the open ocean, the tiger shark on the reef), the game pauses on a mission card, and the voice says it. Each swim gets a different mission from the last:
 
@@ -25,7 +42,7 @@ Once you reach the biggest form (the great white shark in the open ocean, the ti
 
 Finishing the mission ends the swim with **Mission complete!** and earns a coral colony. The top hunter also turns up now and then once you are big.
 
-The start screen has two levels, and the device remembers the choice:
+The start screen has two ways to play, and each spot remembers its choice:
 
 - **Little swimmer** is the gentle game.
 - **Big swimmer** takes more snacks to grow, sends more hunters, and they turn and chase you (always a bit slower than you, so you can get away). You also get less safe time after a bump, and the missions ask for more.
@@ -57,7 +74,7 @@ Twelve harder animals teach bigger ideas:
 
 Sea friends this device has never met come first, so a child who has met everyone else soon meets the new ones.
 
-The **Ocean book** (on the start and pause screens) keeps every card this player has met, grouped by place. **Player 1** and **Player 2** on the start screen each keep their own Ocean book, reef, level and place to swim on the same phone; a save from before players is Player 1's. An animal that lives in two places shows in both. **Find out more** on a card opens a Google search for "<animal> facts for kids", with SafeSearch on. It shows only when the device is online. The speaker button at the top turns the voice off; the device remembers. The facts are in `src/species.js`; photo credits are in [CREDITS.md](CREDITS.md).
+The **Ocean book** (on the start and pause screens) keeps every card this player has met, grouped by place. An animal that lives in two places shows in both. **Find out more** on a card opens a Google search for "<animal> facts for kids", with SafeSearch on. It shows only when the device is online. The speaker button at the top turns the voice off; the device remembers. The facts are in `src/species.js`; photo credits are in [CREDITS.md](CREDITS.md).
 
 ## The voice
 
@@ -140,6 +157,7 @@ node tools/browser-autoplay.mjs       # seek-food controller plays to the shark 
 node tools/browser-reef.mjs           # earn, plant, reload, shelter; desktop + phone
 node tools/browser-learn.mjs          # fact cards, voice, Ocean book, mission card, sea-bed friends, fits; "zoo" screenshots
 node tools/browser-zones.mjs          # picking a place, the reef swim and mission, Home, the book by place, built-in species, fits
+node tools/browser-levels.mjs         # locked places, a typed name, Level complete and Next, the end screen, Erase asks first, fits
 ```
 
 `tools/browser-sound.mjs` checks that sound stays off until a tap and that each main moment plays its sound. `tools/browser-update.mjs` checks that an update shows on the first open. `tools/browser-check.mjs` checks that old saved drawings never replace species artwork, that growing changes the swimming animal, and that the start screen fits on a computer and sideways phones. Run `node tools/browser-check.mjs screenshots` with Playwright installed (or set `PLAYWRIGHT_MODULE` to an installed copy). Its browser is muted.

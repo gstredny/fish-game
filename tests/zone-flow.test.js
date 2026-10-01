@@ -4,10 +4,10 @@ import { growLine, SPECIES } from "../src/species.js";
 import { createMission, missionLine } from "../src/missions.js";
 import { ZONES } from "../src/zones.js";
 import { MET_KEY } from "../src/ocean-book.js";
-import { openGame } from "./app-fixture.js";
+import { OPEN_SEA, openGame } from "./app-fixture.js";
 
 function memoryStorage(saved = {}) {
-  const data = new Map(Object.entries(saved));
+  const data = new Map(Object.entries({ ...OPEN_SEA, ...saved }));
   return { data, getItem: key => data.get(key) ?? null, setItem: (key, value) => data.set(key, value) };
 }
 
@@ -28,7 +28,7 @@ test("where to swim is chosen on the start screen, remembered, and fills the swi
   try {
     assert.match(app.nodes.get("zone-pick").innerHTML, /data-zone="reef" aria-pressed="false"/);
     assert.match(app.nodes.get("zone-pick").innerHTML, /data-zone="open" aria-pressed="true"/, "the open ocean is the first choice");
-    assert.match(app.nodes.get("zone-pick").innerHTML, /Coral reef<\/span><span class="zone-blurb">Sunny, warm and busy<\/span><span class="zone-new">\d+ new<\/span>/);
+    assert.match(app.nodes.get("zone-pick").innerHTML, /<span class="zone-number">1<\/span>Coral reef<\/span><span class="zone-blurb">Done!<\/span><span class="zone-new">\d+ new<\/span>/);
     pickZone(app, "reef");
     assert.equal(storage.getItem("little-fish-zone-v1"), "reef");
     assert.equal(app.world.zone, ZONES.reef, "the water behind the start screen is the reef");
@@ -114,9 +114,9 @@ test("Home goes back to the start screen from the pause, win and game-over scree
     app.click("won-home-button");
     assert.equal(app.nodes.get("intro").hidden, false);
     assert.equal(app.world.reef.pending, 1, "the coral earned is kept for later");
-    pickZone(app, "reef");
+    pickZone(app, "deep");
     app.click("start-button");
-    assert.equal(app.world.zone.id, "reef", "and another place can be picked");
+    assert.equal(app.world.zone.id, "deep", "and another place can be picked");
   } finally { app.close(); }
 });
 

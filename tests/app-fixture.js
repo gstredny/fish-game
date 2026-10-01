@@ -6,6 +6,9 @@ const source = (await readFile(entry, "utf8")).replace(/from "(\.\/[^"\n]+)"/g,
 const html = await readFile(new URL("../index.html", import.meta.url), "utf8");
 let fixtureId = 0;
 
+// Every level finished and the open ocean picked: the sea the checks from before levels swim in.
+export const OPEN_SEA = { "little-fish-levels-v1": '["reef","open","deep","bottom"]', "little-fish-zone-v1": "open" };
+
 // Every canvas draws into this no-op context.
 const noopContext = new Proxy({}, { get: (target, key) => target[key] ?? (String(key).startsWith("create") ?
   () => ({ addColorStop() {} }) : () => {}), set: (target, key, value) => { target[key] = value; return true; } });

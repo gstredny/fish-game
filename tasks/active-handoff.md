@@ -1,4 +1,19 @@
-# Active handoff — no text selection when holding an arrow
+# Active handoff — levels in order, named save spots, an ending
+
+Date: 2026-10-01
+Task: `tasks/019-levels-and-names.md`
+
+Built and checked, NOT committed or pushed (George says when). Places are levels in `src/zones.js` order
+(reef → open → deep → bottom); only the reef is open for a new spot; one finished mission opens the next
+(`src/levels.js`, `little-fish-levels-v1` per spot). Win screen says Level complete! with a Next button; the
+last level shows `#finished` ("You did it!"). Three named spots (`src/players.js`, `little-fish-name-v1`;
+Player N until named) showing "Level N of 4" / "Finished! ★"; Change name box; Erase asks on the page.
+Old saves keep book + reef, start on level 1. `npm test` 119/119; `node tools/browser-levels.mjs` passed
+(844x390, 1280x800, 568x320). Cache `little-fish-v25`; 5 new voice clips. Not on George's phone yet.
+Commit with explicit paths: README.md index.html src/ style.css sw.js tests/ tools/browser-levels.mjs
+voice/ tasks/019-levels-and-names.md tasks/active-handoff.md.
+
+## Previous — no text selection when holding an arrow
 
 Date: 2026-09-30
 Task: `tasks/018-no-text-select.md`

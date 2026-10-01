@@ -5,10 +5,10 @@ import { KINDS, ZONES } from "../src/zones.js";
 import { MET_KEY } from "../src/ocean-book.js";
 import { VOICE_KEY } from "../src/voice.js";
 import { WHAT_ANIMAL } from "../src/lines.js";
-import { openGame } from "./app-fixture.js";
+import { OPEN_SEA, openGame } from "./app-fixture.js";
 
 function memoryStorage(saved = {}) {
-  const data = new Map(Object.entries(saved));
+  const data = new Map(Object.entries({ ...OPEN_SEA, ...saved }));
   return { data, getItem: key => data.get(key) ?? null, setItem: (key, value) => data.set(key, value) };
 }
 

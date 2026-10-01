@@ -3,13 +3,14 @@ import assert from "node:assert/strict";
 import { SPECIES } from "../src/species.js";
 import { FORMS, goalFor } from "../src/rules.js";
 import { ZONE_IDS, ZONES, formKind } from "../src/zones.js";
-import { openGame } from "./app-fixture.js";
+import { OPEN_SEA, openGame } from "./app-fixture.js";
 
 test("old drawings and mode preferences never replace named animals across growth, Home or reload", async () => {
   for (const mode of ["on", "off"]) {
     const data = new Map([
       ["little-fish-drawings", '["data:image/png;base64,AAAA","data:image/png;base64,BBBB"]'],
-      ["little-fish-plain-v1", mode]
+      ["little-fish-plain-v1", mode],
+      ...Object.entries(OPEN_SEA)
     ]);
     const reads = [];
     const storage = { getItem: key => { reads.push(key); return data.get(key) ?? null; },

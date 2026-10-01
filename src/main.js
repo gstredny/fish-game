@@ -6,14 +6,16 @@ import { padDirection } from "./pad.js";
 import { toWorld } from "./camera.js";
 import { createWorld, dangerBehind, nearbyAnimals, resetWorld, swim } from "./world.js";
 import { plantCoral } from "./reef.js";
-import { loadReef, saveReef } from "./reef-save.js";
+import { loadReef, REEF_KEY, saveReef } from "./reef-save.js";
 import { cardSpeech, growLine, hurtLine, meetLine, searchLink, SPECIES } from "./species.js";
-import { DEFAULT_ZONE, formKind, KINDS, ZONE_IDS, ZONES, zoneKinds } from "./zones.js";
+import { formKind, KINDS, ZONE_IDS, ZONES, zoneKinds } from "./zones.js";
 import { swatch } from "./animal-paint.js";
 import { PHOTOS } from "./photos.js";
 import { createVoice } from "./voice.js";
-import { loadMet, saveMet } from "./ocean-book.js";
-import { PLAYER_KEY, PLAYERS, playerSaves, savedPlayer } from "./players.js";
+import { loadMet, MET_KEY, saveMet } from "./ocean-book.js";
+import { cleanName, NAME_KEY, PLAYER_KEY, PLAYERS, playerSaves, savedPlayer } from "./players.js";
+import { allDone, currentLevel, isOpen, levelDoneLine, levelNumber, LEVELS_KEY, loadBeaten, LOCKED_LINE, nextLevel,
+  OCEAN_DONE_LINE, placeName, saveBeaten } from "./levels.js";
 import { missionCount, missionDone, missionDoneLine, missionGoal, missionKind, missionLine, pickMission } from "./missions.js";
 import { FIND_THAT_ONE, VOICE_ON, WHAT_ANIMAL } from "./lines.js";
 
@@ -23,7 +25,7 @@ const overlay = document.querySelector("#overlay");
 const hud = document.querySelector("#hud");
 const hint = document.querySelector("#hint");
 const toast = document.querySelector("#toast");
-const panels = ["intro", "paused", "won", "gameover", "card", "book", "mission"];
+const panels = ["intro", "paused", "won", "gameover", "card", "book", "mission", "finished"];
 const LEVEL_KEY = "little-fish-level-v1";
 const ZONE_KEY = "little-fish-zone-v1";
 const PORTRAIT_PHONE = "(orientation: portrait) and (max-width: 600px) and (pointer: coarse)";
@@ -61,55 +63,134 @@ let lastSwim = null;
 let storage = null;
 try { storage = window.localStorage; } catch { /* private mode: preferences last for this visit */ }
 let player = savedPlayer(storage);
-let saves, level, zone, met;
+let saves, level, zone, met, beaten;
+// The level this swim finished for the first time, until the next swim.
+let cleared = null;
 readPlayer();
 let world = createWorld(width, height, { reef: loadReef(saves), zone });
 const sound = createSound();
 sound.setMuted(voice.muted);
 
-// Where to swim: one button per zone, with how many of its animals this device has yet to meet.
+// Where to swim: one button per level, in order. A locked place waits for the one before it to be
+// finished; an open one shows how many of its animals this player has yet to meet.
 function renderZones() {
   document.querySelector("#zone-pick").innerHTML = ZONE_IDS.map(id => {
     const place = ZONES[id];
-    const fresh = zoneKinds(place).filter(kind => !met.has(kind)).length;
-    return `<button class="zone-button" type="button" data-zone="${id}" aria-pressed="${id === zone}" ` +
-      `style="--top:${place.water[0]};--bottom:${place.water[2]}"><span class="zone-name">${place.name}</span>` +
-      `<span class="zone-blurb">${place.blurb}</span>${fresh ? `<span class="zone-new">${fresh} new</span>` : ""}</button>`;
+    const open = isOpen(beaten, id);
+    const fresh = open ? zoneKinds(place).filter(kind => !met.has(kind)).length : 0;
+    const blurb = !open ? "🔒 Locked" : beaten.has(id) ? "Done!" : place.blurb;
+    return `<button class="zone-button${open ? "" : " locked"}" type="button" data-zone="${id}" aria-pressed="${id === zone}" ` +
+      `${open ? "" : 'aria-disabled="true" '}style="--top:${place.water[0]};--bottom:${place.water[2]}">` +
+      `<span class="zone-name"><span class="zone-number">${levelNumber(id)}</span>${place.name}</span>` +
+      `<span class="zone-blurb">${blurb}</span>${fresh ? `<span class="zone-new">${fresh} new</span>` : ""}</button>`;
   }).join("");
 }
 
-// Little swimmer or Big swimmer, where to swim, and the Ocean book: this player's own.
+// Little swimmer or Big swimmer, the levels finished, where to swim, and the Ocean book: this
+// player's own. The place to swim is the one picked last, if it is open, else the level they are on.
 function readPlayer() {
   saves = playerSaves(storage, player);
   level = "little";
-  zone = DEFAULT_ZONE;
+  beaten = loadBeaten(saves);
+  zone = currentLevel(beaten);
   try {
     if (saves.getItem(LEVEL_KEY) === "big") level = "big";
-    if (ZONE_IDS.includes(saves.getItem(ZONE_KEY))) zone = saves.getItem(ZONE_KEY);
+    const picked = saves.getItem(ZONE_KEY);
+    if (ZONE_IDS.includes(picked) && isOpen(beaten, picked)) zone = picked;
   } catch {}
   met = loadMet(saves);
 }
 
-// Picked on the start screen: the water, book, reef and buttons become this player's.
+// Picked on the start screen. A spot nobody has swum yet asks for a name.
 function choosePlayer(choice) {
   player = choice;
   try { storage?.setItem(PLAYER_KEY, player); } catch {}
+  loadPlayer();
+  if (describePlayer(player).used) closeName();
+  else askName();
+}
+
+// The water, book, reef and buttons become this player's.
+function loadPlayer() {
   readPlayer();
   resetWorld(world, width, height, { zone, met, reef: loadReef(saves) });
-  showPlayer();
+  renderPlayers();
   showLevel();
   renderZones();
   updateHud();
+  document.querySelector("#erase-ask").hidden = true;
 }
 
-function showPlayer() {
-  for (const choice of PLAYERS) {
-    document.querySelector(`#player-${choice}`).setAttribute("aria-pressed", String(player === choice));
+// A spot's typed name (shown as Player N until there is one) and the level it is on. A spot
+// with no name, no animals met and no level finished is a new swimmer.
+function describePlayer(slot) {
+  const theirs = playerSaves(storage, slot);
+  let typed = null;
+  try { typed = theirs.getItem(NAME_KEY); } catch {}
+  const done = loadBeaten(theirs);
+  const used = Boolean(typed) || done.size > 0 || loadMet(theirs).size > 0;
+  const progress = !used ? "New swimmer" : allDone(done) ? "Finished! ★" :
+    `Level ${levelNumber(currentLevel(done))} of ${ZONE_IDS.length}`;
+  return { typed, name: typed || `Player ${slot}`, used, progress };
+}
+
+// Who's swimming: the three save spots, and Change name / Erase for the one picked.
+function renderPlayers() {
+  document.querySelector("#player-pick").innerHTML = PLAYERS.map(slot => {
+    const { name, progress } = describePlayer(slot);
+    return `<button class="player-button" type="button" data-player="${slot}" aria-pressed="${slot === player}">` +
+      `<span class="player-name">${escapeHtml(name)}</span><span class="player-level">${progress}</span></button>`;
+  }).join("");
+  const { name, used } = describePlayer(player);
+  const erase = document.querySelector("#player-erase");
+  erase.textContent = `Erase ${name}`;
+  erase.hidden = !used;
+}
+
+function escapeHtml(text) {
+  return text.replace(/[&<>"]/g, mark => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[mark]);
+}
+
+function askName() {
+  const input = document.querySelector("#name-input");
+  input.value = describePlayer(player).typed ?? "";
+  document.querySelector("#name-box").hidden = false;
+  document.querySelector("#erase-ask").hidden = true;
+  input.focus?.();
+}
+
+function saveName() {
+  const name = cleanName(document.querySelector("#name-input").value ?? "");
+  try {
+    if (name) saves.setItem(NAME_KEY, name);
+    else saves.removeItem(NAME_KEY);
+  } catch {}
+  closeName();
+  renderPlayers();
+}
+
+function closeName() {
+  document.querySelector("#name-box").hidden = true;
+}
+
+// Erasing asks first, on the page itself: no browser pop-up.
+function askErase() {
+  document.querySelector("#erase-text").textContent =
+    `Really erase ${describePlayer(player).name}? Their book and levels go too.`;
+  document.querySelector("#erase-ask").hidden = false;
+  closeName();
+}
+
+function erasePlayer() {
+  for (const key of [NAME_KEY, MET_KEY, REEF_KEY, LEVEL_KEY, ZONE_KEY, LEVELS_KEY]) {
+    try { saves.removeItem(key); } catch {}
   }
+  loadPlayer();
 }
 
 function chooseZone(id) {
   if (!ZONE_IDS.includes(id)) return;
+  if (!isOpen(beaten, id)) return tell(LOCKED_LINE, 2400);
   zone = id;
   try { saves.setItem(ZONE_KEY, zone); } catch {}
   // The water behind the start screen is the place you picked.
@@ -134,7 +215,10 @@ function showPanel(name) {
   hud.hidden = name === "intro" || world.phase === "ready";
   hint.hidden = Boolean(name);
   showPad(!name);
-  if (name === "intro") renderZones();
+  if (name === "intro") {
+    renderZones();
+    renderPlayers();
+  }
   document.querySelector("#reef-bar").hidden = Boolean(name) || (!world.reef.pending && !world.reef.corals.length);
 }
 
@@ -405,6 +489,7 @@ function begin() {
 
 // Each swim's mission differs from the last one.
 function startSwim() {
+  cleared = null;
   const mission = pickMission(lastSwim?.zone === zone ? lastSwim.id : null, ZONES[zone]);
   resetWorld(world, width, height, { level, zone, met, mission });
   lastSwim = { zone, id: mission };
@@ -421,6 +506,7 @@ function startSwim() {
 // Back to the start screen, to pick another place or level. The swim is over.
 function goHome() {
   cardFrom = bookFrom = null;
+  cleared = null;
   voice.stop();
   steering.clear();
   input.keys.clear();
@@ -459,27 +545,59 @@ function closeMission() {
 }
 
 // An animal that finished the mission (the giant, the last sea friend) and is new to the
-// Ocean book gets its card before the win screen.
+// Ocean book gets its card before the win screen. The first mission finished in a place finishes
+// that level; the last level ends the ocean.
 function finishSwim(first = false) {
   const kind = { find: world.zone.giant, friends: world.mission.last }[world.mission.id];
+  if (first) cleared = clearLevel();
   if (first && kind && !met.has(kind)) {
     met.add(kind);
     saveMet(met, saves);
     return openCard(kind, "won");
   }
+  if (cleared && !nextLevel(cleared)) return showFinished();
   showWon();
-  voice.say(missionDoneLine(world.mission));
+  voice.say(cleared ? levelDoneLine(cleared) : missionDoneLine(world.mission));
 }
 
+function clearLevel() {
+  const id = world.zone.id;
+  if (beaten.has(id)) return null;
+  beaten.add(id);
+  saveBeaten(beaten, saves);
+  return id;
+}
+
+// The big button: the level just opened, else the coral to plant, else another swim here.
 function showWon() {
   const { mission } = world;
+  const next = nextLevel(world.zone.id);
+  const onward = document.querySelector("#won-next-button");
   const plant = document.querySelector("#win-plant-button");
   const again = document.querySelector("#win-restart-button");
+  onward.hidden = !next;
+  onward.innerHTML = next ? `Next: ${ZONES[next].name} <span aria-hidden="true">↗</span>` : "";
   plant.hidden = !world.reef.pending;
-  again.className = plant.hidden ? "primary-button" : "text-button";
+  const main = cleared ? onward : !plant.hidden ? plant : again;
+  for (const button of [onward, plant, again]) button.className = button === main ? "primary-button" : "text-button";
+  document.querySelector("#won-title").textContent = cleared ? "Level complete!" : "Mission complete!";
   document.querySelector("#won-text").textContent = `${missionDone(mission)} ` +
-    (plant.hidden ? "Every swim has a new mission." : "You earned a coral colony! Plant a home for little fish.");
+    (cleared ? `You finished ${placeName(cleared)}! Next stop: ${placeName(next)}.` :
+      plant.hidden ? "Every swim has a new mission." : "You earned a coral colony! Plant a home for little fish.");
   showPanel("won");
+}
+
+function showFinished() {
+  showPanel("finished");
+  voice.say(OCEAN_DONE_LINE);
+}
+
+// From the win screen into the next level.
+function goNext() {
+  const next = nextLevel(world.zone.id);
+  if (!next) return;
+  chooseZone(next);
+  begin();
 }
 
 function pause() {
@@ -577,6 +695,12 @@ window.addEventListener("pointerdown", event => {
 window.addEventListener("keydown", event => {
   // Enter or Space on a focused button or link presses it, and nothing else.
   if ((event.key === "Enter" || event.key === " ") && event.target?.closest?.("button, a")) return;
+  // Typing a name is not steering.
+  if (event.target?.tagName === "INPUT") {
+    if (event.key === "Enter") saveName();
+    if (event.key === "Escape") closeName();
+    return;
+  }
   if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " "].includes(event.key)) event.preventDefault();
   if (cardFrom) {
     if (["Enter", " ", "Escape"].includes(event.key)) {
@@ -621,6 +745,8 @@ window.addEventListener("resize", () => { if (window.matchMedia?.(PORTRAIT_PHONE
 document.querySelector("#start-button").addEventListener("click", begin);
 document.querySelector("#restart-button").addEventListener("click", begin);
 document.querySelector("#win-restart-button").addEventListener("click", begin);
+document.querySelector("#won-next-button").addEventListener("click", goNext);
+document.querySelector("#finished-restart-button").addEventListener("click", begin);
 document.querySelector("#resume-button").addEventListener("click", resume);
 document.querySelector("#pause-button").addEventListener("click", pause);
 document.querySelector("#plant-button").addEventListener("click", startPlanting);
@@ -629,15 +755,25 @@ document.querySelector("#cancel-plant-button").addEventListener("click", stopPla
 document.querySelector("#mission-go").addEventListener("click", closeMission);
 document.querySelector("#level-little").addEventListener("click", () => chooseLevel("little"));
 document.querySelector("#level-big").addEventListener("click", () => chooseLevel("big"));
-for (const choice of PLAYERS) document.querySelector(`#player-${choice}`).addEventListener("click", () => choosePlayer(choice));
+document.querySelector("#player-pick").addEventListener("click", event => {
+  const slot = event.target?.closest?.("[data-player]")?.dataset.player;
+  if (PLAYERS.includes(slot)) choosePlayer(slot);
+});
+document.querySelector("#player-rename").addEventListener("click", askName);
+document.querySelector("#name-save").addEventListener("click", saveName);
+document.querySelector("#name-cancel").addEventListener("click", closeName);
+document.querySelector("#player-erase").addEventListener("click", askErase);
+document.querySelector("#erase-yes").addEventListener("click", erasePlayer);
+document.querySelector("#erase-no").addEventListener("click", () => { document.querySelector("#erase-ask").hidden = true; });
 document.querySelector("#zone-pick").addEventListener("click", event => chooseZone(event.target?.closest?.("[data-zone]")?.dataset.zone));
-for (const id of ["paused-home-button", "won-home-button", "gameover-home-button"]) {
+for (const id of ["paused-home-button", "won-home-button", "gameover-home-button", "finished-home-button"]) {
   document.querySelector(`#${id}`).addEventListener("click", goHome);
 }
 document.querySelector("#card-close").addEventListener("click", closeCard);
 document.querySelector("#card-hear").addEventListener("click", () => voice.say(cardSpeech(cardKind), { force: true }));
 document.querySelector("#intro-book-button").addEventListener("click", () => openBook("intro"));
 document.querySelector("#paused-book-button").addEventListener("click", () => openBook("paused"));
+document.querySelector("#finished-book-button").addEventListener("click", () => openBook("finished"));
 document.querySelector("#book-close").addEventListener("click", closeBook);
 document.querySelector("#book-zones").addEventListener("click", chooseFromBook);
 for (const button of voiceButtons) button.addEventListener("click", toggleVoice);
@@ -676,7 +812,7 @@ window.addEventListener("appinstalled", () => { installPrompt = null; introFoot.
 resize();
 updateHud();
 showVoice();
-showPlayer();
+renderPlayers();
 showLevel();
 showPanel("intro");
 requestAnimationFrame(frame);

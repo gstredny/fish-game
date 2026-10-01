@@ -4,10 +4,10 @@ import { allLines } from "../src/lines.js";
 import { createMission, missionDoneLine, missionLine } from "../src/missions.js";
 import { cardSpeech, searchLink } from "../src/species.js";
 import { MET_KEY } from "../src/ocean-book.js";
-import { openGame } from "./app-fixture.js";
+import { OPEN_SEA, openGame } from "./app-fixture.js";
 
 function memoryStorage(saved = {}) {
-  const data = new Map(Object.entries(saved));
+  const data = new Map(Object.entries({ ...OPEN_SEA, ...saved }));
   return { data, getItem: key => data.get(key) ?? null, setItem: (key, value) => data.set(key, value) };
 }
 

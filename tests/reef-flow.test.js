@@ -1,11 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { REEF_KEY } from "../src/reef-save.js";
-import { openGame } from "./app-fixture.js";
+import { OPEN_SEA, openGame } from "./app-fixture.js";
 
 function storageWith(reef = { pending: 0, corals: [] }) {
   let value = JSON.stringify(reef);
-  return { getItem: () => value, setItem: (key, data) => { assert.equal(key, REEF_KEY); value = data; } };
+  return { getItem: key => key === REEF_KEY ? value : OPEN_SEA[key] ?? null,
+    setItem: (key, data) => { assert.equal(key, REEF_KEY); value = data; } };
 }
 
 test("the real app saves the mission reward, plants by touch, reloads, and shows shelter", async () => {
