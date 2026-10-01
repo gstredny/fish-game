@@ -1,7 +1,7 @@
 # Levels in order, named save spots, and an ending
 
 Date: 2026-10-01
-Status: built and checked, NOT committed (George says when to commit and push)
+Status: LIVE on GitHub Pages (695b3bb, Pages run 36860449775 success, live cache `little-fish-v25`). George's phone try is his to do
 Branch: `master`
 
 George's ask: "make it like Donkey Kong Country Super Nintendo where the next level is the different parts of
@@ -48,7 +48,10 @@ Assumptions (George vetoes in one line): one mission finished = level done; leve
       568x320; screenshots 01–08 in `screenshots/levels/` (ignored by git) looked at.
 - [x] `git diff --check`: clean.
 - [x] README "Levels, save spots and the end"; `sw.js` is `little-fish-v25` and lists `src/levels.js`.
-- [ ] Commit and push (George's call), then Pages run success and live `sw.js` = `little-fish-v25`.
+- [x] Committed 695b3bb and pushed (George: "just push and commit so I can test on my phone");
+      `gh api .../actions/runs?head_sha=695b3bb…`: "pages build and deployment completed success" (run
+      36860449775); `curl https://gstredny.github.io/fish-game/sw.js`: `little-fish-v25`; live `src/levels.js`
+      and `index.html` with `player-pick` and `#finished` served.
 - [ ] Tried on George's phone: type a name (keyboard, sideways), lock voice line, Level complete, the end.
 
 ## Attempt log (append-only)
@@ -70,3 +73,5 @@ Assumptions (George vetoes in one line): one mission finished = level done; leve
   is a candidate for its own module as a scoped task. The 568x320 install guide overlapping Ocean book is
   older than this task. Kelp forest / icy sea (`tasks/013`) would slot into the level order by position in
   `src/zones.js`; a player who finished the level before a new one keeps every level after it open.
+- 2026-10-01: George: old saves need not be kept ("that was just me testing; he hasn't played yet"), so no
+  migration; the assumption stands. Pushed 695b3bb; Pages run 36860449775 success; live cache v25.
