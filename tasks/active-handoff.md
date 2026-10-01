@@ -1,4 +1,19 @@
-# Active handoff — levels in order, named save spots, an ending
+# Active handoff — Big swimmer gentler, the question before the name, a coral trophy case
+
+Date: 2026-10-01
+Task: `tasks/020-easier-big-guess-first-coral-case.md`
+
+LIVE (bfb6a3f + 46082c8, Pages run 36865632410 success, live cache `little-fish-v26`). Big swimmer
+hunters chase at 50% (orca 65%), 2 s safety. "What animal is this?" always comes before a name: a
+never-met mission animal gets its card before the mission card (`openMission` → card from "mission" →
+`showMission`); a never-met hunter's bump opens its card instead of the hurt line (`hurtBy`). Coral is a
+trophy case: finishing a level earns one; `#coral` ("Your coral" on start, win and end screens) paints one
+colony per finished level (`src/coral-paint.js`, derived from `beaten`). Reef, planting, shelter, reef bar
+and clownfish-at-coral are removed. `npm test` 109/109; `browser-coral`, `browser-levels` and
+`browser-sideways` passed. Not on George's phone yet. Left as is: growth/welcome lines still name the next
+hunter ("Watch out for mackerel!"); George can ask for nameless versions (needs re-recording).
+
+## Previous — levels in order, named save spots, an ending
 
 Date: 2026-10-01
 Task: `tasks/019-levels-and-names.md`

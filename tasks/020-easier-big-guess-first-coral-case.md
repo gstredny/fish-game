@@ -1,7 +1,7 @@
 # Big swimmer gentler, the question before the name, and a coral trophy case
 
 Date: 2026-10-01
-Status: open
+Status: LIVE on GitHub Pages (bfb6a3f + 46082c8, Pages run 36865632410 success, live cache `little-fish-v26`). George's phone try is his to do
 Branch: `master`
 
 George's asks (after playing v25 on his phone): "it's a little too hard on the big swimmer. Can you make it
@@ -46,7 +46,9 @@ mackerel!") since that is the food-chain lesson; re-recording nameless versions 
       `screenshots/coral/`, looked at); `tools/browser-levels.mjs` passed; `tools/browser-sideways.mjs`
       passed at 844x390, 844x340 and 844x330.
 - [x] `git diff --check` clean; README updated; `sw.js` is `little-fish-v26`, reef files gone, `coral-paint.js` in.
-- [ ] Pushed; Pages run success; live `sw.js` cache name matches.
+- [x] Pushed bfb6a3f (Big swimmer) and 46082c8 (ask first + coral case); `gh api .../actions/runs?head_sha=46082c8…`:
+      "pages build and deployment completed success" (run 36865632410); live `sw.js` = `little-fish-v26`;
+      live `src/coral-paint.js` and `index.html` with `#coral` served.
 
 ## Attempt log (append-only)
 - 2026-10-01: Big swimmer `chase` 0.62 → 0.5, `orcaChase` 0.8 → 0.65, `safe` 1.5 → 2 (`src/rules.js`).
@@ -58,3 +60,4 @@ mackerel!") since that is the food-chain lesson; re-recording nameless versions 
   (`openCoral`, derived from `beaten`, no new storage). Fixture: setting innerHTML now empties children.
 - 2026-10-01: the spots row made the 844x340 start screen overflow (sideways check): at ≤340px tall the two
   question labels and the spots' level lines are hidden; passes at 390/340/330.
+- 2026-10-01: pushed; Pages run 36865632410 success; live cache v26.
