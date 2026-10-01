@@ -77,12 +77,12 @@ export function swim(world, seconds, input, width, height) {
       creature.x += (world.player.x - creature.x) / gap * speed * step;
       creature.y += (world.player.y - creature.y) / gap * speed * step;
     } else if (danger && gap < level.reach) {
-      swimAlong(world, creature, step);
+      swimAlong(world, creature, step, level.pace);
       const chase = creature.tier >= SHARK + 1 ? 18 : 10;
       creature.x += Math.sign(world.player.x - creature.x) * chase * step;
       creature.y += Math.sign(world.player.y - creature.y) * chase * step;
     } else {
-      swimAlong(world, creature, step);
+      swimAlong(world, creature, step, level.pace);
     }
     if (isFriend(world.stage, creature.tier) && gap < 220) {
       // Your own kind schools with you: it turns your way and keeps close.
@@ -225,8 +225,8 @@ function startMission(world) {
   world.events.push({ type: "mission" });
 }
 
-function swimAlong(world, creature, step) {
-  creature.x += creature.direction * CREATURES[creature.tier].speed * step;
+function swimAlong(world, creature, step, pace) {
+  creature.x += creature.direction * CREATURES[creature.tier].speed * pace * step;
   creature.y += Math.sin(world.time * 2 + creature.wobble) * 8 * step;
 }
 

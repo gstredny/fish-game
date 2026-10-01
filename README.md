@@ -48,8 +48,8 @@ Finishing the mission ends the swim with **Mission complete!** (or **Level compl
 
 The start screen has two ways to play, and each spot remembers its choice:
 
-- **Little swimmer** is the gentle game.
-- **Big swimmer** takes more snacks to grow, sends more hunters, and they turn and chase you (at half your speed, the orca a little faster, so you can get away). You also get less safe time after a bump, and the missions ask for more.
+- **Little swimmer** is the gentle game: the fish swim at three quarters of their speed.
+- **Big swimmer** takes more snacks to grow, sends more hunters, and they turn and chase you (at about a third of your speed, the orca a little faster, so you can get away). You also get less safe time after a bump, and the missions ask for more.
 
 **Home** on the pause, win and game-over screens goes back to the start screen, to pick another place, level or fish.
 

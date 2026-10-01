@@ -1,4 +1,4 @@
-const CACHE = "little-fish-v27";
+const CACHE = "little-fish-v28";
 const FILES = [
   "./",
   "./index.html",

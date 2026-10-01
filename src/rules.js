@@ -27,12 +27,12 @@ export const CREATURES = [
 export const SHARK = FORMS.length - 1;
 
 // Little swimmer is the gentle game; Big swimmer takes longer to grow, and its hunters turn and
-// chase (a little slower than you, so you can always get away). `odds` splits new fish into
-// snacks below you, snacks, your own kind, hunters, and big hunters. `orcas` is the top hunter's
-// share of the biggest form's ocean.
+// chase (well slower than you, so you can always get away). `pace` is the share of its full speed
+// every food-chain animal swims at. `odds` splits new fish into snacks below you, snacks, your own
+// kind, hunters, and big hunters. `orcas` is the top hunter's share of the biggest form's ocean.
 export const LEVELS = {
-  little: { goals: [6, 7, 8, 9], chase: 0, reach: 180, orcaChase: 0.5, safe: 2.4, odds: [0.25, 0.65, 0.75, 0.95], orcas: 0.03 },
-  big: { goals: [8, 9, 11, 12], chase: 0.5, reach: 230, orcaChase: 0.65, safe: 2, odds: [0.22, 0.58, 0.68, 0.93], orcas: 0.06 }
+  little: { goals: [6, 7, 8, 9], pace: 0.75, chase: 0, reach: 180, orcaChase: 0.4, safe: 2.4, odds: [0.25, 0.65, 0.75, 0.95], orcas: 0.03 },
+  big: { goals: [8, 9, 11, 12], pace: 0.85, chase: 0.35, reach: 230, orcaChase: 0.45, safe: 2, odds: [0.22, 0.58, 0.68, 0.93], orcas: 0.06 }
 };
 
 export function goalFor(level, stage) {

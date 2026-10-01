@@ -224,11 +224,28 @@ test("Big swimmer takes longer to grow, and its hunters really chase you", () =>
   const little = chased("little"), big = chased("big");
   assert.ok(little.gap > 150, `a Little swimmer hunter keeps swimming its way (${little.gap.toFixed(0)}px)`);
   assert.ok(big.gap < 90, `a Big swimmer hunter turns and chases (${big.gap.toFixed(0)}px)`);
+  assert.ok(big.gap > 50, `but slowly, well under half your speed (${big.gap.toFixed(0)}px)`);
   assert.equal(big.facing, -1, "and faces you");
   for (const level of Object.values(LEVELS)) {
     assert.ok(level.chase < 1 && level.orcaChase < 1, "every hunter is slower than you, so you can always get away");
   }
   assert.ok(swimSpeed(SHARK) > 0);
+});
+
+test("food-chain animals swim slower than full speed, slowest for Little swimmer", () => {
+  // A mackerel far to the right, swimming away: too far off to notice you. How far does it get in 1 s?
+  const travel = level => {
+    const world = createWorld(390, 844, { level });
+    Object.assign(world, { phase: "playing", stage: 0, invulnerable: 99, friends: [] });
+    const mackerel = { x: world.player.x + 600, y: world.player.y, tier: 2, direction: 1, wobble: 0 };
+    world.creatures = [mackerel];
+    for (let tick = 0; tick < 20; tick++) swim(world, 0.05, idleInput, 390, 844);
+    return mackerel.x - world.player.x - 600;
+  };
+  const full = CREATURES[2].speed;
+  const little = travel("little"), big = travel("big");
+  assert.ok(big > 0 && big < full * 0.9, `Big swimmer: ${big.toFixed(0)} of ${full}px`);
+  assert.ok(little > 0 && little < big, `Little swimmer: ${little.toFixed(0)}px, slower than Big's ${big.toFixed(0)}px`);
 });
 
 test("a snack is eaten the moment it touches the fish, with a +1 to show it", () => {
