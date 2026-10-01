@@ -3,9 +3,9 @@ import { paintOcean } from "./paint.js";
 import { createSound } from "./sound.js";
 import { createSteering } from "./steering.js";
 import { padDirection } from "./pad.js";
-import { createWorld, dangerBehind, growUp, nearbyAnimals, resetWorld, swim } from "./world.js";
+import { createWorld, dangerBehind, growUp, nearbyAnimals, resetWorld, startMission, swim } from "./world.js";
 import { paintColony } from "./coral-paint.js";
-import { cardSpeech, growLine, hurtLine, meetLine, searchLink, SPECIES } from "./species.js";
+import { article, cardSpeech, growLine, hurtLine, meetLine, searchLink, SPECIES } from "./species.js";
 import { formKind, KINDS, ZONE_IDS, ZONES, zoneKinds } from "./zones.js";
 import { swatch } from "./animal-paint.js";
 import { PHOTOS } from "./photos.js";
@@ -17,6 +17,7 @@ import { allDone, currentLevel, isOpen, levelDoneLine, levelNumber, LEVELS_KEY, 
 import { missionCount, missionDone, missionDoneLine, missionGoal, missionKind, missionLine, pickMission } from "./missions.js";
 import { FIND_THAT_ONE, VOICE_ON, WHAT_ANIMAL } from "./lines.js";
 import { pickChoices } from "./choices.js";
+import { CHECKPOINT_KEY, loadCheckpoints, saveCheckpoints } from "./checkpoints.js";
 
 const canvas = document.querySelector("#ocean");
 const context = canvas.getContext("2d");
@@ -65,7 +66,7 @@ let lastSwim = null;
 let storage = null;
 try { storage = window.localStorage; } catch { /* private mode: preferences last for this visit */ }
 let player = savedPlayer(storage);
-let saves, level, zone, met, beaten, stars;
+let saves, level, zone, met, beaten, stars, checkpoints;
 // The level this swim finished for the first time, until the next swim.
 let cleared = null;
 readPlayer();
@@ -88,7 +89,7 @@ function renderZones() {
   }).join("");
 }
 
-// Little swimmer or Big swimmer, the levels finished, where to swim, stars, and the Ocean book: this
+// Little swimmer or Big swimmer, the levels finished, where to swim, stars, saved sizes, and the Ocean book: this
 // player's own. The place to swim is the one picked last, if it is open, else the level they are on.
 function readPlayer() {
   saves = playerSaves(storage, player);
@@ -103,6 +104,7 @@ function readPlayer() {
     if (ZONE_IDS.includes(picked) && isOpen(beaten, picked)) zone = picked;
   } catch {}
   met = loadMet(saves);
+  checkpoints = loadCheckpoints(saves);
 }
 
 // Picked on the start screen. A spot nobody has swum yet asks for a name.
@@ -186,7 +188,7 @@ function askErase() {
 }
 
 function erasePlayer() {
-  for (const key of [NAME_KEY, MET_KEY, LEVEL_KEY, ZONE_KEY, LEVELS_KEY, STARS_KEY]) {
+  for (const key of [NAME_KEY, MET_KEY, LEVEL_KEY, ZONE_KEY, LEVELS_KEY, STARS_KEY, CHECKPOINT_KEY]) {
     try { saves.removeItem(key); } catch {}
   }
   loadPlayer();
@@ -537,11 +539,12 @@ function begin() {
   startSwim();
 }
 
-// Each swim's mission differs from the last one.
+// Each swim's mission differs from the last one. A swim starts at the size saved for this place,
+// if the last one here lost all its hearts; as the biggest form, its mission starts straight away.
 function startSwim() {
   cleared = null;
   const mission = pickMission(lastSwim?.zone === zone ? lastSwim.id : null, ZONES[zone]);
-  resetWorld(world, width, height, { level, zone, met, mission });
+  resetWorld(world, width, height, { level, zone, met, mission, stage: checkpoints[zone] ?? 0 });
   lastSwim = { zone, id: mission };
   world.phase = "playing";
   hintFrom = { ...world.player };
@@ -549,7 +552,8 @@ function startSwim() {
   input.keys.clear();
   updateHud();
   showPanel(null);
-  tell(growLine(world.zone, 0), 3200);
+  if (world.stage === SHARK) startMission(world);
+  else tell(growLine(world.zone, world.stage), 3200);
   if (document.hidden) pause();
 }
 
@@ -608,7 +612,11 @@ function closeMission() {
 // that level; the last level ends the ocean.
 function finishSwim(first = false) {
   const kind = { find: world.zone.giant, friends: world.mission.last }[world.mission.id];
-  if (first) cleared = clearLevel();
+  if (first) {
+    cleared = clearLevel();
+    delete checkpoints[world.zone.id];
+    saveCheckpoints(checkpoints, saves);
+  }
   if (first && kind && !met.has(kind)) {
     met.add(kind);
     saveMet(met, saves);
@@ -643,6 +651,16 @@ function showWon() {
     (cleared ? `You finished ${placeName(cleared)} and earned a coral! Next stop: ${placeName(next)}.` :
       "Every swim has a new mission.");
   showPanel("won");
+}
+
+// Losing all your hearts keeps your size: the next swim in this place starts as the fish you were.
+function showGameOver() {
+  checkpoints[world.zone.id] = world.stage;
+  saveCheckpoints(checkpoints, saves);
+  const name = SPECIES[formKind(world.zone, world.stage)].name.toLowerCase();
+  document.querySelector("#gameover-text").textContent = world.stage ?
+    `You keep your size. You'll start again as ${article(name)} ${name}.` : "Every big fish starts out little.";
+  showPanel("gameover");
 }
 
 function showFinished() {
@@ -700,7 +718,7 @@ function frame(timestamp) {
   }
   // After this frame's grow or bump line, so a new card's reading is not cut off by it.
   meetAnimals();
-  if (world.phase === "gameover" && overlay.hidden) showPanel("gameover");
+  if (world.phase === "gameover" && overlay.hidden) showGameOver();
   requestAnimationFrame(frame);
 }
 

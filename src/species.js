@@ -346,7 +346,7 @@ function capital(text) {
   return text[0].toUpperCase() + text.slice(1);
 }
 
-function article(word) {
+export function article(word) {
   return /^[aeiou]/.test(word) ? "an" : "a";
 }
 

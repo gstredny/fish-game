@@ -46,6 +46,8 @@ Once you reach the biggest form (the great white shark in the open ocean, the ti
 
 Finishing the mission ends the swim with **Mission complete!** (or **Level complete!** the first time in a place). The top hunter also turns up now and then once you are big.
 
+Losing all three hearts keeps your size: the game-over screen says so, and **Try again** (or coming back to that place later, even after closing the app) starts the swim as the fish you were, with three hearts. Lost as the biggest form, the swim starts big with a new mission. Each place keeps its own size for each save spot; finishing the place's mission clears it, so the next swim there starts little.
+
 The start screen has two ways to play, and each spot remembers its choice:
 
 - **Little swimmer** is the gentle game: the fish swim at three quarters of their speed.
@@ -161,6 +163,7 @@ node tools/browser-zones.mjs          # picking a place, the reef swim and missi
 node tools/browser-levels.mjs         # locked places, a typed name, Level complete and Next, the end screen, Erase asks first, fits
 node tools/browser-coral.mjs          # the question before the mission names its animal, a bump by a stranger, the coral shelf, fits
 node tools/browser-quiz.mjs           # three names to pick, a right pick's star and size up, a wrong pick, fits
+node tools/browser-keep-size.mjs      # losing all hearts as a lionfish, Try again as a lionfish, a reload keeps it, fits
 ```
 
 `tools/browser-sound.mjs` checks that sound stays off until a tap and that each main moment plays its sound. `tools/browser-update.mjs` checks that an update shows on the first open. `tools/browser-check.mjs` checks that old saved drawings never replace species artwork, that growing changes the swimming animal, and that the start screen fits on a computer and sideways phones. Run `node tools/browser-check.mjs screenshots` with Playwright installed (or set `PLAYWRIGHT_MODULE` to an installed copy). Its browser is muted.

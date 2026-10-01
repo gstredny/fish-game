@@ -6,14 +6,15 @@ import { DEFAULT_ZONE, hasTopHunter, topTier, ZONES } from "./zones.js";
 
 // `zone` is where this swim happens (zones.js): its food chain fills the tiers and its list of sea
 // friends fills the water and the sea bed. `met` is the device's Ocean book: sea friends it has
-// never met come first (see makeFriend).
-export function createWorld(width, height, { level = "little", zone = DEFAULT_ZONE, mission, met = new Set() } = {}) {
+// never met come first (see makeFriend). `stage` is the size the fish starts at (little, unless a
+// swim picks up where the last one ended).
+export function createWorld(width, height, { level = "little", zone = DEFAULT_ZONE, mission, met = new Set(), stage = 0 } = {}) {
   const place = typeof zone === "string" ? ZONES[zone] : zone;
   const world = {
     player: { x: 0, y: 0, direction: 1 },
     camera: { x: 0, y: 0 },
     zone: place,
-    stage: 0,
+    stage,
     bites: 0,
     hearts: 3,
     invulnerable: 2.5,
@@ -219,7 +220,7 @@ export function growUp(world) {
 }
 
 // The biggest form now: the swim's mission begins, and the game waits while it is explained.
-function startMission(world) {
+export function startMission(world) {
   world.mission.active = true;
   world.phase = "mission";
   world.events.push({ type: "mission" });
