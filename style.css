@@ -98,6 +98,7 @@ button:focus-visible { outline: 3px solid #ffe49b; outline-offset: 4px; }
   white-space: nowrap;
   backdrop-filter: blur(10px);
 }
+.stars { min-width: 0; color: #ffdd93; }
 
 .icon-button {
   width: 44px;
@@ -468,8 +469,28 @@ h1 em { color: #ffdf9c; font-style: normal; }
 .card-chain dd { margin: 0; font-size: 14px; line-height: 1.35; }
 .card-actions { display: flex; align-items: center; gap: 12px; margin-top: 16px; }
 .card-actions .primary-button { margin-top: 0; }
-/* While the child guesses, only the photo and the question show; the card keeps its size. */
-.guessing .card-facts, .guessing .card-chain, .guessing #card-hear, .guessing .card-more { visibility: hidden; }
+/* While the child guesses, the photo, the question and three names show; Tell me! is a small
+   "I don't know" link under them. */
+.guessing .card-facts, .guessing .card-chain { display: none; }
+.guessing #card-hear, .guessing .card-more { display: none; }
+.card-choices { display: grid; gap: 8px; margin-top: 12px; }
+.card-choices[hidden] { display: none; }
+.choice-button {
+  min-height: 46px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 14px;
+  background: #ffdd93;
+  box-shadow: 0 5px 0 #d58e66;
+  color: #244c56;
+  font-size: 18px;
+  font-weight: 800;
+  text-align: left;
+}
+.choice-button:active { transform: translateY(3px); box-shadow: 0 2px 0 #d58e66; }
+.guessing .card-actions { margin-top: 8px; }
+.guessing #card-close { min-height: 0; padding: 6px; background: none; box-shadow: none; color: #f4fff6; font-size: 15px;
+  font-weight: 400; text-decoration: underline; text-underline-offset: 4px; }
 
 .book-panel { text-align: center; }
 .book-panel h2 { font-size: clamp(26px, 4vw, 36px); letter-spacing: -.03em; }

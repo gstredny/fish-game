@@ -190,10 +190,7 @@ function meetCreature(world, creature) {
     world.bites = growth.bites;
     world.events.push({ type: growth.grew ? "grow" : "eat" });
     if (world.stage === SHARK && growth.grew) {
-      // The biggest form now: the swim's mission begins, and the game waits while it is explained.
-      world.mission.active = true;
-      world.phase = "mission";
-      world.events.push({ type: "mission" });
+      startMission(world);
     } else if (world.mission.active && !world.mission.done && MISSIONS[world.mission.id].tier === creature.tier) {
       advanceMission(world, 1);
     }
@@ -209,6 +206,23 @@ function meetCreature(world, creature) {
   burst(world, world.player.x, world.player.y, { color: "#ffdaab" }, 14);
   world.events.push({ type: "hurt", by: kindAt(world, creature.tier) });
   if (world.hearts === 0) world.phase = "gameover";
+}
+
+// A right answer on a "What animal is this?" card: one size bigger at once, as if the last snack
+// had just been eaten.
+export function growUp(world) {
+  if (world.stage === SHARK) return;
+  world.stage += 1;
+  world.bites = 0;
+  world.events.push({ type: "grow" });
+  if (world.stage === SHARK) startMission(world);
+}
+
+// The biggest form now: the swim's mission begins, and the game waits while it is explained.
+function startMission(world) {
+  world.mission.active = true;
+  world.phase = "mission";
+  world.events.push({ type: "mission" });
 }
 
 function swimAlong(world, creature, step) {

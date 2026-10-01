@@ -24,7 +24,7 @@ say to finish the one before it. Finishing a mission in a place finishes that le
 finished level can be swum again for a new mission. The order is the order of `src/zones.js`; the rules
 are in `src/levels.js`.
 
-**Who's swimming?** on the start screen has three save spots. Each keeps its own name, Ocean book, coral,
+**Who's swimming?** on the start screen has three save spots. Each keeps its own name, Ocean book, coral, stars,
 levels finished, Little/Big swimmer and place to swim on the same phone, and shows the level it is on
 ("Level 2 of 4", or "Finished! ★"). Picking a spot nobody has swum asks for a name; **Change name** renames
 the spot, and **Erase** empties it after a second tap on the page (no browser pop-up). A spot without a
@@ -55,7 +55,7 @@ The start screen has two ways to play, and each spot remembers its choice:
 
 ## Learning as you swim
 
-The first time a child meets an animal, the game pauses and a card shows a real photo of it. First the voice asks "What animal is this?" and the card waits, with no timer, while the child thinks. **Tell me!** then names the animal and the voice reads out a fact, what the animal eats, and who eats it. The question always comes before the name: a mission about an animal never met (the orca to swim away from, the tuna to eat) shows that card before the mission card, and a bump by a hunter never met opens its card instead of the "Watch out!" line. After that, a name tag floats above the animal and the voice says one short line, one animal at a time with a few seconds between, so a busy ocean does not rattle off names. Growing up and getting bumped are told as food-chain lines too, such as "You're a tuna now! Tuna eat squid. Watch out for sharks!" and "Watch out! Mackerel eat sardines!" The first line of a swim starts with a welcome to the place.
+The first time a child meets an animal, the game pauses and a card shows a real photo of it. First the voice asks "What animal is this?" and the card waits, with no timer, while the child picks one of three names: the right one and two other animals from the same place, picked and shuffled fresh every time. A right pick earns a star (⭐ at the top, kept per save spot) and, when the card closes, makes the fish one size bigger at once (a damselfish becomes a lionfish; one size before the biggest, the mission starts). A wrong pick says "Good try!" and shows the right name. **Tell me!** names it without a star. Then the voice reads out a fact, what the animal eats, and who eats it. The question always comes before the name: a mission about an animal never met (the orca to swim away from, the tuna to eat) shows that card before the mission card, and a bump by a hunter never met opens its card instead of the "Watch out!" line. After that, a name tag floats above the animal and the voice says one short line, one animal at a time with a few seconds between, so a busy ocean does not rattle off names. Growing up and getting bumped are told as food-chain lines too, such as "You're a tuna now! Tuna eat squid. Watch out for sharks!" and "Watch out! Mackerel eat sardines!" The first line of a swim starts with a welcome to the place.
 
 Gentle sea friends come by as well. In open water: a sea turtle, a dolphin, a jellyfish, a pufferfish (swim close and it puffs up), a manta ray, a parrotfish and, once in a while, a huge blue whale. On the sea bed: a seahorse, an octopus, a sea star, a crab, a lobster, a sea urchin and clownfish in their anemone (swim low to meet them). They never eat you and are never eaten.
 
@@ -151,7 +151,7 @@ npm test
 With the local server running, start a headless Chrome and let the scripts play the game. Screenshots land in `screenshots/`.
 
 ```sh
-"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new --remote-debugging-port=9444 --user-data-dir=/tmp/fish-chrome about:blank &
+"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new --mute-audio --remote-debugging-port=9444 --user-data-dir=/tmp/fish-chrome about:blank &
 node tools/browser-play.mjs desktop   # real keyboard input, box-pattern swim
 node tools/browser-play.mjs phone     # 844×390 sideways touch input
 node tools/browser-sideways.mjs       # sideways phone: arrow pad steers, finger on water doesn't, snacks, turn prompt, panels fit
@@ -160,6 +160,7 @@ node tools/browser-learn.mjs          # fact cards, voice, Ocean book, mission c
 node tools/browser-zones.mjs          # picking a place, the reef swim and mission, Home, the book by place, built-in species, fits
 node tools/browser-levels.mjs         # locked places, a typed name, Level complete and Next, the end screen, Erase asks first, fits
 node tools/browser-coral.mjs          # the question before the mission names its animal, a bump by a stranger, the coral shelf, fits
+node tools/browser-quiz.mjs           # three names to pick, a right pick's star and size up, a wrong pick, fits
 ```
 
 `tools/browser-sound.mjs` checks that sound stays off until a tap and that each main moment plays its sound. `tools/browser-update.mjs` checks that an update shows on the first open. `tools/browser-check.mjs` checks that old saved drawings never replace species artwork, that growing changes the swimming animal, and that the start screen fits on a computer and sideways phones. Run `node tools/browser-check.mjs screenshots` with Playwright installed (or set `PLAYWRIGHT_MODULE` to an installed copy). Its browser is muted.

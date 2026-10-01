@@ -3,7 +3,7 @@ import { paintOcean } from "./paint.js";
 import { createSound } from "./sound.js";
 import { createSteering } from "./steering.js";
 import { padDirection } from "./pad.js";
-import { createWorld, dangerBehind, nearbyAnimals, resetWorld, swim } from "./world.js";
+import { createWorld, dangerBehind, growUp, nearbyAnimals, resetWorld, swim } from "./world.js";
 import { paintColony } from "./coral-paint.js";
 import { cardSpeech, growLine, hurtLine, meetLine, searchLink, SPECIES } from "./species.js";
 import { formKind, KINDS, ZONE_IDS, ZONES, zoneKinds } from "./zones.js";
@@ -16,6 +16,7 @@ import { allDone, currentLevel, isOpen, levelDoneLine, levelNumber, LEVELS_KEY, 
   OCEAN_DONE_LINE, placeName, saveBeaten } from "./levels.js";
 import { missionCount, missionDone, missionDoneLine, missionGoal, missionKind, missionLine, pickMission } from "./missions.js";
 import { FIND_THAT_ONE, VOICE_ON, WHAT_ANIMAL } from "./lines.js";
+import { pickChoices } from "./choices.js";
 
 const canvas = document.querySelector("#ocean");
 const context = canvas.getContext("2d");
@@ -26,6 +27,7 @@ const toast = document.querySelector("#toast");
 const panels = ["intro", "paused", "won", "gameover", "card", "book", "mission", "finished", "coral"];
 const LEVEL_KEY = "little-fish-level-v1";
 const ZONE_KEY = "little-fish-zone-v1";
+const STARS_KEY = "little-fish-stars-v1";
 const PORTRAIT_PHONE = "(orientation: portrait) and (max-width: 600px) and (pointer: coarse)";
 const input = { keys: new Set(), pointer: null, pad: null };
 const steering = createSteering(input);
@@ -53,6 +55,8 @@ const voiceButtons = [document.querySelector("#voice-button"), document.querySel
 let cardKind = null;
 let cardFrom = null;
 let guessing = false;
+// A right pick while still growing: the fish grows one size when its card closes.
+let prize = false;
 let bookFrom = null;
 let coralFrom = null;
 let hintFrom = null;
@@ -61,7 +65,7 @@ let lastSwim = null;
 let storage = null;
 try { storage = window.localStorage; } catch { /* private mode: preferences last for this visit */ }
 let player = savedPlayer(storage);
-let saves, level, zone, met, beaten;
+let saves, level, zone, met, beaten, stars;
 // The level this swim finished for the first time, until the next swim.
 let cleared = null;
 readPlayer();
@@ -84,14 +88,16 @@ function renderZones() {
   }).join("");
 }
 
-// Little swimmer or Big swimmer, the levels finished, where to swim, and the Ocean book: this
+// Little swimmer or Big swimmer, the levels finished, where to swim, stars, and the Ocean book: this
 // player's own. The place to swim is the one picked last, if it is open, else the level they are on.
 function readPlayer() {
   saves = playerSaves(storage, player);
   level = "little";
   beaten = loadBeaten(saves);
   zone = currentLevel(beaten);
+  stars = 0;
   try {
+    stars = Number(saves.getItem(STARS_KEY)) || 0;
     if (saves.getItem(LEVEL_KEY) === "big") level = "big";
     const picked = saves.getItem(ZONE_KEY);
     if (ZONE_IDS.includes(picked) && isOpen(beaten, picked)) zone = picked;
@@ -174,13 +180,13 @@ function closeName() {
 // Erasing asks first, on the page itself: no browser pop-up.
 function askErase() {
   document.querySelector("#erase-text").textContent =
-    `Really erase ${describePlayer(player).name}? Their book, levels and coral go too.`;
+    `Really erase ${describePlayer(player).name}? Their book, levels, stars and coral go too.`;
   document.querySelector("#erase-ask").hidden = false;
   closeName();
 }
 
 function erasePlayer() {
-  for (const key of [NAME_KEY, MET_KEY, LEVEL_KEY, ZONE_KEY, LEVELS_KEY]) {
+  for (const key of [NAME_KEY, MET_KEY, LEVEL_KEY, ZONE_KEY, LEVELS_KEY, STARS_KEY]) {
     try { saves.removeItem(key); } catch {}
   }
   loadPlayer();
@@ -233,6 +239,9 @@ function updateHud() {
   const hearts = document.querySelector("#hearts");
   hearts.textContent = `${"♥ ".repeat(world.hearts)}${"♡ ".repeat(3 - world.hearts)}`.trim();
   hearts.setAttribute("aria-label", `${world.hearts} hearts left`);
+  const shine = document.querySelector("#stars");
+  shine.textContent = `⭐ ${stars}`;
+  shine.setAttribute("aria-label", `${stars} stars`);
 }
 
 // Growing: snacks eaten so far. A shark: how far along the mission is.
@@ -378,21 +387,39 @@ function closeLabel(from) {
   return { meet: "Keep swimming", mission: "Your mission", book: "Back to the book", won: "Next" }[from];
 }
 
-// An animal met while swimming: the photo shows first, and the child gets to say who it is
-// before the card names it and reads it. It waits, with no timer, until they tap "Tell me!".
+// An animal met while swimming: the photo shows first, with three names to pick from, before the
+// card names it and reads it. It waits, with no timer, for a pick or "Tell me!".
 function askGuess() {
   guessing = true;
+  prize = false;
   document.querySelector("#card").classList.add("guessing");
   document.querySelector("#card-kicker").textContent = WHAT_ANIMAL;
   document.querySelector("#card-name").textContent = "?";
   document.querySelector("#card-close").textContent = "Tell me!";
+  const choices = document.querySelector("#card-choices");
+  choices.innerHTML = pickChoices(cardKind, zoneKinds(world.zone)).map(kind =>
+    `<button class="choice-button" type="button" data-pick="${kind}">${SPECIES[kind].name}</button>`).join("");
+  choices.hidden = false;
   voice.say(WHAT_ANIMAL);
 }
 
-function revealCard() {
+// A right pick earns a star, and a fish still growing gets one size bigger when the card closes.
+function answer(kind) {
+  if (!guessing || !kind) return;
+  if (kind !== cardKind) return revealCard("Good try!");
+  stars += 1;
+  try { saves.setItem(STARS_KEY, String(stars)); } catch {}
+  prize = cardFrom === "meet" && world.stage < SHARK;
+  sound.play("grow");
+  updateHud();
+  revealCard(prize ? "That's right! ⭐ You get to grow!" : "That's right! ⭐");
+}
+
+function revealCard(kicker = "You met a new animal!") {
   guessing = false;
   document.querySelector("#card").classList.remove("guessing");
-  document.querySelector("#card-kicker").textContent = "You met a new animal!";
+  document.querySelector("#card-choices").hidden = true;
+  document.querySelector("#card-kicker").textContent = kicker;
   document.querySelector("#card-name").textContent = SPECIES[cardKind].name;
   document.querySelector("#card-close").textContent = closeLabel(cardFrom);
   voice.say(cardSpeech(cardKind));
@@ -410,6 +437,7 @@ function closeCard() {
   world.nextCardAt = world.time + CARD_GAP;
   resume();
   world.invulnerable = Math.max(world.invulnerable, 2);
+  if (prize) growUp(world);
 }
 
 // The book is grouped by place; an animal that lives in two places shows in both, and counts once.
@@ -789,6 +817,7 @@ for (const id of ["paused-home-button", "won-home-button", "gameover-home-button
   document.querySelector(`#${id}`).addEventListener("click", goHome);
 }
 document.querySelector("#card-close").addEventListener("click", closeCard);
+document.querySelector("#card-choices").addEventListener("click", event => answer(event.target?.closest?.("[data-pick]")?.dataset.pick));
 document.querySelector("#card-hear").addEventListener("click", () => voice.say(cardSpeech(cardKind), { force: true }));
 document.querySelector("#intro-book-button").addEventListener("click", () => openBook("intro"));
 document.querySelector("#paused-book-button").addEventListener("click", () => openBook("paused"));

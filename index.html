@@ -31,6 +31,7 @@
     </div>
     <div class="hud-actions">
       <button id="voice-button" class="icon-button" type="button" aria-label="Turn the voice off">🔊</button>
+      <div id="stars" class="hearts stars" aria-label="0 stars">⭐ 0</div>
       <div id="hearts" class="hearts" aria-label="Three hearts">♥ ♥ ♥</div>
       <button id="pause-button" class="icon-button" type="button" aria-label="Pause game">Ⅱ</button>
     </div>
@@ -121,6 +122,7 @@
       <div class="card-text">
         <p id="card-kicker" class="card-kicker">You met a new animal!</p>
         <h2 id="card-name">Sardine</h2>
+        <div id="card-choices" class="card-choices" role="group" aria-label="Pick the animal" hidden></div>
         <p id="card-facts" class="card-facts"></p>
         <dl class="card-chain">
           <div><dt>Eats</dt><dd id="card-eats"></dd></div>
