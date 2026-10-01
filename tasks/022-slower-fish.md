@@ -1,7 +1,7 @@
 # Slower fish for Little and Big swimmer
 
 Date: 2026-10-01
-Status: in progress
+Status: LIVE on GitHub Pages (666590d, Pages run 36930775570, cache `little-fish-v28`). George's phone try is his to do
 Branch: `master`
 
 George's ask (after v27): "make it a little easier for the little swimmers and the big swimmers? The big
@@ -27,7 +27,7 @@ snacks needed, hearts and safe time stay the same. Slower snacks are easier to c
 - [x] `node --test tests/game.test.js`: the new slower-swim checks pass (seen failing first).
 - [x] `npm test`: all pass (real counts in the log).
 - [x] `git diff --check` clean; `sw.js` cache bumped.
-- [ ] Pushed; Pages deploy success; live `sw.js` shows the new cache.
+- [x] Pushed 666590d; Pages run 36930775570 "completed success"; live `sw.js` = `little-fish-v28`.
 
 ## Attempt log (append-only)
 - 2026-10-01: red first: `node --test tests/game.test.js` 20 passed, 2 failed ("but slowly, well under half your
@@ -35,3 +35,5 @@ snacks needed, hearts and safe time stay the same. Slower snacks are easier to c
   `swimAlong`; Big `chase` 0.5 → 0.35, `orcaChase` 0.65 → 0.45; Little `orcaChase` 0.5 → 0.4. `sw.js`
   `little-fish-v28`; README lines updated. `tests/game.test.js`: 22 passed, 0 failed. `npm test`: 117 passed,
   0 failed, 0 cancelled, 0 skipped. `git diff --check` clean. No browser run: no screen changed, only speeds.
+- 2026-10-01: George OK'd shipping (AskUserQuestion). Pushed 666590d (`git ls-remote` shows it). Pages run
+  36930775570 completed success. Live `sw.js`: `const CACHE = "little-fish-v28";`; live `src/rules.js` has `pace: 0.75`.

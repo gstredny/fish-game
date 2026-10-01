@@ -1,4 +1,14 @@
-# Active handoff — pick the answer: a star and a size up
+# Active handoff — slower fish for Little and Big swimmer
+
+Date: 2026-10-01
+Task: `tasks/022-slower-fish.md`
+
+LIVE (666590d, Pages run 36930775570 success, live cache `little-fish-v28`). `LEVELS.pace` in `src/rules.js`:
+food-chain animals swim at 75% (Little) / 85% (Big) of their speed. Big hunters chase at 35% of your speed
+(was 50%), orca 45% (was 65%); Little orca 40% (was 50%). `npm test` 117/117. Not on George's phone yet.
+If still too hard: Big `safe` time, Big `odds` (fewer hunters) or `goals` are the next knobs.
+
+## Previous — pick the answer: a star and a size up
 
 Date: 2026-10-01
 Task: `tasks/021-pick-the-answer.md`
