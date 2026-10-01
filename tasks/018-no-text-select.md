@@ -1,7 +1,7 @@
 # Holding an arrow must not pop up Copy / Look Up
 
 Date: 2026-09-30
-Status: fix committed; deploy evidence below
+Status: done; live on GitHub Pages (333ea04). George holding an arrow on his phone is the last check
 
 George: "Whenever you use the arrows, this thing comes up because it's like trying to highlight
 stuff. Can you remove that so if you play like a normal game?" (screenshot: blue selection handles
@@ -20,7 +20,7 @@ so nothing is lost. Cache `little-fish-v24` so phones fetch the new `style.css`.
 
 - [x] `tests/no-text-select.test.js` fails before the CSS change, passes after.
 - [x] `npm test`: 111 passed, 0 failed, 0 skipped.
-- [ ] Pages deploy succeeds; live `sw.js` is `little-fish-v24` and live `style.css` has the body rule.
+- [x] Pages deploy succeeds; live `sw.js` is `little-fish-v24` and live `style.css` has the body rule.
 - [ ] George holds an arrow on his phone: no handles, no Copy bar. (His phone; cannot be run here.)
 
 ## Attempt log (append-only)
@@ -29,3 +29,6 @@ so nothing is lost. Cache `little-fish-v24` so phones fetch the new `style.css`.
   own no-select rules were already there (style.css `.pad`), so a pad-only fix was never enough.
 - One change: body-wide no-select. Test seen failing ("body rule is missing user-select: none"), then
   111/111 after. Fallback if the phone still shows it: `touchstart` `preventDefault()` on the pad.
+- Committed and pushed 333ea04. Pages run 36804007724: completed, success. Live `sw.js`:
+  `const CACHE = "little-fish-v24";`. Live `style.css` body rule has `user-select: none`,
+  `-webkit-user-select: none`, `-webkit-touch-callout: none` (curl with a cache-busting query).

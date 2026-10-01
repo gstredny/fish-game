@@ -1,4 +1,15 @@
-# Active handoff — voice pronunciation fixes
+# Active handoff — no text selection when holding an arrow
+
+Date: 2026-09-30
+Task: `tasks/018-no-text-select.md`
+
+Live (333ea04, Pages run 36804007724, cache `little-fish-v24`). The `body` rule in `style.css` turns off
+`user-select` and the touch callout for the whole page: iPhone Safari used to select the nearest text
+(reef bar) when a thumb held the pad and show Copy / Look Up. New `tests/no-text-select.test.js`.
+`npm test` 111/111. Not yet held on George's phone. Fallback if it still shows: `touchstart`
+`preventDefault()` on the pad.
+
+## Previous — voice pronunciation fixes
 
 Date: 2026-09-30
 Task: `tasks/017-pronunciation.md`
