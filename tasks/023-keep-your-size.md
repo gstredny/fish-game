@@ -1,7 +1,7 @@
 # Keep your size after losing all your hearts
 
 Date: 2026-10-01
-Status: in progress
+Status: LIVE on GitHub Pages (95d89d0, Pages run 36931929051, cache `little-fish-v29`). George's phone try is his to do
 Branch: `master`
 
 George's ask: "why can't it save where they were when they died? Like, it should save at the level
@@ -37,7 +37,8 @@ Assumption (George can veto in one line): only losing all hearts saves the size;
 - [x] `npm test`: all pass (real counts in the log).
 - [x] `git diff --check` clean; `sw.js` bumped and caches `src/checkpoints.js`.
 - [x] Game-over screen looked at in a muted headless browser (844x390).
-- [ ] Pushed; Pages deploy success; live `sw.js` shows the new cache (once George says ship).
+- [x] Pushed 95d89d0; Pages run 36931929051 "completed success"; live `sw.js` = `little-fish-v29`, live
+      `src/checkpoints.js` and `index.html` with `#gameover-text` served.
 
 ## Attempt log (append-only)
 - 2026-10-01: red first: `node --test tests/keep-size-flow.test.js` 0 passed, 5 failed (no `#gameover-text`,
@@ -51,3 +52,5 @@ Assumption (George can veto in one line): only losing all hearts saves the size;
   1280x800). Looked at the shots: game-over reads "You keep your size. You'll start again as a lionfish.",
   Try again and Home fit; Try again shows Lionfish, three hearts. `browser-levels`, `browser-coral`,
   `browser-quiz` passed again. README: a paragraph under Missions, and the new check in the list.
+- 2026-10-01: pushed 95d89d0 (`git ls-remote` shows it). Pages run 36931929051 completed success. Live `sw.js`:
+  `const CACHE = "little-fish-v29";`; live `src/checkpoints.js` served; live `index.html` has `id="gameover-text"` (1).

@@ -1,4 +1,17 @@
-# Active handoff — slower fish for Little and Big swimmer
+# Active handoff — keep your size after losing all hearts
+
+Date: 2026-10-01
+Task: `tasks/023-keep-your-size.md`
+
+LIVE (95d89d0, Pages run 36931929051 success, live cache `little-fish-v29`). Losing the last heart saves the
+fish's size for that place (`src/checkpoints.js`, `little-fish-checkpoint-v1`, per save spot). Try again, or
+the same place later (even after closing the app), starts at that size with three hearts; the biggest form
+starts with a new mission. Game-over says "You keep your size. You'll start again as a lionfish." A finished
+mission clears that place's size; Erase clears all. `npm test` 122/122; `tools/browser-keep-size.mjs`
+passed (844x390, 1280x800, muted); levels, coral, quiz checks passed. Not on George's phone yet.
+Assumption George may veto: leaving mid-swim (Home, closing the app) does not save the size; only dying does.
+
+## Previous — slower fish for Little and Big swimmer
 
 Date: 2026-10-01
 Task: `tasks/022-slower-fish.md`
