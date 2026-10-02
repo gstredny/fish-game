@@ -3,7 +3,7 @@
 Date: 2026-10-02
 Task: `tasks/024-be-a-pufferfish.md`
 
-COMMITTED and PUSHED on `master` (deploy evidence in the task file). A discovered Pufferfish's
+DONE and LIVE: ffdec5e, Pages run 37016708482 success, live `sw.js` = `little-fish-v30`. A discovered Pufferfish's
 Ocean book card offers **Be this animal**. A separate reef scene gives a voiced intro, slow visible
 grouper warning, large Puff! control (Space or pointerdown, including a second thumb), rock shelter,
 gentle retry, success/replay and return to the same book. A successful defence is required; the

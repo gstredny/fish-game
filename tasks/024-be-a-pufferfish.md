@@ -1,7 +1,7 @@
 # Be this animal — pufferfish adventure
 
 Date: 2026-10-02
-Status: Browser-verified; committed and pushed (deploy evidence below)
+Status: DONE and LIVE (ffdec5e, Pages run 37016708482, cache `little-fish-v30`)
 Branch: `master`
 
 ## Intent contract
@@ -169,6 +169,12 @@ shelter-success shots at 1280×800, 844×390 and 568×320: controls fit, puffed 
 `npm test` → exit 0, 138 passed, 0 failed, 0 cancelled, 0 skipped. `git diff --check` → exit 0.
 Review items left as is (not bugs): per-frame `renderControls`, steering math shared with
 `world.js`, dialogs need Tab/click like the main game's won/game-over panels.
+
+2026-10-02 — Committed ffdec5e, pushed `de4e708..ffdec5e master`. Pages run 37016708482 →
+completed, success. Live: `curl https://gstredny.github.io/fish-game/sw.js` → `const CACHE = "little-fish-v30";`;
+live `src/puffer-adventure.js` has the new retry line; `voice/9eca6c058684.mp3` → 200 audio/mp3.
+Muted Chromium on the live URL at 844×390 → `#card-be` and `#puffer-ui` present, 0 page errors,
+start screen renders. Not checked: real audio playback, George's phone.
 
 ## Handoff / remaining verification
 
