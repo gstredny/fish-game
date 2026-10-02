@@ -1,8 +1,13 @@
-const CACHE = "little-fish-v29";
+const CACHE = "little-fish-v30";
 const FILES = [
   "./",
   "./index.html",
   "./style.css",
+  "./puffer.css",
+  "./src/puffer-adventure.js",
+  "./src/puffer-swim.js",
+  "./src/puffer-paint.js",
+  "./src/puffer-lines.js",
   "./src/main.js",
   "./src/world.js",
   "./src/rules.js",

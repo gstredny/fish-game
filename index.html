@@ -13,6 +13,7 @@
   <link rel="icon" href="icons/fish.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="puffer.css">
   <title>Little Fish, Big Ocean</title>
 </head>
 <body>
@@ -47,6 +48,23 @@
     </svg>
   </div>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <section id="puffer-ui" class="puffer-ui" hidden aria-label="Pufferfish adventure">
+    <p id="puffer-instruction" role="status">You're a pufferfish!</p>
+    <div class="puffer-links">
+      <button id="puffer-voice" class="icon-button" type="button" aria-label="Turn the sound off">🔊</button>
+      <button id="puffer-pause" class="book-button" type="button">Pause</button>
+      <button id="puffer-back" class="book-button" type="button">Back to book</button>
+    </div>
+  </section>
+  <button id="puffer-puff" class="puffer-puff" type="button" hidden aria-pressed="false">Puff!</button>
+  <div id="puffer-dialog" class="puffer-dialog" hidden>
+    <section class="panel result-panel" aria-labelledby="puffer-title">
+      <h2 id="puffer-title">Be a pufferfish</h2>
+      <p id="puffer-text"></p>
+      <button id="puffer-go" class="primary-button" type="button">Let's swim!</button>
+      <button id="puffer-dialog-back" class="text-button" type="button">Back to book</button>
+    </section>
+  </div>
 
   <main id="overlay" class="overlay">
     <section id="intro" class="panel intro-panel">
@@ -128,6 +146,7 @@
           <div><dt>Eats</dt><dd id="card-eats"></dd></div>
           <div><dt>Eaten by</dt><dd id="card-eaten"></dd></div>
         </dl>
+        <button id="card-be" class="primary-button" type="button" hidden>Be this animal</button>
         <div class="card-actions">
           <button id="card-hear" class="icon-button" type="button" aria-label="Hear it again">🔊</button>
           <button id="card-close" class="primary-button" type="button">Keep swimming</button>

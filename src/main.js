@@ -18,6 +18,7 @@ import { missionCount, missionDone, missionDoneLine, missionGoal, missionKind, m
 import { FIND_THAT_ONE, VOICE_ON, WHAT_ANIMAL } from "./lines.js";
 import { pickChoices } from "./choices.js";
 import { CHECKPOINT_KEY, loadCheckpoints, saveCheckpoints } from "./checkpoints.js";
+import { createPufferAdventure } from "./puffer-adventure.js";
 
 const canvas = document.querySelector("#ocean");
 const context = canvas.getContext("2d");
@@ -52,7 +53,8 @@ let toastTimer;
 const CARD_GAP = 20;
 const GREET_GAP = 6;
 const voice = createVoice();
-const voiceButtons = [document.querySelector("#voice-button"), document.querySelector("#intro-voice-button")];
+const voiceButtons = [document.querySelector("#voice-button"), document.querySelector("#intro-voice-button"),
+  document.querySelector("#puffer-voice")];
 let cardKind = null;
 let cardFrom = null;
 let guessing = false;
@@ -73,6 +75,14 @@ readPlayer();
 let world = createWorld(width, height, { zone });
 const sound = createSound();
 sound.setMuted(voice.muted);
+const puffer = createPufferAdventure({ input, voice, sound, clearInput: () => {
+  steering.clear();
+  input.keys.clear();
+  releasePad();
+}, backToBook: () => {
+  puffer.leave();
+  openBook(bookFrom);
+}, showControls: visible => showPad(visible) });
 
 // Where to swim: one button per level, in order. A locked place waits for the one before it to be
 // finished; an open one shows how many of its animals this player has yet to meet.
@@ -212,15 +222,16 @@ function resize() {
   canvas.width = Math.round(width * ratio);
   canvas.height = Math.round(height * ratio);
   context.setTransform(ratio, 0, 0, ratio, 0, 0);
+  puffer.resize(width, height);
 }
 
 function showPanel(name) {
   overlay.hidden = !name;
   overlay.classList.toggle("result-mode", name !== "intro" && Boolean(name));
   for (const panel of panels) document.getElementById(panel).hidden = panel !== name;
-  hud.hidden = name === "intro" || world.phase === "ready";
-  hint.hidden = Boolean(name);
-  showPad(!name);
+  hud.hidden = puffer.active || name === "intro" || world.phase === "ready";
+  hint.hidden = puffer.active || Boolean(name);
+  showPad(!name && (!puffer.active || puffer.state.phase === "playing"));
   if (name === "intro") {
     renderZones();
     renderPlayers();
@@ -277,6 +288,7 @@ function showPad(visible) {
 
 // The camera keeps the fish out from under the pad.
 function placePad() {
+  if (puffer.active) return;
   if (pad.hidden) return void (world.keepOut = null);
   const box = pad.getBoundingClientRect();
   world.keepOut = { x: box.left + box.width / 2, y: box.top + box.height / 2, r: box.width / 2 };
@@ -366,6 +378,7 @@ function openCard(kind, from) {
   const photo = document.querySelector("#card-photo");
   cardKind = kind;
   cardFrom = from;
+  document.querySelector("#card-be").hidden = from !== "book" || kind !== "pufferfish" || !met.has(kind);
   document.querySelector("#card-kicker").textContent = from === "book" ? "Ocean book" : "You met a new animal!";
   document.querySelector("#card-name").textContent = animal.name;
   document.querySelector("#card-facts").textContent = animal.facts.join(" ");
@@ -677,6 +690,7 @@ function goNext() {
 }
 
 function pause() {
+  if (puffer.active) return puffer.pause();
   if (world.phase !== "playing") return;
   world.phase = "paused";
   steering.clear();
@@ -697,6 +711,11 @@ function frame(timestamp) {
   const seconds = previousFrame ? (timestamp - previousFrame) / 1000 : 0;
   previousFrame = timestamp;
   visualTime += Math.min(seconds, 0.05);
+  if (puffer.active) {
+    puffer.frame(context, seconds, width, height);
+    requestAnimationFrame(frame);
+    return;
+  }
   if (!pad.hidden) placePad();
   swim(world, seconds, input, width, height);
   sound.listen(world);
@@ -758,10 +777,11 @@ window.addEventListener("pointerdown", event => {
   if (touchFirst || event.pointerType !== "touch") return;
   touchFirst = true;
   hint.innerHTML = "Hold an arrow to swim";
-  if (world.phase === "playing") showPad(true);
+  if (puffer.active ? puffer.state.phase === "playing" : world.phase === "playing") showPad(true);
 }, true);
 
 window.addEventListener("keydown", event => {
+  if (puffer.active) return puffer.keyDown(event);
   // Enter or Space on a focused button or link presses it, and nothing else.
   if ((event.key === "Enter" || event.key === " ") && event.target?.closest?.("button, a")) return;
   // Typing a name is not steering.
@@ -835,6 +855,14 @@ for (const id of ["paused-home-button", "won-home-button", "gameover-home-button
   document.querySelector(`#${id}`).addEventListener("click", goHome);
 }
 document.querySelector("#card-close").addEventListener("click", closeCard);
+document.querySelector("#card-be").addEventListener("click", () => {
+  if (cardFrom !== "book" || cardKind !== "pufferfish" || !met.has(cardKind)) return;
+  cardFrom = null;
+  voice.stop();
+  puffer.enter(width, height);
+  showPanel(null);
+  toast.classList.remove("visible");
+});
 document.querySelector("#card-choices").addEventListener("click", event => answer(event.target?.closest?.("[data-pick]")?.dataset.pick));
 document.querySelector("#card-hear").addEventListener("click", () => voice.say(cardSpeech(cardKind), { force: true }));
 document.querySelector("#intro-book-button").addEventListener("click", () => openBook("intro"));

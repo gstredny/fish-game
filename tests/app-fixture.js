@@ -25,9 +25,9 @@ function element() {
     getBoundingClientRect: () => ({ left: 0, top: 0, right: 0, bottom: 0, width: 0, height: 0 }),
     classList: { add: name => classes.add(name), remove: name => classes.delete(name),
       toggle: (name, on) => on ? classes.add(name) : classes.delete(name), contains: name => classes.has(name) },
-    addEventListener: (event, callback) => listeners.set(event, callback),
+    addEventListener: (event, callback) => listeners.set(event, [...(listeners.get(event) ?? []), callback]),
     setAttribute() {}, setPointerCapture() {},
-    emit: (type, event = {}) => listeners.get(type)?.({ preventDefault() {}, ...event })
+    emit: (type, event = {}) => listeners.get(type)?.forEach(callback => callback({ preventDefault() {}, ...event }))
   };
 }
 
@@ -54,9 +54,9 @@ export async function openGame(storage, extraGlobals = {}) {
   };
   for (const [key, value] of Object.entries(globals)) Object.defineProperty(globalThis, key, { value, configurable: true, writable: true });
   try {
-    const hook = `\nexport { world, input };\n// fixture ${++fixtureId}`;
+    const hook = `\nexport { world, input, puffer };\n// fixture ${++fixtureId}`;
     const game = await import(`data:text/javascript;base64,${Buffer.from(source + hook).toString("base64")}`);
-    return { ...game, nodes, window, close, frame: time => frames.shift()(time),
+    return { ...game, nodes, window, document: globals.document, close, frame: time => frames.shift()(time),
       click: id => nodes.get(id).emit("click"),
       // `target` is the focused element; a button's own click is sent separately, as browsers do.
       key: (key, target) => window.emit("keydown", { key, target }) };

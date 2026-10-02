@@ -1,4 +1,32 @@
-# Active handoff — keep your size after losing all hearts
+# Active handoff — be a pufferfish
+
+Date: 2026-10-02
+Task: `tasks/024-be-a-pufferfish.md`
+
+COMMITTED and PUSHED on `master` (deploy evidence in the task file). A discovered Pufferfish's
+Ocean book card offers **Be this animal**. A separate reef scene gives a voiced intro, slow visible
+grouper warning, large Puff! control (Space or pointerdown, including a second thumb), rock shelter,
+gentle retry, success/replay and return to the same book. A successful defence is required; the
+ordinary swim's size/hearts/snacks/mission/world fields and save data remain exact. Blur/visibility/
+portrait pause the scene. Save spots keep their existing per-player discovery gate; no new save keys.
+
+New modules: `src/puffer-adventure.js` (controls/narration), `src/puffer-swim.js` (encounter),
+`src/puffer-paint.js` (reef scene), `src/puffer-lines.js` (spoken words), `puffer.css`.
+Main/card hooks, `sw.js` prepared as `little-fish-v30`, README, fixture and tests updated.
+Six clips recorded offline in the existing Kokoro voice; 339 reused, 345 total.
+
+Lead verification: `npm test` 138 passed, 0 failed/cancelled/skipped; puffer-specific tests 16 passed,
+0 failed/cancelled/skipped; syntax and diff checks pass. All 31 imported JS modules plus both
+stylesheets appear in the offline cache. Independent Sol review found no actionable defects;
+Opus 5.5 is unavailable here. Later lead input review added held-second-thumb/release regressions.
+
+BROWSER VERIFIED 2026-10-02 (review session): `node tools/browser-puffer.mjs <scratch>` → 6 passed,
+0 failed at 1280×800, 844×390, 568×320; screenshots inspected. Review fix: the top line now says
+"That was a close bump!" / "Safe in the shelter!" on retry/win instead of the grouper warning.
+Two test mistakes in the runner fixed (CDP touchEnd lifts the listed point; wait one frame before Space).
+Not checked: real audio playback, native service-worker install in a browser, George's phone.
+
+## Previous — keep your size after losing all hearts
 
 Date: 2026-10-01
 Task: `tasks/023-keep-your-size.md`

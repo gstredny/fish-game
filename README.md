@@ -57,6 +57,12 @@ The start screen has two ways to play, and each spot remembers its choice:
 
 ## Learning as you swim
 
+A discovered pufferfish's **Ocean book** card offers **Be this animal**. In this short reef adventure,
+swim toward the marked rock shelter, then tap **Puff!** (or press Space) when the grouper is close.
+Puffing makes the pufferfish bigger and slower for a few seconds and sends the grouper away.
+Reach shelter after using the defence to finish; a bump offers a gentle retry. Replay or return to
+the same book. The ordinary swim keeps its size, hearts, snacks and mission progress unchanged.
+
 The first time a child meets an animal, the game pauses and a card shows a real photo of it. First the voice asks "What animal is this?" and the card waits, with no timer, while the child picks one of three names: the right one and two other animals from the same place, picked and shuffled fresh every time. A right pick earns a star (⭐ at the top, kept per save spot) and, when the card closes, makes the fish one size bigger at once (a damselfish becomes a lionfish; one size before the biggest, the mission starts). A wrong pick says "Good try!" and shows the right name. **Tell me!** names it without a star. Then the voice reads out a fact, what the animal eats, and who eats it. The question always comes before the name: a mission about an animal never met (the orca to swim away from, the tuna to eat) shows that card before the mission card, and a bump by a hunter never met opens its card instead of the "Watch out!" line. After that, a name tag floats above the animal and the voice says one short line, one animal at a time with a few seconds between, so a busy ocean does not rattle off names. Growing up and getting bumped are told as food-chain lines too, such as "You're a tuna now! Tuna eat squid. Watch out for sharks!" and "Watch out! Mackerel eat sardines!" The first line of a swim starts with a welcome to the place.
 
 Gentle sea friends come by as well. In open water: a sea turtle, a dolphin, a jellyfish, a pufferfish (swim close and it puffs up), a manta ray, a parrotfish and, once in a while, a huge blue whale. On the sea bed: a seahorse, an octopus, a sea star, a crab, a lobster, a sea urchin and clownfish in their anemone (swim low to meet them). They never eat you and are never eaten.
@@ -147,6 +153,12 @@ blender -b -P tools/render-ocean.py -- art/ocean-bottom.webp bottom
 ```sh
 npm test
 ```
+
+`node --test tests/puffer*.test.js` checks the pufferfish defence, retry, shelter, controls and preserved swim.
+`node tools/browser-puffer.mjs screenshots` uses muted Playwright Chromium without a server port to check
+the full adventure on desktop and two sideways phone sizes, including simultaneous steering and Puff!
+It saves screenshots and checks an offline reload using previously fetched assets; native service worker
+installation and voice caching are covered by the Node tests.
 
 ## Check it in a browser
 
